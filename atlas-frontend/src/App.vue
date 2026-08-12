@@ -1,47 +1,34 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import Form from "./components/form.vue";
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <main class="min-h-screen">
+    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white">
+      <section class="flex flex-col justify-center gap-6 px-8 py-16 sm:px-16 lg:px-24">
+        <div class="max-w-xl">
+          <h1
+            class="text-5xl font-extrabold  text-ff sm:text-6xl lg:text-7xl"
+          >
+            Request a<br />
+            Demo
+          </h1>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+          <p
+            class="mt-6 max-w-lg text-lg leading-7 text-ff sm:text-xl sm:leading-8"
+          >
+            Streamline operations, qualify leads faster, and reclaim hours of
+            your day. See exactly how our custom automation solutions can work
+            for your business.
+          </p>
+        </div>
+      </section>
+
+      <section class="flex items-center justify-center bg-ff px-5 py-12 sm:px-8 lg:px-12">
+        <Form />
+      </section>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
   </main>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
+<style scoped></style>
