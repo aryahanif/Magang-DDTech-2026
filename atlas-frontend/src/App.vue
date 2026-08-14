@@ -3,8 +3,8 @@ import Form from "./components/form.vue";
 </script>
 
 <template>
-  <main class="min-h-screen">
-    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white">
+  <main class="min-h-screen bg-white">
+    <div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
       <section class="flex flex-col justify-center gap-6 px-8 py-16 sm:px-16 lg:px-24">
         <div class="max-w-xl">
           <h1

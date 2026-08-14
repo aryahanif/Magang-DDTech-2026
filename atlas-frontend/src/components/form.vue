@@ -1,6 +1,58 @@
+<script setup>
+import { reactive, ref } from 'vue';
+import { apiClient } from '../utils/api'; // Sesuaikan path
+const formData = reactive({
+  full_name: '',
+  company_name: '',
+  phone: '', // Di form saat ini id-nya phone_number
+  email: '',
+  country: 'australia',
+  business_type: 'mortgagebroker',
+  automation_interest: '1',
+  preferred_contact_method: 'email', // Di form saat ini id-nya contact_method
+  current_problem: '',
+  message: '',
+  consent_status: false, // Di form saat ini id-nya policy
+  
+  // Data tracking (bisa diisi statis atau diambil dari route/URL params)
+  source_page: '/atlas',
+  utm_source: 'linkedin' 
+});
+const isSubmitting = ref(false);
+const submitMessage = ref('');
+const submitForm = async () => {
+  isSubmitting.value = true;
+  submitMessage.value = '';
+  
+  try {
+    const response = await apiClient.post('/api/leads', formData);
+    
+    if(response.data.success) {
+      submitMessage.value = "Terima kasih! Permintaan Anda berhasil dikirim.";
+      
+      // Kosongkan form kembali setelah sukses
+      Object.assign(formData, {
+        full_name: '',
+        company_name: '',
+        phone: '',
+        email: '',
+        current_problem: '',
+        message: '',
+        consent_status: false,
+      });
+    }
+  } catch (error) {
+    console.error("Gagal mengirim lead:", error);
+    submitMessage.value = "Terjadi kesalahan. Silakan coba lagi.";
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+</script>
+
 <template>
   <div class="bg-fbg p-8 rounded-2xl">
-    <form class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <form @submit.prevent="submitForm" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="flex flex-col ">
         <label for="full_name" class="text-sm font-medium text-ff"
           >Full Name</label
@@ -9,6 +61,7 @@
           type="text"
           id="full_name"
           name="full_name"
+          v-model="formData.full_name"
           placeholder="Alden Tegar"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1"
           maxlength="50"
@@ -24,6 +77,7 @@
           type="text"
           id="company_name"
           name="company_name"
+          v-model="formData.company_name"
           placeholder="DdTech"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1"
           required
@@ -38,6 +92,7 @@
           type="tel"
           id="phone_number"
           name="phone_number"
+          v-model="formData.phone"
           placeholder="+61 xxx xxx xxx"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1"
           required
@@ -50,6 +105,7 @@
           type="email"
           id="email"
           name="email"
+          v-model="formData.email"
           placeholder="Email"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1"
           required
@@ -61,6 +117,7 @@
         <select
           id="country"
           name="country"
+          v-model="formData.country"
           class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1"
           required
         >
@@ -78,6 +135,7 @@
         <select
           id="business_type"
           name="business_type"
+          v-model="formData.business_type"
           class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1"
           required
         >
@@ -94,6 +152,7 @@
         <select
           id="automation_interest"
           name="automation_interest"
+          v-model="formData.automation_interest"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1"
           required
         >
@@ -112,6 +171,7 @@
         <select
           id="contact_method"
           name="contact_method"
+          v-model="formData.preferred_contact_method"
           class="w-full border border-gray-300 text-ff rounded-md p-3 mt-1"
           required
         >
@@ -129,6 +189,7 @@
         <textarea
           id="current_problem"
           name="current_problem"
+          v-model="formData.current_problem"
           placeholder="Enter your current biggest challenge in running your business"
           class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1"
           required
@@ -140,6 +201,7 @@
         <textarea
           id="message"
           name="message"
+          v-model="formData.message"
           placeholder="Enter your message"
           class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1"
         ></textarea>
@@ -158,14 +220,16 @@
           DDTech regarding this request.</label
         >
       </div>
-
       <div class="lg:col-span-2">
         <button
           type="submit"
+          :disabled="isSubmitting"
           class="bg-ff text-white py-3 w-full rounded-md hover:bg-blue-600 transition duration-300"
         >
-          Submit
+          {{ isSubmitting ? 'Submitting...' : 'Submit' }}
         </button>
+        <p v-if="submitMessage" class="mt-2 text-center text-sm font-medium text-ff text-red">{{ submitMessage }}</p>
+        
       </div>
     </form>
   </div>
