@@ -1,22 +1,21 @@
 <script setup>
 import { reactive, ref } from 'vue';
-import { apiClient } from '../utils/api'; // Sesuaikan path
+import { apiClient } from '../utils/api';
+
 const formData = reactive({
   full_name: '',
   company_name: '',
-  phone: '', // Di form saat ini id-nya phone_number
+  phone: '',
   email: '',
   country: 'australia',
   business_type: 'mortgagebroker',
   automation_interest: '1',
-  preferred_contact_method: 'email', // Di form saat ini id-nya contact_method
+  preferred_contact_method: 'email',
   current_problem: '',
   message: '',
-  consent_status: false, // Di form saat ini id-nya policy
-  
-  // Data tracking (bisa diisi statis atau diambil dari route/URL params)
-  source_page: '/atlas',
-  utm_source: 'linkedin' 
+  consent_status: false,
+  source_page: window.location.pathname,
+  utm_source: sessionStorage.getItem('saved_traffic_source') || 'direct'
 });
 const isSubmitting = ref(false);
 const submitMessage = ref('');
@@ -27,10 +26,8 @@ const submitForm = async () => {
   try {
     const response = await apiClient.post('/api/leads', formData);
     
-    if(response.data.success) {
+    if(response.status === 200 || response.status === 201) {
       submitMessage.value = "Terima kasih! Permintaan Anda berhasil dikirim.";
-      
-      // Kosongkan form kembali setelah sukses
       Object.assign(formData, {
         full_name: '',
         company_name: '',
@@ -85,13 +82,13 @@ const submitForm = async () => {
       </div>
 
       <div class="flex flex-col">
-        <label for="phone_number" class="text-sm font-medium text-ff"
+        <label for="phone" class="text-sm font-medium text-ff"
           >Phone Number</label
         >
         <input
           type="tel"
-          id="phone_number"
-          name="phone_number"
+          id="phone"
+          name="phone"
           v-model="formData.phone"
           placeholder="+61 xxx xxx xxx"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1"
@@ -165,12 +162,12 @@ const submitForm = async () => {
       </div>
 
       <div class="flex flex-col">
-        <label for="contact_method" class="text-sm font-medium text-ff"
+        <label for="preferred_contact_method" class="text-sm font-medium text-ff"
           >Preferred Contact Method</label
         >
         <select
-          id="contact_method"
-          name="contact_method"
+          id="preferred_contact_method"
+          name="preferred_contact_method"
           v-model="formData.preferred_contact_method"
           class="w-full border border-gray-300 text-ff rounded-md p-3 mt-1"
           required

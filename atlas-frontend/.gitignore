@@ -41,3 +41,7 @@ __screenshots__/
 .env.local
 .env.*.local
 .env
+
+# Local Mock DB
+db.json
+routes.json

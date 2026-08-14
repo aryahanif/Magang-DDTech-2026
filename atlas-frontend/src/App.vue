@@ -1,5 +1,21 @@
 <script setup lang="ts">
 import Form from "./components/form.vue";
+const getTrafficSource = () => {
+  // Untuk utm_source
+  const utm = new URLSearchParams(window.location.search).get('utm_source');
+  if (utm) return utm;
+  
+  // Untuk referrer
+  const referrer = document.referrer.toLowerCase();
+  if (referrer.includes('google.com')) return 'google_organic';
+  if (referrer.includes('bing.com')) return 'bing_organic';
+  
+  return 'direct';
+};
+
+if (!sessionStorage.getItem('saved_traffic_source')) {
+  sessionStorage.setItem('saved_traffic_source', getTrafficSource());
+}
 </script>
 
 <template>
