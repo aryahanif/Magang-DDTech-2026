@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaModule } from './database/prisma.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { QualificationModule } from './modules/qualification/qualification.module';
 import { EmailModule } from './modules/email/email.module';
@@ -9,7 +11,21 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
-  imports: [LeadsModule, QualificationModule, EmailModule, AdminModule, AuthModule, DashboardModule],
+  imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 5,
+      },
+    ]),
+    PrismaModule,
+    LeadsModule,
+    QualificationModule,
+    EmailModule,
+    AdminModule,
+    AuthModule,
+    DashboardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
