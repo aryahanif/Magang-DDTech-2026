@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Lead {
+  id                      String    @id @default(uuid()) @db.Uuid
+  full_name               String?
+  email                   String
+  phone                   String?
+  company_name            String?
+  country                 String?
+  business_type           String?
+  industry                String?
+  role                    String?
+  website_url             String?
+  company_size            String?
+  current_problem         String?
+  automation_interest     String?
+  preferred_contact_method String?
+  message                 String?
+  source_page             String?
+  utm_source              String?
+  utm_medium              String?
+  utm_campaign            String?
+  consent_status          Boolean?
+  
+  lead_score              Int?
+  lead_tier               String?
+  fit_status              String?
+  qualification_summary   String?
+  recommended_next_action String?
+  urgency_level           String?
+  
+  status                  String?   @default("New Lead")
+  assigned_owner          String?
+  next_follow_up_at       DateTime?
+  
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  notes                   LeadNote[]
+  activity_logs           LeadActivityLog[]
+
+  @@map("leads")
+}
+
+model LeadNote {
+  id         String   @id @default(uuid()) @db.Uuid
+  lead_id    String   @db.Uuid
+  note       String?
+  created_by String?
+  created_at DateTime @default(now())
+
+  lead       Lead     @relation(fields: [lead_id], references: [id])
+
+  @@map("lead_notes")
+}
+
+model LeadActivityLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  lead_id       String   @db.Uuid
+  activity_type String?
+  description   String?
+  metadata      Json?
+  created_at    DateTime @default(now())
+
+  lead          Lead     @relation(fields: [lead_id], references: [id])
+
+  @@map("lead_activity_logs")
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String?
+  email         String?  @unique
+  role          String?
+  password_hash String?
+  created_at    DateTime @default(now())
+
+  @@map("users")
+}
