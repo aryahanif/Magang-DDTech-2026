@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import Form from "./components/form.vue";
+import { RouterLink, RouterView } from 'vue-router'
+
 const getTrafficSource = () => {
-  // Untuk utm_source
   const utm = new URLSearchParams(window.location.search).get('utm_source');
   if (utm) return utm;
   
-  // Untuk referrer
   const referrer = document.referrer.toLowerCase();
   if (referrer.includes('google.com')) return 'google_organic';
   if (referrer.includes('bing.com')) return 'bing_organic';
@@ -19,32 +18,30 @@ if (!sessionStorage.getItem('saved_traffic_source')) {
 </script>
 
 <template>
-  <main class="min-h-screen bg-white">
-    <div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
-      <section class="flex flex-col justify-center gap-6 px-8 py-16 sm:px-16 lg:px-24">
-        <div class="max-w-xl">
-          <h1
-            class="text-5xl font-extrabold  text-ff sm:text-6xl lg:text-7xl"
-          >
-            Request a<br />
-            Demo
-          </h1>
+  <div class="min-h-screen bg-white text-ff">
+    <!-- Navbar -->
+    <header class="bg-fbg border-b border-gray-200 py-4 px-8 flex justify-between items-center sticky top-0 z-50">
+      <div class="text-2xl font-bold">
+        <RouterLink to="/">Atlas</RouterLink>
+      </div>
+      <nav class="flex gap-6 items-center">
+        <RouterLink to="/" class="hover:text-blue-600 transition font-medium">Home</RouterLink>
+        <RouterLink to="/assessment" class="hover:text-blue-600 transition font-medium">Assessment</RouterLink>
+        <RouterLink to="/contact-sales" class="hover:text-blue-600 transition font-medium">Contact Sales</RouterLink>
+        <RouterLink to="/waitlist" class="hover:text-blue-600 transition font-medium">Waitlist</RouterLink>
+        <RouterLink to="/partner-inquiry" class="hover:text-blue-600 transition font-medium">Partner Inquiry</RouterLink>
+        <RouterLink to="/requestdemo" class="hover:text-blue-600 transition font-medium">Request Demo</RouterLink>
+      </nav>
+    </header>
 
-          <p
-            class="mt-6 max-w-lg text-lg leading-7 text-ff sm:text-xl sm:leading-8"
-          >
-            Streamline operations, qualify leads faster, and reclaim hours of
-            your day. See exactly how our custom automation solutions can work
-            for your business.
-          </p>
-        </div>
-      </section>
-
-      <section class="flex items-center justify-center bg-ff px-5 py-12 sm:px-8 lg:px-12">
-        <Form />
-      </section>
-    </div>
-  </main>
+    <!-- Main Content -->
+    <RouterView />
+  </div>
 </template>
 
-<style scoped></style>
+<style>
+/* Active link styles if needed */
+.router-link-exact-active {
+  /* color: blue; */
+}
+</style>

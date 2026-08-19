@@ -1,0 +1,51 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import RequestDemoView from '../views/RequestdemoView.vue'
+import AssessmentView from '../views/AssessmentView.vue'
+import ContactSalesView from '../views/ContactSalesView.vue'
+import WaitlistView from '../views/WaitlistView.vue'
+import PartnerInquiryView from '../views/PartnerInquiryView.vue'
+import PolicyView from '../views/PolicyView.vue'
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView
+    },
+    {
+      path: '/requestdemo',
+      name: 'requestdemo',
+      component: RequestDemoView
+    },
+    {
+      path: '/assessment',
+      name: 'assessment',
+      component: AssessmentView
+    },
+    {
+      path: '/contact-sales',
+      name: 'contact-sales',
+      component: ContactSalesView
+    },
+    {
+      path: '/waitlist',
+      name: 'waitlist',
+      component: WaitlistView
+    },
+    {
+      path: '/partner-inquiry',
+      name: 'partner-inquiry',
+      component: PartnerInquiryView
+    },
+    {
+      path: '/policy',
+      name: 'policy',
+      component: PolicyView
+    }
+  ]
+})
+
+export default router
