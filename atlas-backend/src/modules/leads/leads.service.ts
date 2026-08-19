@@ -10,14 +10,21 @@ export class LeadsService {
     private readonly qualificationService: QualificationService,
   ) {}
 
-  createLead(data: CreateLeadDto) {
+  async createLead(data: CreateLeadDto) {
     const initialScore = this.qualificationService.calculateRuleBasedScore(data);
     
-    return this.prisma.lead.create({
+    const lead = await this.prisma.lead.create({
       data: {
         ...data,
         lead_score: initialScore,
       },
     });
+
+    // Asynchronous AI Processing (Non-blocking)
+    this.qualificationService.analyzeLeadWithAI(lead.id, data).catch((error) => {
+      console.error('Failed to analyze lead with AI asynchronously:', error);
+    });
+
+    return lead;
   }
 }
