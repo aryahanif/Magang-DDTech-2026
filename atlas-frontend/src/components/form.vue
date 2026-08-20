@@ -39,20 +39,20 @@ const props = defineProps({
 
 const schema = toTypedSchema(
   z.object({
-    full_name: z.string({ required_error: "Full name is required" }).min(1, "Full name is required"),
-    company_name: z.string({ required_error: "Company name is required" }).min(1, "Company name is required"),
-    phone: z.string().optional().or(z.literal('')),
-    email: z.string({ required_error: "Email is required" }).min(1, "Email is required").email("Invalid email format"),
+    full_name: z.string({ required_error: "Full name is required" }).min(1, "Full name is required").max(50, "Name is too long"),
+    company_name: z.string({ required_error: "Company name is required" }).min(1, "Company name is required").max(50, "Company name is too long"),
+    phone: z.string().max(15, "Phone number is too long").optional().or(z.literal('')),
+    email: z.string({ required_error: "Email is required" }).min(1, "Email is required").email("Invalid email format").max(50, "Email is too long"),
     country: z.string().optional().or(z.literal('')),
     business_type: z.string().optional().or(z.literal('')),
-    industry: z.string().optional().or(z.literal('')),
-    role: z.string({ required_error: "Role is required" }).min(1, "Role is required"),
-    website_url: z.string().url("Invalid URL format").optional().or(z.literal('')),
+    industry: z.string().max(50, "Industry name is too long").optional().or(z.literal('')),
+    role: z.string({ required_error: "Role is required" }).min(1, "Role is required").max(50, "Role is too long"),
+    website_url: z.string().url("Invalid URL format").max(500, "URL is too long").optional().or(z.literal('')),
     company_size: z.string().optional().or(z.literal('')),
     automation_interest: z.string().optional().or(z.literal('')),
     preferred_contact_method: z.string().optional().or(z.literal('')),
-    current_problem: z.string().optional().or(z.literal('')),
-    message: z.string().optional().or(z.literal('')),
+    current_problem: z.string().max(500, "Text is too long").optional().or(z.literal('')),
+    message: z.string().max(500, "Text is too long").optional().or(z.literal('')),
     consent_status: z.boolean().refine(val => val === true, {
       message: "You must agree to the Privacy Policy"
     })
@@ -81,16 +81,25 @@ const isSubmitting = ref(false);
 const submitMessage = ref('');
 
 const submitForm = async (values, { resetForm }) => {
+  // PENCEGAHAN: Jangan kirim form jika Cloudflare belum dicentang
+  if (!turnstileToken.value) {
+    submitMessage.value = "Mohon centang kotak keamanan (Cloudflare) terlebih dahulu.";
+    return;
+  }
+
   isSubmitting.value = true;
   submitMessage.value = '';
   
   const payload = {
     ...values,
+    cf_turnstile_token: turnstileToken.value, // Sisipkan token ke Backend
     source_page: window.location.pathname,
     utm_source: sessionStorage.getItem('saved_traffic_source') || 'direct',
     utm_medium: sessionStorage.getItem('saved_utm_medium') || '',
     utm_campaign: sessionStorage.getItem('saved_utm_campaign') || ''
   };
+
+  console.log("PAYLOAD YANG DIKIRIM KE AXIOS:", payload);
 
   try {
     const response = await apiClient.post('/api/leads', payload);
@@ -109,7 +118,7 @@ const submitForm = async (values, { resetForm }) => {
 
 <template>
   <div class="bg-fbg p-8 rounded-2xl">
-    <Form :validation-schema="schema" :initial-values="initialValues" @submit="submitForm" class="grid grid-cols-1 lg:grid-cols-2 gap-4" novalidate>
+    <Form :validation-schema="schema" :initial-values="initialValues" @submit="submitForm" class="grid grid-cols-1 lg:grid-cols-2 gap-4" novalidate v-slot="{ meta }">
       <div class="flex flex-col">
         <label for="full_name" class="text-sm font-medium text-ff">Full Name</label>
         <Field
@@ -132,6 +141,7 @@ const submitForm = async (values, { resetForm }) => {
           name="company_name"
           placeholder="DdTech"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="50"
           required
         />
         <ErrorMessage name="company_name" class="text-red-500 text-sm mt-1" />
@@ -145,6 +155,7 @@ const submitForm = async (values, { resetForm }) => {
           name="phone"
           placeholder="+61 xxx xxx xxx"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="15"
           required
         />
         <ErrorMessage name="phone" class="text-red-500 text-sm mt-1" />
@@ -158,6 +169,7 @@ const submitForm = async (values, { resetForm }) => {
           name="email"
           placeholder="Email"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="50"
           required
         />
         <ErrorMessage name="email" class="text-red-500 text-sm mt-1" />
@@ -206,6 +218,7 @@ const submitForm = async (values, { resetForm }) => {
           name="industry"
           placeholder="Finance, IT, dll."
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="50"
           required
         />
         <ErrorMessage name="industry" class="text-red-500 text-sm mt-1" />
@@ -219,6 +232,7 @@ const submitForm = async (values, { resetForm }) => {
           name="role"
           placeholder="CEO, Manager, dll."
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="50"
           required
         />
         <ErrorMessage name="role" class="text-red-500 text-sm mt-1" />
@@ -232,6 +246,7 @@ const submitForm = async (values, { resetForm }) => {
           name="website_url"
           placeholder="https://example.com"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="500"
           required
         />
         <ErrorMessage name="website_url" class="text-red-500 text-sm mt-1" />
@@ -300,6 +315,7 @@ const submitForm = async (values, { resetForm }) => {
           name="current_problem"
           placeholder="Enter your current biggest challenge in running your business"
           class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="500"
           required
         />
         <ErrorMessage name="current_problem" class="text-red-500 text-sm mt-1" />
@@ -313,6 +329,7 @@ const submitForm = async (values, { resetForm }) => {
           name="message"
           placeholder="Enter your message"
           class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          maxlength="500"
         />
         <ErrorMessage name="message" class="text-red-500 text-sm mt-1" />
       </div>
@@ -343,7 +360,7 @@ const submitForm = async (values, { resetForm }) => {
       <div class="lg:col-span-2">
         <button
           type="submit"
-          :disabled="isSubmitting"
+          :disabled="isSubmitting || !meta.valid || !turnstileToken"
           class="bg-ff text-white py-3 w-full rounded-md hover:bg-blue-600 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {{ isSubmitting ? 'Submitting...' : 'Submit' }}
