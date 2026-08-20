@@ -31,7 +31,7 @@ emit('login-success')
       
       <!-- Copywriting -->
       <div class="max-w-xl my-auto">
-        <h1 class="text-[48px] font-bold leading-tight mb-6 tracking-tight">
+        <h1 class="text-[48px] font-bold mb-6 animate-fade-in-up ">
           AI Powered Workforce,<br/>human-quality Leads.
         </h1>
         <p class="text-blue-100 text-[16px] leading-relaxed">
@@ -132,3 +132,22 @@ emit('login-success')
     
   </div>
 </template>
+<style scoped>
+/* Membuat frame animasi dari bawah (transparan) ke atas (jelas) */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Menerapkan animasi dengan durasi 1 detik dan transisi yang halus */
+.animate-fade-in-up {
+  opacity: 0; /* Mulai dari transparan sebelum animasi berjalan */
+  animation: fadeInUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+</style>

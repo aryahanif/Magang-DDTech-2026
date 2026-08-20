@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import MainLayout from '../components/MainLayout.vue' // Impor Layout Utama
 
 const emit = defineEmits(['navigate'])
 
@@ -61,11 +62,11 @@ const updateTooltip = (event: MouseEvent) => {
 
 // Data Dummy KPI Cards
 const kpiCards = [
-  { label: 'Tier A leads', value: '12,207', change: '+3.1% vs last week', isPositive: true },
-  { label: 'Total Leads', value: '12,482', change: '+3.1% vs last week', isPositive: true },
-  { label: 'New Leads This Week', value: '634', change: '+12.4% vs last week', isPositive: true },
-  { label: 'Demo Request', value: '289', change: '- 2.4% vs last week', isPositive: false },
-  { label: 'Conversion Rate', value: '4.8%', change: '+0.6pp vs last week', isPositive: true }
+  { label: 'Tier A leads', value: '12,207', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
+  { label: 'Total Leads', value: '12,482', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
+  { label: 'New Leads This Week', value: '634', trendValue: '+ 12.4%', trendText: 'vs last week', isPositive: true },
+  { label: 'Demo Request', value: '289', trendValue: '- 2.4%', trendText: 'vs last week', isPositive: false },
+  { label: 'Conversion Rate', value: '4.8%', trendValue: '+ 0.6pp', trendText: 'vs last week', isPositive: true }
 ]
 
 // Data Dummy Leads by Country (Grafik Batang)
@@ -96,267 +97,184 @@ const sourceData = [
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-[#F8FAFC] font-sans text-[#1E293B]">
+  <!-- BUNGKUS DENGAN MAINLAYOUT -->
+  <!-- Set active-menu="dashboard" agar Sidebar tahu mana yang harus disorot biru -->
+  <MainLayout active-menu="dashboard" @navigate="(page: any) => emit('navigate', page)">
     
-    <!-- SIDEBAR -->
-    <aside class="w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between flex-shrink-0 z-10">
-      <div>
-        <div class="h-16 flex items-center gap-3 px-6 border-b border-[#E2E8F0]">
-          <div class="bg-[#2563EB] text-white font-bold text-xs px-2 py-1 rounded">Logo</div>
-          <span class="font-bold text-xl text-[#0F172A]">Atlas</span>
-        </div>
-
-        <nav class="p-4 space-y-1.5">
-          <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#EFF6FF] text-[#2563EB] font-semibold text-sm">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            Dashboard
-          </a>
-
-          <a href="#" @click.prevent="emit('navigate', 'leads')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#64748B] hover:bg-gray-50 font-medium text-sm transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            Leads
-          </a>
-
-          <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#64748B] hover:bg-gray-50 font-medium text-sm transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            Pipeline
-          </a>
-
-          <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#64748B] hover:bg-gray-50 font-medium text-sm transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Settings
-          </a>
-        </nav>
-      </div>
-
-      <div class="p-4 border-t border-[#E2E8F0]">
-        <button @click="emit('navigate', 'login')" class="w-full text-left text-xs text-[#94A3B8] hover:text-[#EF4444] transition py-1">
-          ← Log out
-        </button>
-      </div>
-    </aside>
-
-    <!-- MAIN CONTENT AREA -->
-    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <!-- DASHBOARD BODY (Otomatis masuk ke dalam slot MainLayout) -->
+    <main class="flex-1 p-8 space-y-8 overflow-y-auto">
       
-      <!-- TOP HEADER -->
-      <header class="h-16 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-8 flex-shrink-0 z-10">
-        <div class="relative w-80">
-          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input 
-            type="text" 
-            placeholder="Search leads, companies..." 
-            class="w-full pl-9 pr-4 py-1.5 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-full focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
-          />
-        </div>
+      <div>
+        <h1 class="text-[32px] font-bold text-[#0F172A]">Overview</h1>
+        <p class="text-[16px] text-[#64748B] mt-0.5">Your AI Workforce performance for the last 7 days</p>
+      </div>
 
-        <div class="flex items-center gap-5">
-          <button class="relative text-[#64748B] hover:text-[#0F172A]">
-            <svg class="w-5 h-5 text-[#2563EB]" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-            </svg>
-          </button>
+      <!-- KPI Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div 
+          v-for="(card, index) in kpiCards" 
+          :key="index" 
+          class="bg-white p-5 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col justify-between"
+        >
+          <span class="text-[12px] font-semibold text-[#64748B]">{{ card.label }}</span>
+          <div class="my-2">
+            <span class="text-2xl font-bold text-[#0F172A]">{{ card.value }}</span>
+          </div>
           
-          <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
-            <div class="text-right">
-              <div class="text-xs font-bold text-[#0F172A]">Aldean Tegar</div>
-              <div class="text-[10px] text-[#64748B]">Admin</div>
-            </div>
-            <div class="w-8 h-8 rounded-full bg-[#E0E7FF] text-[#2563EB] font-bold text-xs flex items-center justify-center border border-[#C7D2FE]">
-              AT
-            </div>
+          <div class="flex items-center gap-1 mt-1">
+            <svg v-if="!card.isPositive" class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+            <svg v-else class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+            <span class="text-[12px] font-bold" :class="card.isPositive ? 'text-green-500' : 'text-red-500'">
+              {{ card.trendValue }}
+            </span>
+            <span class="text-[12px] text-[#94A3B8] font-medium ml-1">
+              {{ card.trendText }}
+            </span>
           </div>
         </div>
-      </header>
+      </div>
 
-      <!-- DASHBOARD BODY (Scrollable) -->
-      <main class="flex-1 p-8 space-y-8 overflow-y-auto">
-        
-        <div>
-          <h1 class="text-2xl font-bold text-[#0F172A]">Overview</h1>
-          <p class="text-xs text-[#64748B] mt-0.5">Your AI Workforce performance for the last 7 days</p>
+      <!-- Leads by Country (Bar Chart) -->
+      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+        <div class="mb-2">
+          <h2 class="text-[20px] font-bold text-[#0F172A]">Leads by Country</h2>
+          <p class="text-[12px] text-[#64748B]">Distribution across active markets</p>
         </div>
 
-        <!-- KPI Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div 
-            v-for="(card, index) in kpiCards" 
-            :key="index" 
-            class="bg-white p-5 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col justify-between"
-          >
-            <span class="text-[11px] font-semibold text-[#64748B]">{{ card.label }}</span>
-            <div class="my-2">
-              <span class="text-2xl font-bold text-[#0F172A]">{{ card.value }}</span>
-            </div>
-            <div class="flex items-center gap-1 text-[11px]" :class="card.isPositive ? 'text-[#16A34A]' : 'text-[#DC2626]'">
-              <span v-if="card.isPositive">↗</span>
-              <span v-else>↘</span>
-              <span>{{ card.change }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Leads by Country (Bar Chart) -->
-        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
-          <div class="mb-2">
-            <h2 class="text-sm font-bold text-[#0F172A]">Leads by Country</h2>
-            <p class="text-[11px] text-[#64748B]">Distribution across active markets</p>
+        <div class="flex mt-4 h-[280px]">
+          <div class="flex flex-col justify-between text-[11px] text-[#94A3B8] font-medium pr-4 text-right mb-6">
+            <span>6000</span>
+            <span>4500</span>
+            <span>3000</span>
+            <span>1500</span>
+            <span>0</span>
           </div>
 
-          <div class="flex mt-4 h-[280px]">
-            <!-- Sumbu Y -->
-            <div class="flex flex-col justify-between text-[11px] text-[#94A3B8] font-medium pr-4 text-right mb-6">
-              <span>6000</span>
-              <span>4500</span>
-              <span>3000</span>
-              <span>1500</span>
-              <span>0</span>
-            </div>
-
-            <!-- Area Grafik Batang -->
-            <div class="flex-1 border-b border-[#E2E8F0] flex items-end justify-around pb-0 mb-6 relative">
-              <div v-for="item in countryData" :key="item.name" class="flex flex-col items-center w-20 relative">
-                <div 
-                  class="w-16 bg-[#2563EB] rounded-t-xl transition-all duration-1000 ease-out origin-bottom" 
-                  :class="showBars ? item.height : 'h-0'"
-                ></div>
-                <span class="absolute -bottom-6 text-xs text-[#64748B] font-medium whitespace-nowrap">
-                  {{ item.name }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Leads by Source (Donut Visual dengan Hover Tooltip) -->
-        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
-          <div class="mb-6">
-            <h2 class="text-sm font-bold text-[#0F172A]">Leads by Source</h2>
-            <p class="text-[11px] text-[#64748B]">Where qualified leads originate</p>
-          </div>
-
-          <div class="flex flex-col md:flex-row items-center justify-around gap-8 py-4">
-            
-            <!-- SVG Donut Chart -->
-            <div class="relative w-48 h-48 flex items-center justify-center">
-              
-              <!-- Teks di Tengah (Statis) -->
-              <div class="absolute flex flex-col items-center justify-center pointer-events-none">
-                <span class="text-3xl font-bold text-[#0F172A] tracking-tight">12,482</span>
-                <span class="text-sm text-[#64748B] font-semibold mt-1">Total</span>
-              </div>
-              
-              <!-- Lingkaran SVG -->
-              <svg viewBox="0 0 42 42" class="w-full h-full -rotate-90">
-                <defs>
-                  <mask id="circular-wipe">
-                    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="white" stroke-width="10" 
-                      :stroke-dasharray="`${maskProgress} 100`" stroke-dashoffset="0"></circle>
-                  </mask>
-                </defs>
-
-                <g mask="url(#circular-wipe)">
-                  <circle 
-                    v-for="(item, index) in sourceData" 
-                    :key="index"
-                    cx="21" cy="21" r="15.915" fill="transparent" stroke-width="7" 
-                    :stroke="item.color" 
-                    :stroke-dasharray="item.dasharray" 
-                    :stroke-dashoffset="item.dashoffset"
-                    class="transition-opacity duration-300 cursor-pointer"
-                    :class="hoveredSource && hoveredSource !== item ? 'opacity-80' : 'opacity-100'"
-                    @mouseenter="hoveredSource = item" 
-                    @mouseleave="hoveredSource = null"
-                    @mousemove="updateTooltip"
-                  ></circle>
-                </g>
-              </svg>
-            </div>
-
-            <!-- Tooltip Melayang (Floating Box) -->
-            <div 
-              v-if="hoveredSource" 
-              class="fixed z-50 bg-white px-4 py-2.5 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-gray-100 pointer-events-none transition-opacity duration-200"
-              :style="{ top: `${tooltipY + 15}px`, left: `${tooltipX + 15}px` }"
-            >
-              <span class="text-[13px] text-gray-800 font-medium">
-                {{ hoveredSource.label }} : {{ hoveredSource.count }}
+          <div class="flex-1 border-b border-[#E2E8F0] flex items-end justify-around pb-0 mb-6 relative">
+            <div v-for="item in countryData" :key="item.name" class="flex flex-col items-center w-20 relative">
+              <div 
+                class="w-16 bg-[#2563EB] rounded-t-xl transition-all duration-1000 ease-out origin-bottom" 
+                :class="showBars ? item.height : 'h-0'"
+              ></div>
+              <span class="absolute -bottom-6 text-xs text-[#64748B] font-medium whitespace-nowrap">
+                {{ item.name }}
               </span>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Legend List -->
-            <div class="space-y-3 w-full max-w-xs relative z-0">
-              <div 
-                v-for="source in sourceData" :key="source.label" 
-                class="flex items-center justify-between text-xs p-1.5 rounded transition-colors cursor-pointer"
-                :class="hoveredSource === source ? 'bg-[#EFF6FF]' : ''"
-                @mouseenter="hoveredSource = source" 
-                @mouseleave="hoveredSource = null"
-                @mousemove="updateTooltip"
-              >
-                <div class="flex items-center gap-2 pointer-events-none">
-                  <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: source.color }"></span>
-                  <span class="font-medium" :class="hoveredSource === source ? 'text-[#2563EB]' : 'text-[#475569]'">
-                    {{ source.label }}
-                  </span>
-                </div>
-                <span class="font-bold text-[#0F172A] pointer-events-none">{{ source.percent }}</span>
-              </div>
+      <!-- Leads by Source (Donut Chart) -->
+      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+        <div class="mb-6">
+          <h2 class="text-[20px] font-bold text-[#0F172A]">Leads by Source</h2>
+          <p class="text-[12px] text-[#64748B]">Where qualified leads originate</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center justify-around gap-8 py-4">
+          <div class="relative w-48 h-48 flex items-center justify-center">
+            <div class="absolute flex flex-col items-center justify-center pointer-events-none">
+              <span class="text-3xl font-bold text-[#0F172A] tracking-tight">12,482</span>
+              <span class="text-sm text-[#64748B] font-semibold mt-1">Total</span>
             </div>
             
-          </div>
-        </div>
+            <svg viewBox="0 0 42 42" class="w-full h-full -rotate-90">
+              <defs>
+                <mask id="circular-wipe">
+                  <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="white" stroke-width="10" 
+                    :stroke-dasharray="`${maskProgress} 100`" stroke-dashoffset="0"></circle>
+                </mask>
+              </defs>
 
-        <!-- Pipeline Status Summary -->
-        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
-          <div class="mb-6">
-            <h2 class="text-sm font-bold text-[#0F172A]">Pipeline Status Summary</h2>
-            <p class="text-[11px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>
+              <g mask="url(#circular-wipe)">
+                <circle 
+                  v-for="(item, index) in sourceData" 
+                  :key="index"
+                  cx="21" cy="21" r="15.915" fill="transparent" stroke-width="7" 
+                  :stroke="item.color" 
+                  :stroke-dasharray="item.dasharray" 
+                  :stroke-dashoffset="item.dashoffset"
+                  class="transition-opacity duration-300 cursor-pointer"
+                  :class="hoveredSource && hoveredSource !== item ? 'opacity-80' : 'opacity-100'"
+                  @mouseenter="hoveredSource = item" 
+                  @mouseleave="hoveredSource = null"
+                  @mousemove="updateTooltip"
+                ></circle>
+              </g>
+            </svg>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div 
+            v-if="hoveredSource" 
+            class="fixed z-50 bg-white px-4 py-2.5 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-gray-100 pointer-events-none transition-opacity duration-200"
+            :style="{ top: `${tooltipY + 15}px`, left: `${tooltipX + 15}px` }"
+          >
+            <span class="text-[13px] text-gray-800 font-medium">
+              {{ hoveredSource.label }} : {{ hoveredSource.count }}
+            </span>
+          </div>
+
+          <div class="space-y-3 w-full max-w-xs relative z-0">
             <div 
-              v-for="step in pipelineSteps" 
-              :key="step.step" 
-              class="p-4 rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] flex flex-col justify-between"
+              v-for="source in sourceData" :key="source.label" 
+              class="flex items-center justify-between text-xs p-1.5 rounded transition-colors cursor-pointer"
+              :class="hoveredSource === source ? 'bg-[#EFF6FF]' : ''"
+              @mouseenter="hoveredSource = source" 
+              @mouseleave="hoveredSource = null"
+              @mousemove="updateTooltip"
             >
-              <div>
-                <div class="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-                  <span class="w-4 h-4 rounded bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-[10px] font-bold">{{ step.step }}</span>
-                  <span>{{ step.title }}</span>
-                </div>
-                <!-- Menampilkan Display Count yang beranimasi -->
-                <div class="text-xl font-bold text-[#0F172A] mb-3">{{ step.displayCount }}</div>
+              <div class="flex items-center gap-2 pointer-events-none">
+                <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: source.color }"></span>
+                <span class="font-medium" :class="hoveredSource === source ? 'text-[#2563EB]' : 'text-[#475569]'">
+                  {{ source.label }}
+                </span>
               </div>
-
-              <div>
-                <div class="w-full bg-[#E2E8F0] h-1 rounded-full overflow-hidden mb-1.5">
-                  <div class="bg-[#2563EB] h-full rounded-full" :class="step.progress"></div>
-                </div>
-                <span class="text-[10px] text-[#94A3B8]">{{ step.percentage }}</span>
-              </div>
+              <span class="font-bold text-[#0F172A] pointer-events-none">{{ source.percent }}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Footer -->
-        <div class="text-center text-[11px] text-[#94A3B8] pt-4 pb-6">
-          © 2026 DDTech. All rights reserved.
+      <!-- Pipeline Status Summary -->
+      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+        <div class="mb-6">
+          <h2 class="text-[20px] font-bold text-[#0F172A]">Pipeline Status Summary</h2>
+          <p class="text-[12px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>
         </div>
 
-      </main>
-    </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div 
+            v-for="step in pipelineSteps" 
+            :key="step.step" 
+            class="p-4 rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] flex flex-col justify-between"
+          >
+            <div>
+              <div class="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
+                <span class="w-4 h-4 rounded bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-[10px] font-bold">{{ step.step }}</span>
+                <span>{{ step.title }}</span>
+              </div>
+              <div class="text-xl font-bold text-[#0F172A] mb-3">{{ step.displayCount }}</div>
+            </div>
 
-  </div>
+            <div>
+              <div class="w-full bg-[#E2E8F0] h-1 rounded-full overflow-hidden mb-1.5">
+                <div class="bg-[#2563EB] h-full rounded-full" :class="step.progress"></div>
+              </div>
+              <span class="text-[10px] text-[#94A3B8]">{{ step.percentage }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center text-[11px] text-[#94A3B8] pt-4 pb-6">
+        © 2026 DDTech. All rights reserved.
+      </div>
+
+    </main>
+  </MainLayout>
 </template>
