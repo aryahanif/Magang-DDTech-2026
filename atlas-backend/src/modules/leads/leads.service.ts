@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
 
 @Injectable()
 export class LeadsService {
+  private readonly logger = new Logger(LeadsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly qualificationService: QualificationService,
@@ -12,7 +14,7 @@ export class LeadsService {
 
   async createLead(data: CreateLeadDto) {
     const initialScore = this.qualificationService.calculateRuleBasedScore(data);
-    
+
     const lead = await this.prisma.lead.create({
       data: {
         ...data,
@@ -20,9 +22,11 @@ export class LeadsService {
       },
     });
 
-    // Asynchronous AI Processing (Non-blocking)
+    // Asynchronous AI Processing (Non-blocking). The Tier A email alert is
+    // sent from QualificationService once the AI determines the lead_tier,
+    // since it isn't known yet at creation time.
     this.qualificationService.analyzeLeadWithAI(lead.id, data).catch((error) => {
-      console.error('Failed to analyze lead with AI asynchronously:', error);
+      this.logger.error('Failed to analyze lead with AI asynchronously', error);
     });
 
     return lead;

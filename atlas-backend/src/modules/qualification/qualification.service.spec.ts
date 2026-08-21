@@ -1,12 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QualificationService } from './qualification.service';
+import { PrismaService } from '../../database/prisma.service';
+import { EmailService } from '../email/email.service';
 
 describe('QualificationService', () => {
   let service: QualificationService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [QualificationService],
+      providers: [
+        QualificationService,
+        { provide: PrismaService, useValue: { lead: { update: jest.fn() } } },
+        { provide: EmailService, useValue: { sendNewLeadAlert: jest.fn() } },
+      ],
     }).compile();
 
     service = module.get<QualificationService>(QualificationService);
