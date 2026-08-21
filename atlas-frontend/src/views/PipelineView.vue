@@ -6,12 +6,10 @@ import MainLayout from '../components/MainLayout.vue'
 // DATA STATE & FILTER
 // ==========================================
 
-// State untuk Filter
 const searchQuery = ref('')
 const selectedTier = ref('')
 const selectedOwner = ref('')
 
-// State untuk Modal Add Lead
 const isAddLeadModalOpen = ref(false)
 const newLeadForm = ref({
   name: '',
@@ -21,10 +19,11 @@ const newLeadForm = ref({
   owner: 'AC'
 })
 
-// Definisi Kolom Kanban (Lengkap 5 Tahapan)
+// Definisi Kolom Kanban (Lengkap 6 Tahapan)
 const pipelineColumns = [
   { id: 'new', title: 'New Lead' },
   { id: 'qualified', title: 'Qualified' },
+  { id: 'contacted', title: 'Contacted' },
   { id: 'demo', title: 'Demo Booked' },
   { id: 'proposal', title: 'Proposal' },
   { id: 'won', title: 'Won/Lost' }
@@ -35,8 +34,8 @@ const leads = ref([
   { id: 1, columnId: 'new', tier: 'Tier A', name: 'Anton Sutarno', company: 'Haliburton', value: 12000, owner: 'AC' },
   { id: 2, columnId: 'new', tier: 'Tier C', name: 'Sarah', company: 'Meridian Logistics', value: 26000, owner: 'JM' },
   { id: 3, columnId: 'qualified', tier: 'Tier B', name: 'Chloe Bennett', company: 'Harbour Energy', value: 28500, owner: 'AC' },
-  { id: 4, columnId: 'qualified', tier: 'Tier B', name: 'Budi Sitanggang', company: 'Nusantara Pay', value: 34000, owner: 'AC' },
-  { id: 5, columnId: 'demo', tier: 'Tier A', name: 'Sarah Whitfield', company: 'Garuda Freight', value: 60000, owner: 'JM' },
+  { id: 4, columnId: 'contacted', tier: 'Tier B', name: 'Budi Sitanggang', company: 'Nusantara Pay', value: 34000, owner: 'AC' },
+  { id: 5, columnId: 'contacted', tier: 'Tier A', name: 'Sarah Whitfield', company: 'Garuda Freight', value: 60000, owner: 'JM' },
   { id: 6, columnId: 'demo', tier: 'Tier A', name: 'Rizky Hidayat', company: 'PT Timah Tbk', value: 50000, owner: 'JM' },
   { id: 7, columnId: 'demo', tier: 'Tier B', name: 'Liam Foster', company: 'Brisbane AI', value: 42000, owner: 'AC' },
   { id: 8, columnId: 'proposal', tier: 'Tier A', name: 'Daniel Santos', company: 'Kowhai Health', value: 60000, owner: 'JM' },
@@ -44,6 +43,34 @@ const leads = ref([
   { id: 10, columnId: 'won', tier: 'Tier A', name: 'Tama Ngata', company: 'Aotearoa Cloud', value: 110000, owner: 'JM' },
   { id: 11, columnId: 'won', tier: 'Tier C', name: 'Siti Rahmawati', company: 'Bandung Textiles', value: 18000, owner: 'AC' },
 ])
+
+// ==========================================
+// LOGIKA DRAG AND DROP (BARU)
+// ==========================================
+const draggedLeadId = ref<number | null>(null)
+
+// Saat kartu mulai ditarik
+const onDragStart = (event: DragEvent, leadId: number) => {
+  draggedLeadId.value = leadId
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    // Hack kecil Firefox
+    event.dataTransfer.setData('text/plain', leadId.toString())
+  }
+}
+
+// Saat kartu dilepas di kolom baru
+const onDrop = (columnId: string) => {
+  if (draggedLeadId.value !== null) {
+    const targetLead = leads.value.find(l => l.id === draggedLeadId.value)
+    if (targetLead) {
+      targetLead.columnId = columnId
+    }
+    // Kosongkan kembali state dragging
+    draggedLeadId.value = null
+  }
+}
+
 
 // ==========================================
 // FUNGSI LOGIKA KANBAN & FILTER
@@ -74,15 +101,6 @@ const formatCurrency = (value: number) => {
   return `$${value}`
 }
 
-const getTierClass = (tier: string) => {
-  switch (tier) {
-    case 'Tier A': return 'bg-[#93C5FD] text-[#1E3A8A]'
-    case 'Tier B': return 'bg-[#FEF08A] text-[#9A3412]'
-    case 'Tier C': return 'bg-[#E5E7EB] text-[#4B5563]'
-    default: return 'bg-gray-200 text-gray-700'
-  }
-}
-
 // ==========================================
 // FUNGSI MODAL ADD LEAD
 // ==========================================
@@ -109,11 +127,7 @@ const submitNewLead = () => {
 </script>
 
 <template>
-  <!-- BUNGKUS DENGAN MAINLAYOUT -->
-  <!-- Set active-menu="pipeline" agar Sidebar tahu mana yang harus disorot biru -->
   <MainLayout active-menu="pipeline">
-    
-    <!-- PIPELINE BOARD -->
     <main class="flex-1 p-8 flex flex-col h-full overflow-hidden">
       
       <div class="mb-6">
@@ -125,7 +139,6 @@ const submitNewLead = () => {
         
         <!-- Filter Bar -->
         <div class="h-14 border-b border-[#E2E8F0] flex items-center justify-between px-4 flex-shrink-0 bg-white">
-          
           <div class="relative w-64">
             <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -157,7 +170,16 @@ const submitNewLead = () => {
         <!-- Columns Container -->
         <div class="flex-1 overflow-x-auto overflow-y-hidden p-4 flex gap-4 bg-[#F8FAFC]">
           
-          <div v-for="column in pipelineColumns" :key="column.id" class="w-[320px] min-w-[320px] flex flex-col h-full">
+          <!-- AREA DROP ZONE (Menangkap Drag Over dan Drop) -->
+          <div 
+            v-for="column in pipelineColumns" 
+            :key="column.id" 
+            class="w-[320px] min-w-[320px] flex flex-col h-full rounded-xl transition-colors"
+            @dragover.prevent
+            @dragenter.prevent
+            @drop="onDrop(column.id)"
+          >
+            <!-- Column Header -->
             <div class="mb-4">
               <div class="flex items-center justify-between mb-1">
                 <h2 class="text-[17px] font-bold text-[#0F172A]">{{ column.title }}</h2>
@@ -169,27 +191,45 @@ const submitNewLead = () => {
               <div class="w-full h-px bg-gray-200 mt-2"></div>
             </div>
 
-            <!-- Data Kosong -->
-            <div v-if="getLeadsByColumn(column.id).length === 0" class="flex-1 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center">
-              <span class="text-xs text-gray-400 font-medium">No leads in this stage.</span>
+            <!-- Empty State -->
+            <div v-if="getLeadsByColumn(column.id).length === 0" class="flex-1 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center pointer-events-none">
+              <span class="text-xs text-gray-400 font-medium">Drop lead here...</span>
             </div>
 
             <!-- Cards List -->
             <div v-else class="flex-1 overflow-y-auto space-y-3 pb-4 pr-1">
-              <div v-for="lead in getLeadsByColumn(column.id)" :key="lead.id" class="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] cursor-grab hover:shadow-md transition">
-                <div class="flex justify-between items-start mb-3">
-                  <span class="text-[11px] font-bold px-2 py-0.5 rounded" :class="getTierClass(lead.tier)">{{ lead.tier }}</span>
-                  <div class="w-5 h-5 rounded-full bg-[#E0E7FF] text-[#2563EB] border border-[#C7D2FE] text-[9px] font-bold flex items-center justify-center">{{ lead.owner }}</div>
+              
+              <!-- CARD (Menjadi objek yang bisa di-drag) -->
+              <div 
+                v-for="lead in getLeadsByColumn(column.id)" 
+                :key="lead.id" 
+                draggable="true"
+                @dragstart="onDragStart($event, lead.id)"
+                class="bg-white border border-[#E2E8F0] border-l-4 rounded-lg p-3.5 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing"
+                :class="{
+                  'border-l-blue-600': lead.tier === 'Tier A',
+                  'border-l-amber-400': lead.tier === 'Tier B',
+                  'border-l-slate-300': lead.tier === 'Tier C'
+                }"
+              >
+                <!-- Header: Company & Tier -->
+                <div class="flex items-start justify-between gap-2 mb-0.5 pointer-events-none">
+                  <h3 class="text-[13px] font-bold text-[#0F172A] leading-snug">{{ lead.company }}</h3>
+                  <span class="text-[10px] font-semibold text-[#64748B] tracking-tight">{{ lead.tier }}</span>
                 </div>
-                <div>
-                  <h3 class="text-[14px] font-bold text-[#0F172A] leading-tight">{{ lead.name }}</h3>
-                  <p class="text-[11px] text-[#64748B] font-medium mt-0.5">{{ lead.company }}</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between">
-                  <span class="text-[15px] font-bold text-[#0F172A]">{{ formatCurrency(lead.value) }}</span>
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+
+                <!-- Subtitle: Contact Person -->
+                <p class="text-[11px] text-[#64748B] mb-3 pointer-events-none">{{ lead.name }}</p>
+
+                <!-- Footer: Value & Owner -->
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 pointer-events-none">
+                  <span class="text-[13px] font-bold text-[#0F172A]">{{ formatCurrency(lead.value) }}</span>
+                  <div class="w-5 h-5 rounded-full bg-[#E0E7FF] text-[#2563EB] border border-[#C7D2FE] text-[9px] font-bold flex items-center justify-center">
+                    {{ lead.owner }}
+                  </div>
                 </div>
               </div>
+
             </div>
           </div>
 
