@@ -1,0 +1,47 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { LeadsService } from './leads.service';
+import { PrismaService } from '../../database/prisma.service';
+import { CreateLeadDto } from './dto/create-lead.dto';
+import { QualificationService } from '../qualification/qualification.service';
+
+describe('LeadsService', () => {
+  let service: LeadsService;
+  let prisma: { lead: { create: jest.Mock } };
+  let qualificationService: { calculateRuleBasedScore: jest.Mock };
+
+  const dto: CreateLeadDto = {
+    full_name: 'John Smith',
+    email: 'john@example.com',
+    phone: '+61411222333',
+    company_name: 'ABC Mortgage Brokers',
+    country: 'Australia',
+    business_type: 'Mortgage Broker',
+    consent_status: true,
+  };
+
+  beforeEach(async () => {
+    prisma = { lead: { create: jest.fn() } };
+    qualificationService = { calculateRuleBasedScore: jest.fn().mockReturnValue(55) };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        LeadsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: QualificationService, useValue: qualificationService },
+      ],
+    }).compile();
+
+    service = module.get<LeadsService>(LeadsService);
+  });
+
+  it('creates a lead via Prisma with the submitted data and calculated score', async () => {
+    const created = { id: 'uuid-1', lead_score: 55, ...dto };
+    prisma.lead.create.mockResolvedValue(created);
+
+    const result = await service.createLead(dto);
+
+    expect(qualificationService.calculateRuleBasedScore).toHaveBeenCalledWith(dto);
+    expect(prisma.lead.create).toHaveBeenCalledWith({ data: { ...dto, lead_score: 55 } });
+    expect(result).toBe(created);
+  });
+});
