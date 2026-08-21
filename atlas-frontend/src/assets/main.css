@@ -1,6 +1,6 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
 
 @theme {
   --color-fbg: #F3F3F3;
@@ -11,4 +11,26 @@
 
   /* Menyediakan Outfit sebagai alternatif khusus untuk Heading (gunakan class font-outfit) */
   --font-outfit: "Outfit", sans-serif;
+}
+
+*,
+.font-sans,
+body,
+html,
+#app,
+button,
+input,
+select,
+textarea {
+  font-optical-sizing: auto;
+}
+
+/* Pastikan app memenuhi seluruh layar */
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }

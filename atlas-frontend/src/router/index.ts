@@ -7,9 +7,16 @@ import WaitlistView from '../views/WaitlistView.vue'
 import PartnerInquiryView from '../views/PartnerInquiryView.vue'
 import PolicyView from '../views/PolicyView.vue'
 
+import LoginView from '../views/LoginView.vue'
+import DashboardView from '../views/DashboardView.vue'
+import LeadsView from '../views/LeadsView.vue'
+import PipelineView from '../views/PipelineView.vue'
+import SettingsView from '../views/SettingsView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    //Halaman user
     {
       path: '/',
       name: 'home',
@@ -44,6 +51,33 @@ const router = createRouter({
       path: '/policy',
       name: 'policy',
       component: PolicyView
+    },
+
+    //Halaman admin
+    {
+      path: '/admin',
+      name: 'login',
+      component: LoginView
+    },
+    {
+      path: '/admin/dashboard',
+      name: 'dashboard',
+      component: DashboardView
+    },
+    {
+      path: '/admin/leads',
+      name: 'leads',
+      component: LeadsView
+    },
+    {
+      path: '/admin/pipeline',
+      name: 'pipeline',
+      component: PipelineView
+    },
+    {
+      path: '/admin/settings',
+      name: 'settings',
+      component: SettingsView
     }
   ]
 })
