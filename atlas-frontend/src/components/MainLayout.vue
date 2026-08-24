@@ -9,11 +9,14 @@ defineProps<{
 
 const router = useRouter()
 
-// State untuk Modal Logout
 const isLogoutModalOpen = ref(false)
 const openLogoutModal = () => isLogoutModalOpen.value = true
 const closeLogoutModal = () => isLogoutModalOpen.value = false
 const confirmLogout = () => { closeLogoutModal(); router.push('/admin') }
+
+const isMobileMenuOpen = ref(false)
+const toggleMobileMenu = () => isMobileMenuOpen.value = !isMobileMenuOpen.value
+const closeMobileMenu = () => isMobileMenuOpen.value = false
 
 // Helper untuk class menu aktif/tidak aktif
 const getMenuClass = (menuName: string, currentMenu: string) => {
@@ -30,8 +33,11 @@ const getIconColor = (menuName: string, currentMenu: string) => {
 <template>
   <div class="flex min-h-screen bg-[#F8FAFC] text-[#1E293B]">
     
+    <!-- OVERLAY MOBILE -->
+    <div v-if="isMobileMenuOpen" @click="closeMobileMenu" class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm z-20 md:hidden transition-opacity"></div>
+
     <!-- SIDEBAR GLOBAL -->
-    <aside class="w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between flex-shrink-0 z-20 relative">
+    <aside :class="['w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between shrink-0 z-30 transition-transform duration-300 fixed md:relative h-screen', isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
       <div>
         <!-- Logo -->
         <div class="h-16 flex items-center gap-3 px-6 border-b border-[#E2E8F0]">
@@ -44,22 +50,22 @@ const getIconColor = (menuName: string, currentMenu: string) => {
 
         <!-- Menu Navigasi -->
         <nav class="py-6 space-y-3 pr-5">
-          <RouterLink to="/admin/dashboard" :class="getMenuClass('dashboard', activeMenu)">
+          <RouterLink to="/admin/dashboard" @click="closeMobileMenu" :class="getMenuClass('dashboard', activeMenu)">
             <svg class="w-[24px] h-[24px]" :class="getIconColor('dashboard', activeMenu)" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none" /><path fill="currentColor" d="M14.305 9q-.345 0-.575-.23t-.23-.587V4.817q0-.357.234-.587t.58-.23h4.88q.347 0 .576.23t.23.587v3.366q0 .358-.234.587q-.234.23-.58.23zm-9.5 3q-.345 0-.575-.23T4 11.2V4.8q0-.34.234-.57t.58-.23h4.88q.347 0 .576.23t.23.57v6.4q0 .34-.234.57t-.58.23zm9.5 8q-.345 0-.575-.23t-.23-.57v-6.4q0-.34.234-.57t.58-.23h4.88q.347 0 .576.23t.23.57v6.4q0 .34-.234.57t-.58.23zm-9.5 0q-.345 0-.575-.23T4 19.183v-3.366q0-.357.234-.587t.58-.23h4.88q.347 0 .576.23t.23.587v3.366q0 .358-.234.587q-.234.23-.58.23z" /></svg>
             <span class="text-[16px] tracking-wide">Dashboard</span>
           </RouterLink>
 
-          <RouterLink to="/admin/leads" :class="getMenuClass('leads', activeMenu)">
+          <RouterLink to="/admin/leads" @click="closeMobileMenu" :class="getMenuClass('leads', activeMenu)">
             <svg class="w-[26px] h-[26px]" :class="getIconColor('leads', activeMenu)" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
             <span class="text-[16px] tracking-wide">Leads</span>
           </RouterLink>
 
-          <RouterLink to="/admin/pipeline" :class="getMenuClass('pipeline', activeMenu)">
+          <RouterLink to="/admin/pipeline" @click="closeMobileMenu" :class="getMenuClass('pipeline', activeMenu)">
             <svg class="w-[26px] h-[26px]" :class="getIconColor('pipeline', activeMenu)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="9" r="3"/><path d="M6 9v3a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V12"/></svg>
             <span class="text-[16px] tracking-wide">Pipeline</span>
           </RouterLink>
 
-          <RouterLink to="/admin/settings" :class="getMenuClass('settings', activeMenu)">
+          <RouterLink to="/admin/settings" @click="closeMobileMenu" :class="getMenuClass('settings', activeMenu)">
             <svg class="w-[26px] h-[26px]" :class="getIconColor('settings', activeMenu)" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.73 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             <span class="text-[16px] tracking-wide">Settings</span>
           </RouterLink>
@@ -78,10 +84,15 @@ const getIconColor = (menuName: string, currentMenu: string) => {
     <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
       
       <!-- TOP HEADER GLOBAL -->
-      <header class="h-16 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-8 flex-shrink-0 z-10">
-        <div class="relative w-80">
-          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          <input type="text" placeholder="Search everywhere..." class="w-full pl-9 pr-4 py-1.5 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-full focus:outline-none focus:ring-1 focus:ring-[#2563EB]"/>
+      <header class="h-16 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-4 md:px-8 shrink-0 z-10">
+        <div class="flex items-center gap-3">
+          <button @click="toggleMobileMenu" class="md:hidden text-gray-500 hover:text-[#2563EB] transition p-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <div class="relative w-full max-w-[200px] md:w-80 hidden sm:block">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input type="text" placeholder="Search everywhere..." class="w-full pl-9 pr-4 py-1.5 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-full focus:outline-none focus:ring-1 focus:ring-[#2563EB]"/>
+          </div>
         </div>
         
         <div class="flex items-center gap-5">

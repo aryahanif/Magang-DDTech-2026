@@ -114,7 +114,7 @@ const submitNewLead = () => {
   <MainLayout active-menu="pipeline">
     
     <!-- PIPELINE BOARD -->
-    <main class="flex-1 p-8 flex flex-col h-full overflow-hidden">
+    <main class="flex-1 p-4 md:p-8 flex flex-col h-full overflow-hidden">
       
       <div class="mb-6">
         <h1 class="text-[32px] font-bold text-[#0F172A] tracking-tight">Sales Pipeline</h1>
@@ -124,16 +124,16 @@ const submitNewLead = () => {
       <div class="flex-1 bg-white border border-[#E2E8F0] rounded-xl flex flex-col overflow-hidden shadow-sm">
         
         <!-- Filter Bar -->
-        <div class="h-14 border-b border-[#E2E8F0] flex items-center justify-between px-4 flex-shrink-0 bg-white">
+        <div class="border-b border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between px-4 py-3 gap-3 flex-shrink-0 bg-white">
           
-          <div class="relative w-64">
+          <div class="relative w-full md:w-64">
             <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input v-model="searchQuery" type="text" placeholder="Search pipeline..." class="w-full pl-9 pr-3 py-1.5 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2563EB]"/>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto">
             <select v-model="selectedTier" class="text-[13px] text-[#0F172A] border border-gray-300 rounded-md py-1.5 pl-3 pr-8 focus:outline-none focus:border-[#2563EB] cursor-pointer hover:bg-gray-50 bg-white appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E');">
               <option value="">All Tiers</option>
               <option value="Tier A">Tier A</option>

@@ -28,7 +28,7 @@ const updatePassword = () => {
   <MainLayout active-menu="settings">
     
     <!-- KONTEN HALAMAN SETTINGS -->
-    <main class="flex-1 p-8 flex flex-col h-full overflow-y-auto">
+    <main class="flex-1 p-4 md:p-8 flex flex-col h-full overflow-y-auto">
       
       <!-- Page Title -->
       <div class="mb-8">

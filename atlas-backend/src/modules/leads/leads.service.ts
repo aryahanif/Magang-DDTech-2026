@@ -27,4 +27,23 @@ export class LeadsService {
 
     return lead;
   }
+
+  async findAll() {
+    return this.prisma.lead.findMany({
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.lead.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.lead.delete({
+      where: { id },
+    });
+  }
 }

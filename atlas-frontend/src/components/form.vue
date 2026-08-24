@@ -125,7 +125,7 @@ const submitForm = async (values, { resetForm }) => {
           type="text"
           id="full_name"
           name="full_name"
-          placeholder="Alden Tegar"
+          placeholder="Jhon Smith"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
@@ -139,7 +139,7 @@ const submitForm = async (values, { resetForm }) => {
           type="text"
           id="company_name"
           name="company_name"
-          placeholder="DdTech"
+          placeholder="Your company name"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
@@ -156,6 +156,7 @@ const submitForm = async (values, { resetForm }) => {
           placeholder="+61 xxx xxx xxx"
           class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="15"
+          oninput="this.value = this.value.replace(/[^0-9+]/g, '')"
           required
         />
         <ErrorMessage name="phone" class="text-red-500 text-sm mt-1" />
@@ -175,7 +176,7 @@ const submitForm = async (values, { resetForm }) => {
         <ErrorMessage name="email" class="text-red-500 text-sm mt-1" />
       </div>
 
-      <div class="flex flex-col" v-if="type !== 'waitlist'">
+      <div class="flex flex-col" v-if="type !== ''">
         <label for="country" class="text-sm font-medium text-ff">Country</label>
         <Field
           as="select"

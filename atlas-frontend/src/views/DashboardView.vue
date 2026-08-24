@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
 import MainLayout from '../components/MainLayout.vue' // Impor Layout Utama
 
 // State untuk animasi dan interaksi
 const showBars = ref(false)
 const maskProgress = ref(0) 
 const hoveredSource = ref<any>(null)
-
-// State untuk posisi Tooltip
 const tooltipX = ref(0)
 const tooltipY = ref(0)
 
+const rawLeads = ref<any[]>([])
+
+const fetchDashboardData = async () => {
+  try {
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/leads`);
+    rawLeads.value = response.data.data;
+    
+    // Beri sedikit delay agar animasi terlihat jelas saat halaman selesai dimuat
+    setTimeout(() => {
+      showBars.value = true
+      animateNumbers() 
+    }, 150)
+  } catch (error) {
+    console.error("Gagal mengambil data:", error);
+  }
+};
+
 onMounted(() => {
-  // Beri sedikit delay agar animasi terlihat jelas saat halaman selesai dimuat
-  setTimeout(() => {
-    showBars.value = true
-    animateNumbers() 
-  }, 150)
+  fetchDashboardData();
 })
 
 // Fungsi animasi pergerakan angka (0 ke target) & animasi sapuan Donut Chart
@@ -28,13 +40,7 @@ const animateNumbers = () => {
     if (!startTimestamp) startTimestamp = timestamp;
     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
     
-    // Efek perlambatan di akhir animasi (Cubic Ease Out)
     const easeOut = 1 - Math.pow(1 - progress, 3); 
-
-    // Animasi angka berjalan untuk Pipeline
-    pipelineSteps.value.forEach(item => {
-      item.displayCount = Math.floor(easeOut * item.targetCount).toLocaleString('en-US');
-    });
 
     // Animasi sapuan melingkar Donut Chart (0 ke 100)
     maskProgress.value = easeOut * 100;
@@ -42,9 +48,6 @@ const animateNumbers = () => {
     if (progress < 1) {
       window.requestAnimationFrame(step);
     } else {
-      pipelineSteps.value.forEach(item => {
-        item.displayCount = item.targetCount.toLocaleString('en-US');
-      });
       maskProgress.value = 100;
     }
   };
@@ -58,40 +61,116 @@ const updateTooltip = (event: MouseEvent) => {
   tooltipY.value = event.clientY;
 }
 
-// Data Dummy KPI Cards
-const kpiCards = [
-  { label: 'Tier A leads', value: '12,207', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
-  { label: 'Total Leads', value: '12,482', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
-  { label: 'New Leads This Week', value: '634', trendValue: '+ 12.4%', trendText: 'vs last week', isPositive: true },
-  { label: 'Demo Request', value: '289', trendValue: '- 2.4%', trendText: 'vs last week', isPositive: false },
-  { label: 'Conversion Rate', value: '4.8%', trendValue: '+ 0.6pp', trendText: 'vs last week', isPositive: true }
-]
+// ==========================================
+// DATA DINAMIS DARI DATABASE
+// ==========================================
 
-// Data Dummy Leads by Country (Grafik Batang)
-const countryData = [
-  { name: 'Australia', count: 5900, height: 'h-[280px]' },
-  { name: 'New Zealand', count: 3000, height: 'h-[145px]' },
-  { name: 'Indonesia', count: 3600, height: 'h-[175px]' }
-]
+const kpiCards = computed(() => {
+  const total = rawLeads.value.length;
+  const tierA = rawLeads.value.filter(lead => lead.lead_tier === 'Tier A').length;
+  const newLeads = rawLeads.value.filter(lead => lead.status === 'New Lead').length;
+  const demoReq = rawLeads.value.filter(lead => lead.status === 'Demo' || lead.status === 'Demo Booked').length;
+  const conversionRate = total > 0 ? ((rawLeads.value.filter(lead => lead.status === 'Won').length / total) * 100).toFixed(1) : '0';
 
-// Data Dummy Pipeline Summary (Reaktif)
-const pipelineSteps = ref([
-  { step: '1', title: 'New Lead', targetCount: 12482, displayCount: '0', percentage: '100% of total', progress: 'w-full' },
-  { step: '2', title: 'Qualified', targetCount: 7310, displayCount: '0', percentage: '59% of total', progress: 'w-[59%]' },
-  { step: '3', title: 'Contacted', targetCount: 4180, displayCount: '0', percentage: '33% of total', progress: 'w-[33%]' },
-  { step: '4', title: 'Demo Booked', targetCount: 1620, displayCount: '0', percentage: '13% of total', progress: 'w-[13%]' },
-  { step: '5', title: 'Proposal', targetCount: 740, displayCount: '0', percentage: '6% of total', progress: 'w-[6%]' },
-  { step: '6', title: 'Won / Lost', targetCount: 598, displayCount: '0', percentage: '5% of total', progress: 'w-[5%]' }
-])
+  return [
+    { label: 'Tier A leads', value: tierA.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
+    { label: 'Total Leads', value: total.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
+    { label: 'New Leads', value: newLeads.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
+    { label: 'Demo Request', value: demoReq.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: false },
+    { label: 'Conversion Rate', value: `${conversionRate}%`, trendValue: '+ 0pp', trendText: 'Live Data', isPositive: true }
+  ]
+})
 
-// Data Dummy Leads by Source (Donut Chart)
-const sourceData = [
-  { label: 'Website', count: '4,210', percent: '34%', color: '#2563EB', dasharray: '33 67', dashoffset: '0' },
-  { label: 'Outbond AI', count: '3,120', percent: '25%', color: '#3B82F6', dasharray: '24 76', dashoffset: '-34' },
-  { label: 'Referral', count: '2,122', percent: '17%', color: '#60A5FA', dasharray: '16 84', dashoffset: '-59' },
-  { label: 'Events', count: '1,498', percent: '12%', color: '#93C5FD', dasharray: '11 89', dashoffset: '-76' },
-  { label: 'Partners', count: '1,532', percent: '11%', color: '#BFDBFE', dasharray: '10 90', dashoffset: '-88' }
-]
+const countryData = computed(() => {
+  const counts: Record<string, number> = { 'Australia': 0, 'New Zealand': 0, 'Indonesia': 0 };
+  
+  rawLeads.value.forEach(lead => {
+    const country = lead.country;
+    if (counts[country] !== undefined) {
+      counts[country]!++;
+    }
+  });
+
+  const maxCount = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, 1);
+
+  return [
+    { name: 'Australia', count: counts['Australia'] || 0, height: `h-[${Math.round(((counts['Australia'] || 0) / maxCount) * 280)}px]` },
+    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: `h-[${Math.round(((counts['New Zealand'] || 0) / maxCount) * 280)}px]` },
+    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: `h-[${Math.round(((counts['Indonesia'] || 0) / maxCount) * 280)}px]` }
+  ];
+})
+
+const pipelineSteps = computed(() => {
+  const total = rawLeads.value.length || 1; 
+  
+  const stepCounts = {
+    'New Lead': 0,
+    'Qualified': 0,
+    'Contacted': 0,
+    'Demo Booked': 0,
+    'Proposal': 0,
+    'Won / Lost': 0
+  }
+
+  rawLeads.value.forEach(lead => {
+    const status = lead.status;
+    if (status === 'New Lead') stepCounts['New Lead']++;
+    else if (status === 'Qualified') stepCounts['Qualified']++;
+    else if (status === 'Contacted') stepCounts['Contacted']++;
+    else if (status === 'Demo' || status === 'Demo Booked') stepCounts['Demo Booked']++;
+    else if (status === 'Proposal') stepCounts['Proposal']++;
+    else if (status === 'Won' || status === 'Lost') stepCounts['Won / Lost']++;
+  });
+
+  return [
+    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'], displayCount: stepCounts['New Lead'].toString(), percentage: `${Math.round((stepCounts['New Lead']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['New Lead']/total)*100)}%]` },
+    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'], displayCount: stepCounts['Qualified'].toString(), percentage: `${Math.round((stepCounts['Qualified']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Qualified']/total)*100)}%]` },
+    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'], displayCount: stepCounts['Contacted'].toString(), percentage: `${Math.round((stepCounts['Contacted']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Contacted']/total)*100)}%]` },
+    { step: '4', title: 'Demo Booked', targetCount: stepCounts['Demo Booked'], displayCount: stepCounts['Demo Booked'].toString(), percentage: `${Math.round((stepCounts['Demo Booked']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Demo Booked']/total)*100)}%]` },
+    { step: '5', title: 'Proposal', targetCount: stepCounts['Proposal'], displayCount: stepCounts['Proposal'].toString(), percentage: `${Math.round((stepCounts['Proposal']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Proposal']/total)*100)}%]` },
+    { step: '6', title: 'Won / Lost', targetCount: stepCounts['Won / Lost'], displayCount: stepCounts['Won / Lost'].toString(), percentage: `${Math.round((stepCounts['Won / Lost']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Won / Lost']/total)*100)}%]` }
+  ]
+})
+
+const sourceData = computed(() => {
+  const total = rawLeads.value.length || 1;
+  const sources: Record<string, number> = { 'Website': 0, 'Outbond AI': 0, 'Referral': 0, 'Events': 0, 'Partners': 0 };
+  
+  rawLeads.value.forEach(lead => {
+    let source = lead.source_page;
+    if (source === 'Outbound') source = 'Outbond AI';
+    else if (source === 'Partner') source = 'Partners';
+    else if (source === 'Event') source = 'Events';
+    else if (source === 'LinkedIn') source = 'Referral'; // mapping linkedin to referral to match categories
+    
+    if (sources[source] !== undefined) {
+      sources[source]!++;
+    } else {
+      sources['Website']!++;
+    }
+  });
+
+  const colors = ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE'];
+  let currentOffset = 0;
+
+  return Object.keys(sources).map((key, index) => {
+    const count = sources[key] || 0;
+    const percentNum = Math.round((count / total) * 100);
+    const dasharray = `${percentNum} ${100 - percentNum}`;
+    const dashoffset = -currentOffset;
+    
+    currentOffset += percentNum;
+    
+    return {
+      label: key,
+      count: count.toLocaleString(),
+      percent: `${percentNum}%`,
+      color: colors[index],
+      dasharray: dasharray,
+      dashoffset: dashoffset.toString()
+    }
+  });
+})
 </script>
 
 <template>
@@ -100,7 +179,7 @@ const sourceData = [
   <MainLayout active-menu="dashboard">
     
     <!-- DASHBOARD BODY (Otomatis masuk ke dalam slot MainLayout) -->
-    <main class="flex-1 p-8 space-y-8 overflow-y-auto">
+    <main class="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto overflow-x-hidden">
       
       <div>
         <h1 class="text-[32px] font-bold text-[#0F172A]">Overview</h1>
@@ -108,7 +187,7 @@ const sourceData = [
       </div>
 
       <!-- KPI Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div class="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div 
           v-for="(card, index) in kpiCards" 
           :key="index" 
@@ -136,14 +215,15 @@ const sourceData = [
         </div>
       </div>
 
-      <!-- Leads by Country (Bar Chart) -->
-      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Leads by Country (Bar Chart) -->
+      <div class="bg-white p-4 md:p-6 rounded-2xl border border-[#E2E8F0] shadow-sm overflow-x-auto">
         <div class="mb-2">
           <h2 class="text-[20px] font-bold text-[#0F172A]">Leads by Country</h2>
           <p class="text-[12px] text-[#64748B]">Distribution across active markets</p>
         </div>
 
-        <div class="flex mt-4 h-[280px]">
+        <div class="flex mt-4 h-[280px] min-w-[400px]">
           <div class="flex flex-col justify-between text-[11px] text-[#94A3B8] font-medium pr-4 text-right mb-6">
             <span>6000</span>
             <span>4500</span>
@@ -167,7 +247,7 @@ const sourceData = [
       </div>
 
       <!-- Leads by Source (Donut Chart) -->
-      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+      <div class="bg-white p-4 md:p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
         <div class="mb-6">
           <h2 class="text-[20px] font-bold text-[#0F172A]">Leads by Source</h2>
           <p class="text-[12px] text-[#64748B]">Where qualified leads originate</p>
@@ -176,14 +256,14 @@ const sourceData = [
         <div class="flex flex-col md:flex-row items-center justify-around gap-8 py-4">
           <div class="relative w-48 h-48 flex items-center justify-center">
             <div class="absolute flex flex-col items-center justify-center pointer-events-none">
-              <span class="text-3xl font-bold text-[#0F172A] tracking-tight">12,482</span>
+              <span class="text-3xl font-bold text-[#0F172A] tracking-tight">{{ rawLeads.length.toLocaleString() }}</span>
               <span class="text-sm text-[#64748B] font-semibold mt-1">Total</span>
             </div>
             
-            <svg viewBox="0 0 42 42" class="w-full h-full -rotate-90">
+            <svg viewBox="0 0 44 44" class="w-full h-full -rotate-90">
               <defs>
                 <mask id="circular-wipe">
-                  <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="white" stroke-width="10" 
+                  <circle cx="22" cy="22" r="15.915" fill="transparent" stroke="white" stroke-width="10" 
                     :stroke-dasharray="`${maskProgress} 100`" stroke-dashoffset="0"></circle>
                 </mask>
               </defs>
@@ -192,7 +272,7 @@ const sourceData = [
                 <circle 
                   v-for="(item, index) in sourceData" 
                   :key="index"
-                  cx="21" cy="21" r="15.915" fill="transparent" stroke-width="7" 
+                  cx="22" cy="22" r="15.915" fill="transparent" stroke-width="7" 
                   :stroke="item.color" 
                   :stroke-dasharray="item.dasharray" 
                   :stroke-dashoffset="item.dashoffset"
@@ -236,9 +316,10 @@ const sourceData = [
           </div>
         </div>
       </div>
+      </div>
 
       <!-- Pipeline Status Summary -->
-      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+      <div class="bg-white p-4 md:p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
         <div class="mb-6">
           <h2 class="text-[20px] font-bold text-[#0F172A]">Pipeline Status Summary</h2>
           <p class="text-[12px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>

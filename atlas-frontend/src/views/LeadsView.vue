@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import MainLayout from "../components/MainLayout.vue";
 
 // Cetak Biru Data (Interface)
@@ -44,129 +44,35 @@ const summaryCards = [
   },
 ];
 
+import axios from "axios";
+
 // Data Asli
-const leadsData = ref<Lead[]>([
-  {
-    id: 1,
-    name: "Sarah",
-    role: "Head of Ops",
-    company: "Meridian Logistics",
-    country: "Australia",
-    source: "Website",
-    tier: "Tier A",
-    status: "Demo",
-    value: "Value",
-    updated: "2h ago",
-  },
-  {
-    id: 2,
-    name: "Anton",
-    role: "COO",
-    company: "Kowhai Health",
-    country: "New Zealand",
-    source: "Referral",
-    tier: "Tier B",
-    status: "Proposal",
-    value: "60k",
-    updated: "4h ago",
-  },
-  {
-    id: 3,
-    name: "Budi",
-    role: "VP Customer",
-    company: "Nusantara Pay",
-    country: "Indonesia",
-    source: "LinkedIn",
-    tier: "Tier B",
-    status: "Qualified",
-    value: "60k",
-    updated: "6h ago",
-  },
-  {
-    id: 4,
-    name: "Michael",
-    role: "Director of CX",
-    company: "Southbank Retail",
-    country: "New Zealand",
-    source: "Outbound",
-    tier: "Tier A",
-    status: "Contacted",
-    value: "34k",
-    updated: "Yesterday",
-  },
-  {
-    id: 5,
-    name: "Kevin",
-    role: "Founder",
-    company: "Tuia Studio",
-    country: "New Zealand",
-    source: "Website",
-    tier: "Tier C",
-    status: "New Lead",
-    value: "21.5k",
-    updated: "2d ago",
-  },
-  {
-    id: 6,
-    name: "Amelia",
-    role: "Head Of Support",
-    company: "Garuda Flight",
-    country: "Indonesia",
-    source: "Partner",
-    tier: "Tier B",
-    status: "Demo",
-    value: "12k",
-    updated: "Yesterday",
-  },
-  {
-    id: 7,
-    name: "Putri",
-    role: "CTO",
-    company: "Haliburton",
-    country: "Indonesia",
-    source: "Event",
-    tier: "Tier A",
-    status: "Qualified",
-    value: "50k",
-    updated: "2d ago",
-  },
-  {
-    id: 8,
-    name: "Siti",
-    role: "Supervisor",
-    company: "Bandung Textiles",
-    country: "Indonesia",
-    source: "LinkedIn",
-    tier: "Tier B",
-    status: "Won",
-    value: "110k",
-    updated: "3 days ago",
-  },
-  {
-    id: 9,
-    name: "Chloe",
-    role: "COO",
-    company: "PT Astra",
-    country: "Indonesia",
-    source: "Outbound",
-    tier: "Tier C",
-    status: "Lost",
-    value: "12k",
-    updated: "4d ago",
-  },
-  {
-    id: 10,
-    name: "Jason",
-    role: "GM Commercial",
-    company: "Perth Marine",
-    country: "Australia",
-    source: "Referral",
-    tier: "Tier A",
-    status: "Contacted",
-    value: "17k",
-    updated: "5d ago",
-  },
-]);
+const leadsData = ref<Lead[]>([]);
+
+const fetchLeads = async () => {
+  try {
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/leads`);
+    leadsData.value = response.data.data.map((item: any) => ({
+      id: item.id,
+      name: item.full_name || "Unknown",
+      role: item.role || "-",
+      company: item.company_name || "-",
+      country: item.country || "-",
+      source: item.source_page || "Website",
+      tier: item.lead_tier || "Tier C",
+      status: item.status || "New Lead",
+      value: "0",
+      updated: new Date(item.created_at).toLocaleDateString(),
+    }));
+  } catch (error) {
+    console.error("Gagal mengambil data leads:", error);
+  }
+};
+
+onMounted(() => {
+  fetchLeads();
+});
+
 
 // ==========================================
 // LOGIKA FILTER & PENCARIAN
@@ -246,13 +152,19 @@ const toggleSelectAll = (event: Event) => {
     : [];
 };
 
-const deleteSelectedLeads = () => {
-  leadsData.value = leadsData.value.filter(
-    (lead) => !selectedLeads.value.includes(lead.id),
-  );
-  selectedLeads.value = [];
-  if (paginatedLeads.value.length === 0 && currentPage.value > 1) {
-    currentPage.value--;
+const deleteSelectedLeads = async () => {
+  try {
+    // Menghapus data satu per satu karena API belum mensupport bulk delete
+    for (const id of selectedLeads.value) {
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/leads/${id}`);
+    }
+    await fetchLeads(); // Refresh data
+    selectedLeads.value = [];
+    if (paginatedLeads.value.length === 0 && currentPage.value > 1) {
+      currentPage.value--;
+    }
+  } catch (error) {
+    console.error("Gagal menghapus beberapa data:", error);
   }
 };
 
@@ -305,55 +217,49 @@ const openEditModal = (lead: Lead) => {
   isModalOpen.value = true;
 };
 
-const deleteLead = (id: number) => {
-  leadsData.value = leadsData.value.filter((lead) => lead.id !== id);
-  activeDropdownId.value = null;
-  selectedLeads.value = selectedLeads.value.filter(
-    (selectedId) => selectedId !== id,
-  );
-  if (paginatedLeads.value.length === 0 && currentPage.value > 1) {
-    currentPage.value--;
+const deleteLead = async (id: number) => {
+  try {
+    await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/leads/${id}`);
+    await fetchLeads(); // Refresh tabel setelah dihapus
+    
+    activeDropdownId.value = null;
+    selectedLeads.value = selectedLeads.value.filter((selectedId) => selectedId !== id);
+    if (paginatedLeads.value.length === 0 && currentPage.value > 1) {
+      currentPage.value--;
+    }
+  } catch (error) {
+    console.error("Gagal menghapus data:", error);
   }
 };
 
-const submitForm = () => {
-  if (editingId.value) {
-    const index = leadsData.value.findIndex((l) => l.id === editingId.value);
-    if (index !== -1) {
-      const oldData = leadsData.value[index];
-      if (oldData) {
-        leadsData.value.splice(index, 1, {
-          id: oldData.id,
-          role: newLead.value.role || "-",
-          name: newLead.value.name,
-          company: newLead.value.company,
-          country: newLead.value.country,
-          source: newLead.value.source,
-          tier: newLead.value.tier,
-          status: newLead.value.status,
-          value: newLead.value.value,
-          updated: "Just now",
-        });
-      }
-    }
-  } else {
-    const newId = leadsData.value.length
-      ? Math.max(...leadsData.value.map((l) => l.id)) + 1
-      : 1;
-    leadsData.value.unshift({
-      id: newId,
-      name: newLead.value.name || "Unknown",
-      role: newLead.value.role || "-",
-      company: newLead.value.company || "-",
+const submitForm = async () => {
+  try {
+    const payload = {
+      full_name: newLead.value.name,
+      role: newLead.value.role,
+      company_name: newLead.value.company,
       country: newLead.value.country,
-      source: newLead.value.source,
-      tier: newLead.value.tier,
+      source_page: newLead.value.source,
+      lead_tier: newLead.value.tier,
       status: newLead.value.status,
-      value: newLead.value.value || "-",
-      updated: "Just now",
-    });
+      // Field wajib dari API saat buat baru
+      email: newLead.value.name.replace(/\s+/g, '').toLowerCase() + "@example.com",
+      phone: "-",
+      business_type: "-",
+      consent_status: true
+    };
+
+    if (editingId.value) {
+      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/leads/${editingId.value}`, payload);
+    } else {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/leads`, payload);
+    }
+    
+    await fetchLeads(); // Refresh tabel setelah data tersimpan
+    closeModal();
+  } catch (error) {
+    console.error("Gagal menyimpan data:", error);
   }
-  closeModal();
 };
 
 const closeModal = () => {
@@ -400,7 +306,7 @@ const getStatusClass = (status: string) => {
   <MainLayout active-menu="leads">
     
     <!-- PAGE BODY -->
-    <main class="flex-1 p-8 overflow-y-auto">
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
       <div class="mb-8">
         <h1 class="text-[32px] font-bold text-[#0F172A] tracking-tight">
           Leads Management
@@ -445,7 +351,7 @@ const getStatusClass = (status: string) => {
           v-if="selectedLeads.length === 0"
           class="p-4 border-b border-[#E2E8F0] flex items-center justify-between gap-4 flex-wrap"
         >
-          <div class="relative w-64">
+          <div class="relative w-full md:w-64">
             <svg
               class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"
               fill="none"
@@ -467,7 +373,7 @@ const getStatusClass = (status: string) => {
             />
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto">
             <select
               v-model="filterStatus"
               class="text-[13px] border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium"
@@ -557,7 +463,7 @@ const getStatusClass = (status: string) => {
 
         <!-- Table View -->
         <div class="overflow-x-auto min-h-[300px]">
-          <table class="w-full text-left border-collapse">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr class="border-b border-[#E2E8F0] bg-white">
                 <th class="py-3 px-4 w-12 text-center">

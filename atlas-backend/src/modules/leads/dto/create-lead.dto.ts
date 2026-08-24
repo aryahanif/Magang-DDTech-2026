@@ -8,19 +8,19 @@ export class CreateLeadDto {
   @IsEmail()
   email: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   phone: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   company_name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   country: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   business_type: string;
 
