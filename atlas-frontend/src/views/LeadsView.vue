@@ -3,7 +3,7 @@ import { ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router';
 import MainLayout from "../components/MainLayout.vue";
 
-// Cetak Biru Data (Interface) - Tambahan properti isValid
+// Cetak Biru Data (Interface)
 interface Lead {
   id: number;
   name: string;
@@ -15,7 +15,7 @@ interface Lead {
   status: string;
   value: string;
   updated: string;
-  isValid: boolean; // <-- Properti baru untuk AI Validation
+  isValid: boolean; 
 }
 
 const router = useRouter();
@@ -52,7 +52,7 @@ const summaryCards = [
   },
 ];
 
-// Data Asli (Saya tambahkan beberapa contoh data Spam/Invalid)
+// Data Asli
 const leadsData = ref<Lead[]>([
   { id: 1, name: "Sarah", role: "Head of Ops", company: "Meridian Logistics", country: "Australia", source: "Website", tier: "Tier A", status: "Demo", value: "Value", updated: "2h ago", isValid: true },
   { id: 2, name: "Anton", role: "COO", company: "Kowhai Health", country: "New Zealand", source: "Referral", tier: "Tier B", status: "Proposal", value: "60k", updated: "4h ago", isValid: true },
@@ -64,7 +64,6 @@ const leadsData = ref<Lead[]>([
   { id: 8, name: "Siti", role: "Supervisor", company: "Bandung Textiles", country: "Indonesia", source: "LinkedIn", tier: "Tier B", status: "Won", value: "110k", updated: "3 days ago", isValid: true },
   { id: 9, name: "Chloe", role: "COO", company: "PT Astra", country: "Indonesia", source: "Outbound", tier: "Tier C", status: "Lost", value: "12k", updated: "4d ago", isValid: true },
   { id: 10, name: "Jason", role: "GM Commercial", company: "Perth Marine", country: "Australia", source: "Referral", tier: "Tier A", status: "Contacted", value: "17k", updated: "5d ago", isValid: true },
-  // 2 Data Spam sebagai contoh
   { id: 11, name: "Mickey Mouse", role: "Test", company: "Disney", country: "Australia", source: "Website", tier: "Tier C", status: "New Lead", value: "-", updated: "1h ago", isValid: false },
   { id: 12, name: "hsdjkfhk", role: "-", company: "asdfg", country: "Indonesia", source: "Website", tier: "Tier C", status: "New Lead", value: "-", updated: "2h ago", isValid: false },
 ]);
@@ -72,24 +71,21 @@ const leadsData = ref<Lead[]>([
 // ==========================================
 // LOGIKA TABS & FILTER PENCARIAN
 // ==========================================
-const activeTab = ref("valid"); // Default tab ke 'valid'
+const activeTab = ref("valid"); 
 const searchQuery = ref("");
 const filterStatus = ref("");
 const filterCountry = ref("");
 const filterTier = ref("");
 
-// Menghitung jumlah data invalid untuk badge
 const invalidCount = computed(() => leadsData.value.filter(l => !l.isValid).length);
 
 const filteredLeads = computed(() => {
   return leadsData.value.filter((lead) => {
-    // 1. Filter berdasarkan Tab (All, Valid, atau Invalid)
     const matchTab = 
       activeTab.value === 'all' ? true : 
       activeTab.value === 'valid' ? lead.isValid === true : 
       lead.isValid === false;
 
-    // 2. Filter lainnya
     const matchSearch =
       lead.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       lead.company.toLowerCase().includes(searchQuery.value.toLowerCase());
@@ -108,7 +104,7 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 
 watch([activeTab, searchQuery, filterStatus, filterCountry, filterTier], () => {
-  currentPage.value = 1; // Reset ke halaman 1 jika tab/filter berubah
+  currentPage.value = 1; 
 });
 
 const totalPages = computed(() => Math.ceil(filteredLeads.value.length / itemsPerPage));
@@ -191,8 +187,6 @@ const submitForm = () => {
     const index = leadsData.value.findIndex((l) => l.id === editingId.value);
     if (index !== -1) {
       const oldData = leadsData.value[index];
-      
-      // Tambahkan pengecekan ini agar TypeScript yakin datanya tidak kosong
       if (oldData) {
         leadsData.value.splice(index, 1, {
           id: oldData.id,
@@ -222,7 +216,7 @@ const submitForm = () => {
       status: newLead.value.status,
       value: newLead.value.value || "-",
       updated: "Just now",
-      isValid: true // Default ke valid jika ditambahkan manual oleh admin
+      isValid: true 
     });
   }
   closeModal();
@@ -262,8 +256,8 @@ const getStatusClass = (status: string) => {
         <p class="text-[16px] text-[#64748B] mt-1">All inbound and outbound leads captured by your AI workforce.</p>
       </div>
 
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <!-- Summary Cards dengan Animasi Fade In -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
         <div v-for="(card, index) in summaryCards" :key="index" class="bg-white p-5 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
           <div class="flex items-center justify-between">
             <span class="text-[13px] font-medium text-[#64748B]">{{ card.title }}</span>
@@ -302,8 +296,8 @@ const getStatusClass = (status: string) => {
         </button>
       </div>
 
-      <!-- Table Container -->
-      <div class="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col relative z-20">
+      <!-- Table Container dengan Animasi Fade In Default -->
+      <div class="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col relative z-20 animate-fade-in">
         
         <!-- Filter Bar Standar -->
         <div v-if="selectedLeads.length === 0" class="p-4 border-b border-[#E2E8F0] flex items-center justify-between gap-4 flex-wrap">
@@ -382,7 +376,8 @@ const getStatusClass = (status: string) => {
                 <th class="py-3 px-2 w-10"></th>
               </tr>
             </thead>
-            <tbody>
+            <!-- TRICK ANIMASI VUE: Binding atribut key ke activeTab dan currentPage -->
+            <tbody :key="activeTab + currentPage" class="animate-fade-in">
               <tr v-for="lead in paginatedLeads" :key="lead.id" @click="handleRowClick(lead)" class="border-b border-gray-100 transition group cursor-pointer hover:bg-gray-50" :class="selectedLeads.includes(lead.id) ? 'bg-[#EFF6FF] hover:bg-[#E0E7FF]' : ''">
                 <td class="py-3 px-4 text-center">
                   <input type="checkbox" :value="lead.id" v-model="selectedLeads" @click.stop class="rounded border-gray-300 text-[#2563EB] focus:ring-[#2563EB] transition cursor-pointer" :class="selectedLeads.includes(lead.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'" />
@@ -417,8 +412,8 @@ const getStatusClass = (status: string) => {
             </tbody>
           </table>
 
-          <!-- Empty State (Berubah dinamis sesuai Tab yang dipilih) -->
-          <div v-if="filteredLeads.length === 0" class="py-16 text-center">
+          <!-- Empty State -->
+          <div v-if="filteredLeads.length === 0" class="py-16 text-center animate-fade-in">
             <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
             <p class="text-[14px] text-gray-500 font-medium">No leads found in this category.</p>
           </div>
@@ -438,11 +433,10 @@ const getStatusClass = (status: string) => {
     </main>
   </MainLayout>
 
-  <!-- MODAL (CREATE & UPDATE LEAD) - Saya persingkat untuk menghemat ruang -->
+  <!-- MODAL (CREATE & UPDATE LEAD) -->
   <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
     <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-[480px] p-8 overflow-y-auto max-h-[90vh]">
-      <!-- Isi form sama dengan file Anda sebelumnya -->
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-[480px] p-8 overflow-y-auto max-h-[90vh] animate-fade-in">
       <div class="mb-6">
         <h2 class="text-[26px] font-bold text-black tracking-tight leading-none mb-1">{{ editingId ? "Edit lead" : "Add new lead" }}</h2>
       </div>
@@ -462,10 +456,28 @@ const getStatusClass = (status: string) => {
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-          <button type="button" @click="closeModal" class="px-5 py-2 border border-gray-300 rounded-lg text-[14px] font-bold">Cancel</button>
-          <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold">{{ editingId ? "Save changes" : "Add lead" }}</button>
+          <button type="button" @click="closeModal" class="px-5 py-2 border border-gray-300 rounded-lg text-[14px] font-bold hover:bg-gray-50 transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">{{ editingId ? "Save changes" : "Add lead" }}</button>
         </div>
       </form>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* CSS Animasi Fade In */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
