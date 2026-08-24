@@ -6,8 +6,9 @@ import { EmailService } from '../email/email.service';
 // Define configuration for scoring weights and individual criteria scores (1-5 scale)
 const SCORING_CONFIG = {
   WEIGHTS: {
-    COUNTRY: 0.4,
-    BUSINESS_TYPE: 0.6,
+    COUNTRY: 0.3,
+    BUSINESS_TYPE: 0.4,
+    INTENT: 0.3, // Based on completeness and detail of the inquiry
   },
   COUNTRY_SCORES: {
     'australia': 5,
@@ -39,7 +40,7 @@ export class QualificationService {
    * Calculates a rule-based score based on basic lead information.
    * Uses weighted criteria to generate a final score from 1.0 to 5.0.
    */
-  calculateRuleBasedScore(leadData: { country?: string; business_type?: string }): number {
+  calculateRuleBasedScore(leadData: any): number {
     // 1. Country Score (1-5)
     const country = (leadData.country || '').trim().toLowerCase();
     const countryScore = SCORING_CONFIG.COUNTRY_SCORES[country] || SCORING_CONFIG.COUNTRY_SCORES['default'];
@@ -48,8 +49,18 @@ export class QualificationService {
     const businessType = (leadData.business_type || '').trim().toLowerCase();
     const businessScore = SCORING_CONFIG.BUSINESS_TYPE_SCORES[businessType] || SCORING_CONFIG.BUSINESS_TYPE_SCORES['default'];
 
+    // 3. Intent Score (1-5) based on how much detail they provided
+    let intentScore = 1;
+    if (leadData.current_problem && leadData.current_problem.trim().length > 10) intentScore += 2; // Real problem described
+    if (leadData.automation_interest && leadData.automation_interest.trim().length > 0) intentScore += 1; // Specific interest
+    if (leadData.message && leadData.message.trim().length > 5) intentScore += 1; // Left a message
+    intentScore = Math.min(5, intentScore);
+
     // Calculate weighted average
-    const finalScore = (countryScore * SCORING_CONFIG.WEIGHTS.COUNTRY) + (businessScore * SCORING_CONFIG.WEIGHTS.BUSINESS_TYPE);
+    const finalScore = 
+      (countryScore * SCORING_CONFIG.WEIGHTS.COUNTRY) + 
+      (businessScore * SCORING_CONFIG.WEIGHTS.BUSINESS_TYPE) + 
+      (intentScore * SCORING_CONFIG.WEIGHTS.INTENT);
 
     // Round to 1 decimal place (e.g., 4.4, 3.8)
     return Math.round(finalScore * 10) / 10;
