@@ -87,13 +87,14 @@ const sourceData = [
   <MainLayout active-menu="dashboard">
     <main class="flex-1 p-8 space-y-8 overflow-y-auto">
       
-      <div>
+      <!-- Menambahkan animate-fade-in -->
+      <div class="animate-fade-in">
         <h1 class="text-[32px] font-bold text-[#0F172A]">Overview</h1>
         <p class="text-[16px] text-[#64748B] mt-0.5">Your AI Workforce performance for the last 7 days</p>
       </div>
 
-      <!-- KPI Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <!-- KPI Cards Grid (Menambahkan animate-fade-in) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in">
         <div 
           v-for="(card, index) in kpiCards" 
           :key="index" 
@@ -121,8 +122,8 @@ const sourceData = [
         </div>
       </div>
 
-      <!-- Grid Container: Berdampingan di Desktop -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Grid Container: Berdampingan di Desktop (Menambahkan animate-fade-in) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
         
         <!-- 1. Leads by Country (Bar Chart) -->
         <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
@@ -170,7 +171,6 @@ const sourceData = [
             <!-- Donut Chart -->
             <div class="relative w-40 h-40 flex items-center justify-center flex-shrink-0">
               
-              <!-- PERUBAHAN DI SINI: Teks Tengah yang Reaktif -->
               <div class="absolute flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
                 <span class="text-2xl font-bold text-[#0F172A] tracking-tight">
                   {{ hoveredSource ? hoveredSource.count : '12.4k' }}
@@ -179,7 +179,6 @@ const sourceData = [
                   {{ hoveredSource ? hoveredSource.label : 'Total' }}
                 </span>
               </div>
-              <!-- END PERUBAHAN -->
               
               <svg viewBox="0 0 42 42" class="w-full h-full -rotate-90">
                 <defs>
@@ -231,8 +230,8 @@ const sourceData = [
 
       </div>
 
-      <!-- Pipeline Status Summary -->
-      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+      <!-- Pipeline Status Summary (Menambahkan animate-fade-in) -->
+      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm animate-fade-in">
         <div class="mb-6">
           <h2 class="text-[20px] font-bold text-[#0F172A]">Pipeline Status Summary</h2>
           <p class="text-[12px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>
@@ -269,3 +268,21 @@ const sourceData = [
     </main>
   </MainLayout>
 </template>
+
+<style scoped>
+/* CSS Animasi Fade In Seragam */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
