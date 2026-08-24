@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { GoogleGenAI, Type } from '@google/genai';
+import { EmailService } from '../email/email.service';
 
 // Define configuration for scoring weights and individual criteria scores (1-5 scale)
 const SCORING_CONFIG = {
@@ -27,7 +28,10 @@ export class QualificationService {
   private readonly logger = new Logger(QualificationService.name);
   private ai: GoogleGenAI;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
   }
 
@@ -93,7 +97,7 @@ ${JSON.stringify(leadData, null, 2)}`;
 
       const parsed = JSON.parse(text);
 
-      await this.prisma.lead.update({
+      const updatedLead = await this.prisma.lead.update({
         where: { id: leadId },
         data: {
           lead_tier: parsed.lead_tier,
@@ -105,6 +109,13 @@ ${JSON.stringify(leadData, null, 2)}`;
       });
 
       this.logger.log(`Berhasil menganalisis lead ${leadId} dengan AI.`);
+
+      if (updatedLead.lead_tier === 'Tier A') {
+        // Fire-and-forget so a slow/failing Resend call never blocks qualification.
+        this.emailService
+          .sendNewLeadAlert(updatedLead)
+          .catch((error) => this.logger.error('Failed to send new lead alert email', error));
+      }
     } catch (error) {
       this.logger.error(`Error menganalisis lead ${leadId} dengan AI`, error);
     }
