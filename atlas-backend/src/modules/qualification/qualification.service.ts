@@ -69,7 +69,7 @@ export class QualificationService {
   /**
    * Asynchronously analyzes a lead using Google Gemini API.
    */
-  async analyzeLeadWithAI(leadId: string, leadData: any): Promise<void> {
+  async analyzeLeadWithAI(leadId: string, leadData: any, ruleBasedScore?: number): Promise<void> {
     try {
       if (!process.env.GEMINI_API_KEY) {
         this.logger.warn('GEMINI_API_KEY is not set. Skipping AI qualification.');
@@ -78,6 +78,10 @@ export class QualificationService {
 
       const prompt = `Anda adalah analis penjualan B2B profesional untuk Atlas, DDTech's AI Workforce Platform.
 Analisis data klien berikut dan berikan wawasan mendalam mengenai potensi klien.
+
+Informasi Sistem:
+- Klien ini mendapatkan Rule-Based Score: ${ruleBasedScore ?? 'N/A'} (skala 1.0 - 5.0).
+- Gunakan skor sistem tersebut sebagai salah satu acuan utama untuk menentukan lead_tier (Tier A/B/C). Skor tinggi (>4.0) mengindikasikan Tier A atau B.
 
 Data Klien:
 ${JSON.stringify(leadData, null, 2)}`;
