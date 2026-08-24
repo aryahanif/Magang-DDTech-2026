@@ -3,15 +3,28 @@ import { QualificationService } from './qualification.service';
 import { PrismaService } from '../../database/prisma.service';
 import { EmailService } from '../email/email.service';
 
+const generateContent = jest.fn();
+jest.mock('@google/genai', () => ({
+  GoogleGenAI: jest.fn().mockImplementation(() => ({ models: { generateContent } })),
+  Type: { OBJECT: 'OBJECT', STRING: 'STRING', ARRAY: 'ARRAY' },
+}));
+
 describe('QualificationService', () => {
   let service: QualificationService;
+  let prisma: { lead: { update: jest.Mock } };
+  let emailService: { sendNewLeadAlert: jest.Mock };
 
   beforeEach(async () => {
+    process.env.GEMINI_API_KEY = 'test-key';
+    prisma = { lead: { update: jest.fn() } };
+    emailService = { sendNewLeadAlert: jest.fn().mockResolvedValue(undefined) };
+    generateContent.mockReset();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QualificationService,
-        { provide: PrismaService, useValue: { lead: { update: jest.fn() } } },
-        { provide: EmailService, useValue: { sendNewLeadAlert: jest.fn() } },
+        { provide: PrismaService, useValue: prisma },
+        { provide: EmailService, useValue: emailService },
       ],
     }).compile();
 
@@ -51,6 +64,38 @@ describe('QualificationService', () => {
       const data = {};
       // Default (1*0.3) + (1*0.4) + Intent (1*0.3) = 1.0
       expect(service.calculateRuleBasedScore(data)).toBe(1);
+    });
+  });
+
+  describe('analyzeLeadWithAI email alert', () => {
+    const mockAiReply = (lead_tier: string) => {
+      generateContent.mockResolvedValue({
+        text: JSON.stringify({
+          lead_tier,
+          fit_status: 'Potential',
+          qualification_summary: 'summary',
+          recommended_next_action: 'follow up',
+          urgency_level: 'Medium',
+          risk_flags: [],
+        }),
+      });
+      prisma.lead.update.mockResolvedValue({ id: 'lead-1', lead_tier });
+    };
+
+    it.each(['Tier A', 'Tier B', 'Tier C'])('sends the alert for %s', async (tier) => {
+      mockAiReply(tier);
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(emailService.sendNewLeadAlert).toHaveBeenCalledWith({ id: 'lead-1', lead_tier: tier });
+    });
+
+    it('does not send the alert for Spam', async () => {
+      mockAiReply('Spam');
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(emailService.sendNewLeadAlert).not.toHaveBeenCalled();
     });
   });
 });
