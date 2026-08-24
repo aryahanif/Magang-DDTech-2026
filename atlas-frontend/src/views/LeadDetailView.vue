@@ -8,7 +8,7 @@ const router = useRouter()
 const leadId = route.params.id
 
 // ==========================================
-// 1. DATA DUMMY DEFAULT (Fallback jika di-refresh)
+// 1. DATA DUMMY DEFAULT 
 // ==========================================
 const defaultLead = {
   id: leadId,
@@ -58,7 +58,7 @@ const defaultLead = {
 }
 
 // ==========================================
-// 2. LOGIKA DINAMIS (Mapping data dari tabel + fallback)
+// 2. LOGIKA DINAMIS 
 // ==========================================
 const getInitialData = () => {
   const storedData = sessionStorage.getItem('selectedLead')
@@ -147,11 +147,10 @@ const toggleEditSummary = () => {
 
 <template>
   <MainLayout active-menu="leads">
-    <!-- 1. PERBAIKAN: Ubah min-h-screen menjadi flex flex-col -->
     <main class="flex-1 p-8 overflow-y-auto bg-[#F8FAFC] flex flex-col">
       
-      <!-- HEADER: Back Button & Lead Identity -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 flex-shrink-0">
+      <!-- HEADER: Back Button & Lead Identity (Ditambahkan animasi) -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 flex-shrink-0 animate-fade-in">
         <div class="flex items-center gap-4">
           <button @click="router.push('/admin/leads')" class="p-2 rounded-lg border border-[#E2E8F0] bg-white hover:bg-gray-50 transition">
             <svg class="w-5 h-5 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -186,12 +185,10 @@ const toggleEditSummary = () => {
       </div>
 
       <!-- MAIN GRID: 2 Kolom -->
-      <!-- 2. PERBAIKAN: Tambahkan flex-1 agar grid ini memakan sisa tinggi layar -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
         
-        <!-- KOLOM KIRI (2/3): Informasi & AI -->
-        <!-- 3. PERBAIKAN: Gunakan flex flex-col gap-6 (lebih aman dari space-y-6) -->
-        <div class="lg:col-span-2 flex flex-col gap-6">
+        <!-- KOLOM KIRI (2/3): Informasi & AI (Ditambahkan animasi) -->
+        <div class="lg:col-span-2 flex flex-col gap-6 animate-fade-in">
           
           <!-- 1. AI Qualification Summary -->
           <div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 flex-shrink-0">
@@ -246,7 +243,6 @@ const toggleEditSummary = () => {
           </div>
 
           <!-- 2. Submitted Form Data -->
-          <!-- PERBAIKAN EKSTRA: Diberi flex-1 agar seimbang sejajar dengan Notes di kanan -->
           <div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 flex-1">
             <h2 class="text-[18px] font-bold text-[#0F172A] mb-4">Submitted Form Data</h2>
             
@@ -301,9 +297,8 @@ const toggleEditSummary = () => {
 
         </div>
 
-        <!-- KOLOM KANAN (1/3): Aksi, Notes, Log -->
-        <!-- 4. PERBAIKAN: Gunakan gap-6 -->
-        <div class="flex flex-col gap-6 h-full">
+        <!-- KOLOM KANAN (1/3): Aksi, Notes, Log (Ditambahkan animasi) -->
+        <div class="flex flex-col gap-6 h-full animate-fade-in">
           
           <!-- 3. Lead Details & Assignment -->
           <div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 flex-shrink-0">
@@ -363,7 +358,6 @@ const toggleEditSummary = () => {
           </div>
 
           <!-- 6. Notes History -->
-          <!-- Karena kontainer utamanya (main & grid) sekarang melar sampai dasar layar, flex-1 di sini akan sempurna -->
           <div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 flex-1 flex flex-col min-h-[250px]">
             <h2 class="text-[16px] font-bold text-[#0F172A] mb-4 flex-shrink-0">Notes History</h2>
             
@@ -389,12 +383,19 @@ const toggleEditSummary = () => {
 </template>
 
 <style scoped>
-/* Animasi halus saat data muncul */
-@keyframes fadeInUp {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+/* CSS Animasi Fade In Seragam dengan halaman lain */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
 }
-.animate-fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
