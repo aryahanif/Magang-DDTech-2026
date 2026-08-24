@@ -25,7 +25,7 @@ export class LeadsService {
     // Asynchronous AI Processing (Non-blocking). The Tier A email alert is
     // sent from QualificationService once the AI determines the lead_tier,
     // since it isn't known yet at creation time.
-    this.qualificationService.analyzeLeadWithAI(lead.id, data).catch((error) => {
+    this.qualificationService.analyzeLeadWithAI(lead.id, data, initialScore).catch((error) => {
       this.logger.error('Failed to analyze lead with AI asynchronously', error);
     });
 

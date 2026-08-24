@@ -57,7 +57,7 @@ describe('LeadsService', () => {
 
     await service.createLead(dto);
 
-    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, dto);
+    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, dto, 55);
   });
 
   it('does not let a failed AI analysis reject createLead', async () => {

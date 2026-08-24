@@ -6,8 +6,9 @@ import { EmailService } from '../email/email.service';
 // Define configuration for scoring weights and individual criteria scores (1-5 scale)
 const SCORING_CONFIG = {
   WEIGHTS: {
-    COUNTRY: 0.4,
-    BUSINESS_TYPE: 0.6,
+    COUNTRY: 0.3,
+    BUSINESS_TYPE: 0.4,
+    INTENT: 0.3, // Based on completeness and detail of the inquiry
   },
   COUNTRY_SCORES: {
     'australia': 5,
@@ -39,7 +40,7 @@ export class QualificationService {
    * Calculates a rule-based score based on basic lead information.
    * Uses weighted criteria to generate a final score from 1.0 to 5.0.
    */
-  calculateRuleBasedScore(leadData: { country?: string; business_type?: string }): number {
+  calculateRuleBasedScore(leadData: any): number {
     // 1. Country Score (1-5)
     const country = (leadData.country || '').trim().toLowerCase();
     const countryScore = SCORING_CONFIG.COUNTRY_SCORES[country] || SCORING_CONFIG.COUNTRY_SCORES['default'];
@@ -48,17 +49,40 @@ export class QualificationService {
     const businessType = (leadData.business_type || '').trim().toLowerCase();
     const businessScore = SCORING_CONFIG.BUSINESS_TYPE_SCORES[businessType] || SCORING_CONFIG.BUSINESS_TYPE_SCORES['default'];
 
-    // Calculate weighted average
-    const finalScore = (countryScore * SCORING_CONFIG.WEIGHTS.COUNTRY) + (businessScore * SCORING_CONFIG.WEIGHTS.BUSINESS_TYPE);
+    // 3. Intent Score (1-5) based on completeness, business email, and spam indicators
+    let intentScore = 1;
+    if (leadData.current_problem && leadData.current_problem.trim().length > 10) intentScore += 1; // Real problem described
+    if (leadData.automation_interest && leadData.automation_interest.trim().length > 0) intentScore += 1; // Specific interest
+    if (leadData.message && leadData.message.trim().length > 5) intentScore += 1; // Left a message
 
-    // Round to 1 decimal place (e.g., 4.4, 3.8)
-    return Math.round(finalScore * 10) / 10;
+    // Business Email Check
+    const email = (leadData.email || '').toLowerCase();
+    const freeDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
+    const isFreeEmail = freeDomains.some(domain => email.includes(domain));
+    if (email && !isFreeEmail) intentScore += 1;
+
+    // Spam / Missing Data Check
+    if (!leadData.email || !leadData.company_name) intentScore -= 2;
+    const spamWords = ['test', 'spam', 'asdf', '1234'];
+    const messageText = (leadData.message || '').toLowerCase() + ' ' + (leadData.full_name || '').toLowerCase();
+    if (spamWords.some(w => messageText.includes(w))) intentScore -= 3;
+
+    intentScore = Math.max(1, Math.min(5, intentScore)); // Clamp between 1 and 5
+
+    // Calculate weighted average
+    const finalScore = 
+      (countryScore * SCORING_CONFIG.WEIGHTS.COUNTRY) + 
+      (businessScore * SCORING_CONFIG.WEIGHTS.BUSINESS_TYPE) + 
+      (intentScore * SCORING_CONFIG.WEIGHTS.INTENT);
+
+    // Round to nearest integer to match Prisma's Int schema
+    return Math.round(finalScore);
   }
 
   /**
    * Asynchronously analyzes a lead using Google Gemini API.
    */
-  async analyzeLeadWithAI(leadId: string, leadData: any): Promise<void> {
+  async analyzeLeadWithAI(leadId: string, leadData: any, ruleBasedScore?: number): Promise<void> {
     try {
       if (!process.env.GEMINI_API_KEY) {
         this.logger.warn('GEMINI_API_KEY is not set. Skipping AI qualification.');
@@ -67,6 +91,10 @@ export class QualificationService {
 
       const prompt = `Anda adalah analis penjualan B2B profesional untuk Atlas, DDTech's AI Workforce Platform.
 Analisis data klien berikut dan berikan wawasan mendalam mengenai potensi klien.
+
+Informasi Sistem:
+- Klien ini mendapatkan Rule-Based Score: ${ruleBasedScore ?? 'N/A'} (skala 1.0 - 5.0).
+- Gunakan skor sistem tersebut sebagai salah satu acuan utama untuk menentukan lead_tier (Tier A/B/C). Skor tinggi (>4.0) mengindikasikan Tier A atau B.
 
 Data Klien:
 ${JSON.stringify(leadData, null, 2)}`;
@@ -83,9 +111,10 @@ ${JSON.stringify(leadData, null, 2)}`;
               fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
               qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
               recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },
-              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Tingkat urgensi" }
+              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Tingkat urgensi" },
+              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Bendera risiko atau data mencurigakan" }
             },
-            required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level"]
+            required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level", "risk_flags"]
           }
         }
       });
