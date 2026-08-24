@@ -7,7 +7,10 @@ import { QualificationService } from '../qualification/qualification.service';
 describe('LeadsService', () => {
   let service: LeadsService;
   let prisma: { lead: { create: jest.Mock } };
-  let qualificationService: { calculateRuleBasedScore: jest.Mock };
+  let qualificationService: {
+    calculateRuleBasedScore: jest.Mock;
+    analyzeLeadWithAI: jest.Mock;
+  };
 
   const dto: CreateLeadDto = {
     full_name: 'John Smith',
@@ -21,7 +24,10 @@ describe('LeadsService', () => {
 
   beforeEach(async () => {
     prisma = { lead: { create: jest.fn() } };
-    qualificationService = { calculateRuleBasedScore: jest.fn().mockReturnValue(55) };
+    qualificationService = {
+      calculateRuleBasedScore: jest.fn().mockReturnValue(55),
+      analyzeLeadWithAI: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -43,5 +49,22 @@ describe('LeadsService', () => {
     expect(qualificationService.calculateRuleBasedScore).toHaveBeenCalledWith(dto);
     expect(prisma.lead.create).toHaveBeenCalledWith({ data: { ...dto, lead_score: 55 } });
     expect(result).toBe(created);
+  });
+
+  it('triggers asynchronous AI analysis after creating the lead', async () => {
+    const created = { id: 'uuid-1', lead_score: 55, ...dto };
+    prisma.lead.create.mockResolvedValue(created);
+
+    await service.createLead(dto);
+
+    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, dto);
+  });
+
+  it('does not let a failed AI analysis reject createLead', async () => {
+    const created = { id: 'uuid-1', lead_score: 55, ...dto };
+    prisma.lead.create.mockResolvedValue(created);
+    qualificationService.analyzeLeadWithAI.mockRejectedValue(new Error('Gemini is down'));
+
+    await expect(service.createLead(dto)).resolves.toBe(created);
   });
 });
