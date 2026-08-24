@@ -24,32 +24,32 @@ describe('QualificationService', () => {
 
   describe('calculateRuleBasedScore', () => {
     it('should calculate max score for Australia and Mortgage Broker', () => {
-      const data = { country: 'Australia', business_type: 'Mortgage Broker', current_problem: 'Manual client onboarding and document collection', automation_interest: 'AI assistant for broker workflow', message: 'We want to explore automation' };
+      const data = { country: 'Australia', business_type: 'Mortgage Broker', current_problem: 'Manual client onboarding and document collection', automation_interest: 'AI assistant for broker workflow', message: 'We want to explore automation', email: 'john@company.com', company_name: 'Company' };
       // Country (5*0.3) + Business (5*0.4) + Intent (5*0.3) = 1.5 + 2.0 + 1.5 = 5.0
       expect(service.calculateRuleBasedScore(data)).toBe(5);
     });
 
     it('should calculate intermediate score for New Zealand and Finance Broker', () => {
-      const data = { country: 'New Zealand', business_type: 'Finance Broker' };
-      // Country (5*0.3) + Business (4*0.4) + Intent (1*0.3) = 1.5 + 1.6 + 0.3 = 3.4
-      expect(service.calculateRuleBasedScore(data)).toBe(3.4);
+      const data = { country: 'New Zealand', business_type: 'Finance Broker', email: 'john@company.com', company_name: 'Company' };
+      // Country (5*0.3) + Business (4*0.4) + Intent (2*0.3) = 1.5 + 1.6 + 0.6 = 3.7 => round to 4
+      expect(service.calculateRuleBasedScore(data)).toBe(4);
     });
 
     it('should handle case insensitivity and extra spaces', () => {
-      const data = { country: '  aUstraliA ', business_type: 'pROFessional services' };
-      // Country (5*0.3) + Business (3*0.4) + Intent (1*0.3) = 1.5 + 1.2 + 0.3 = 3.0
+      const data = { country: '  aUstraliA ', business_type: 'pROFessional services', email: 'john@company.com', company_name: 'Company' };
+      // Country (5*0.3) + Business (3*0.4) + Intent (2*0.3) = 1.5 + 1.2 + 0.6 = 3.3 => round to 3
       expect(service.calculateRuleBasedScore(data)).toBe(3);
     });
 
     it('should provide default minimum score for unknown values', () => {
-      const data = { country: 'Japan', business_type: 'Retail' };
-      // Country (1*0.3) + Business (1*0.4) + Intent (1*0.3) = 0.3 + 0.4 + 0.3 = 1.0
+      const data = { country: 'Japan', business_type: 'Retail', email: 'john@company.com', company_name: 'Company' };
+      // Country (1*0.3) + Business (1*0.4) + Intent (2*0.3) = 0.3 + 0.4 + 0.6 = 1.3 => round to 1
       expect(service.calculateRuleBasedScore(data)).toBe(1);
     });
 
-    it('should handle missing fields', () => {
+    it('should handle missing fields and penalties', () => {
       const data = {};
-      // Default (1*0.3) + (1*0.4) + (1*0.3) = 1.0
+      // Default (1*0.3) + (1*0.4) + Intent (1*0.3) = 1.0
       expect(service.calculateRuleBasedScore(data)).toBe(1);
     });
   });

@@ -49,12 +49,25 @@ export class QualificationService {
     const businessType = (leadData.business_type || '').trim().toLowerCase();
     const businessScore = SCORING_CONFIG.BUSINESS_TYPE_SCORES[businessType] || SCORING_CONFIG.BUSINESS_TYPE_SCORES['default'];
 
-    // 3. Intent Score (1-5) based on how much detail they provided
+    // 3. Intent Score (1-5) based on completeness, business email, and spam indicators
     let intentScore = 1;
-    if (leadData.current_problem && leadData.current_problem.trim().length > 10) intentScore += 2; // Real problem described
+    if (leadData.current_problem && leadData.current_problem.trim().length > 10) intentScore += 1; // Real problem described
     if (leadData.automation_interest && leadData.automation_interest.trim().length > 0) intentScore += 1; // Specific interest
     if (leadData.message && leadData.message.trim().length > 5) intentScore += 1; // Left a message
-    intentScore = Math.min(5, intentScore);
+
+    // Business Email Check
+    const email = (leadData.email || '').toLowerCase();
+    const freeDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
+    const isFreeEmail = freeDomains.some(domain => email.includes(domain));
+    if (email && !isFreeEmail) intentScore += 1;
+
+    // Spam / Missing Data Check
+    if (!leadData.email || !leadData.company_name) intentScore -= 2;
+    const spamWords = ['test', 'spam', 'asdf', '1234'];
+    const messageText = (leadData.message || '').toLowerCase() + ' ' + (leadData.full_name || '').toLowerCase();
+    if (spamWords.some(w => messageText.includes(w))) intentScore -= 3;
+
+    intentScore = Math.max(1, Math.min(5, intentScore)); // Clamp between 1 and 5
 
     // Calculate weighted average
     const finalScore = 
@@ -62,8 +75,8 @@ export class QualificationService {
       (businessScore * SCORING_CONFIG.WEIGHTS.BUSINESS_TYPE) + 
       (intentScore * SCORING_CONFIG.WEIGHTS.INTENT);
 
-    // Round to 1 decimal place (e.g., 4.4, 3.8)
-    return Math.round(finalScore * 10) / 10;
+    // Round to nearest integer to match Prisma's Int schema
+    return Math.round(finalScore);
   }
 
   /**
@@ -98,9 +111,10 @@ ${JSON.stringify(leadData, null, 2)}`;
               fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
               qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
               recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },
-              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Tingkat urgensi" }
+              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Tingkat urgensi" },
+              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Bendera risiko atau data mencurigakan" }
             },
-            required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level"]
+            required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level", "risk_flags"]
           }
         }
       });
