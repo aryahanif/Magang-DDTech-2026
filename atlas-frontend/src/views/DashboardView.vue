@@ -1,37 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
-import MainLayout from '../components/MainLayout.vue' // Impor Layout Utama
+import { ref, onMounted } from 'vue'
+import MainLayout from '../components/MainLayout.vue'
 
 // State untuk animasi dan interaksi
 const showBars = ref(false)
 const maskProgress = ref(0) 
 const hoveredSource = ref<any>(null)
+
+// State untuk posisi Tooltip
 const tooltipX = ref(0)
 const tooltipY = ref(0)
 
-const rawLeads = ref<any[]>([])
-
-const fetchDashboardData = async () => {
-  try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/leads`);
-    rawLeads.value = response.data.data;
-    
-    // Beri sedikit delay agar animasi terlihat jelas saat halaman selesai dimuat
-    setTimeout(() => {
-      showBars.value = true
-      animateNumbers() 
-    }, 150)
-  } catch (error) {
-    console.error("Gagal mengambil data:", error);
-  }
-};
-
 onMounted(() => {
-  fetchDashboardData();
+  setTimeout(() => {
+    showBars.value = true
+    animateNumbers() 
+  }, 150)
 })
 
-// Fungsi animasi pergerakan angka (0 ke target) & animasi sapuan Donut Chart
 const animateNumbers = () => {
   const duration = 1500; 
   let startTimestamp: number | null = null;
@@ -39,15 +25,20 @@ const animateNumbers = () => {
   const step = (timestamp: number) => {
     if (!startTimestamp) startTimestamp = timestamp;
     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    
     const easeOut = 1 - Math.pow(1 - progress, 3); 
 
-    // Animasi sapuan melingkar Donut Chart (0 ke 100)
+    pipelineSteps.value.forEach(item => {
+      item.displayCount = Math.floor(easeOut * item.targetCount).toLocaleString('en-US');
+    });
+
     maskProgress.value = easeOut * 100;
 
     if (progress < 1) {
       window.requestAnimationFrame(step);
     } else {
+      pipelineSteps.value.forEach(item => {
+        item.displayCount = item.targetCount.toLocaleString('en-US');
+      });
       maskProgress.value = 100;
     }
   };
@@ -55,139 +46,55 @@ const animateNumbers = () => {
   window.requestAnimationFrame(step);
 }
 
-// Fungsi untuk memperbarui posisi Tooltip mengikuti kursor
 const updateTooltip = (event: MouseEvent) => {
   tooltipX.value = event.clientX;
   tooltipY.value = event.clientY;
 }
 
-// ==========================================
-// DATA DINAMIS DARI DATABASE
-// ==========================================
+const kpiCards = [
+  { label: 'Tier A leads', value: '12,207', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
+  { label: 'Total Leads', value: '12,482', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
+  { label: 'New Leads This Week', value: '634', trendValue: '+ 12.4%', trendText: 'vs last week', isPositive: true },
+  { label: 'Demo Request', value: '289', trendValue: '- 2.4%', trendText: 'vs last week', isPositive: false },
+  { label: 'Conversion Rate', value: '4.8%', trendValue: '+ 0.6pp', trendText: 'vs last week', isPositive: true }
+]
 
-const kpiCards = computed(() => {
-  const total = rawLeads.value.length;
-  const tierA = rawLeads.value.filter(lead => lead.lead_tier === 'Tier A').length;
-  const newLeads = rawLeads.value.filter(lead => lead.status === 'New Lead').length;
-  const demoReq = rawLeads.value.filter(lead => lead.status === 'Demo' || lead.status === 'Demo Booked').length;
-  const conversionRate = total > 0 ? ((rawLeads.value.filter(lead => lead.status === 'Won').length / total) * 100).toFixed(1) : '0';
+const countryData = [
+  { name: 'Australia', count: 5900, height: 'h-[190px]' },
+  { name: 'New Zealand', count: 3000, height: 'h-[95px]' },
+  { name: 'Indonesia', count: 3600, height: 'h-[115px]' }
+]
 
-  return [
-    { label: 'Tier A leads', value: tierA.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
-    { label: 'Total Leads', value: total.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
-    { label: 'New Leads', value: newLeads.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
-    { label: 'Demo Request', value: demoReq.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: false },
-    { label: 'Conversion Rate', value: `${conversionRate}%`, trendValue: '+ 0pp', trendText: 'Live Data', isPositive: true }
-  ]
-})
+const pipelineSteps = ref([
+  { step: '1', title: 'New Lead', targetCount: 12482, displayCount: '0', percentage: '100% of total', progress: 'w-full' },
+  { step: '2', title: 'Qualified', targetCount: 7310, displayCount: '0', percentage: '59% of total', progress: 'w-[59%]' },
+  { step: '3', title: 'Contacted', targetCount: 4180, displayCount: '0', percentage: '33% of total', progress: 'w-[33%]' },
+  { step: '4', title: 'Demo Booked', targetCount: 1620, displayCount: '0', percentage: '13% of total', progress: 'w-[13%]' },
+  { step: '5', title: 'Proposal', targetCount: 740, displayCount: '0', percentage: '6% of total', progress: 'w-[6%]' },
+  { step: '6', title: 'Won / Lost', targetCount: 598, displayCount: '0', percentage: '5% of total', progress: 'w-[5%]' }
+])
 
-const countryData = computed(() => {
-  const counts: Record<string, number> = { 'Australia': 0, 'New Zealand': 0, 'Indonesia': 0 };
-  
-  rawLeads.value.forEach(lead => {
-    const country = lead.country;
-    if (counts[country] !== undefined) {
-      counts[country]!++;
-    }
-  });
-
-  const maxCount = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, 1);
-
-  return [
-    { name: 'Australia', count: counts['Australia'] || 0, height: `h-[${Math.round(((counts['Australia'] || 0) / maxCount) * 280)}px]` },
-    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: `h-[${Math.round(((counts['New Zealand'] || 0) / maxCount) * 280)}px]` },
-    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: `h-[${Math.round(((counts['Indonesia'] || 0) / maxCount) * 280)}px]` }
-  ];
-})
-
-const pipelineSteps = computed(() => {
-  const total = rawLeads.value.length || 1; 
-  
-  const stepCounts = {
-    'New Lead': 0,
-    'Qualified': 0,
-    'Contacted': 0,
-    'Demo Booked': 0,
-    'Proposal': 0,
-    'Won / Lost': 0
-  }
-
-  rawLeads.value.forEach(lead => {
-    const status = lead.status;
-    if (status === 'New Lead') stepCounts['New Lead']++;
-    else if (status === 'Qualified') stepCounts['Qualified']++;
-    else if (status === 'Contacted') stepCounts['Contacted']++;
-    else if (status === 'Demo' || status === 'Demo Booked') stepCounts['Demo Booked']++;
-    else if (status === 'Proposal') stepCounts['Proposal']++;
-    else if (status === 'Won' || status === 'Lost') stepCounts['Won / Lost']++;
-  });
-
-  return [
-    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'], displayCount: stepCounts['New Lead'].toString(), percentage: `${Math.round((stepCounts['New Lead']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['New Lead']/total)*100)}%]` },
-    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'], displayCount: stepCounts['Qualified'].toString(), percentage: `${Math.round((stepCounts['Qualified']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Qualified']/total)*100)}%]` },
-    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'], displayCount: stepCounts['Contacted'].toString(), percentage: `${Math.round((stepCounts['Contacted']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Contacted']/total)*100)}%]` },
-    { step: '4', title: 'Demo Booked', targetCount: stepCounts['Demo Booked'], displayCount: stepCounts['Demo Booked'].toString(), percentage: `${Math.round((stepCounts['Demo Booked']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Demo Booked']/total)*100)}%]` },
-    { step: '5', title: 'Proposal', targetCount: stepCounts['Proposal'], displayCount: stepCounts['Proposal'].toString(), percentage: `${Math.round((stepCounts['Proposal']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Proposal']/total)*100)}%]` },
-    { step: '6', title: 'Won / Lost', targetCount: stepCounts['Won / Lost'], displayCount: stepCounts['Won / Lost'].toString(), percentage: `${Math.round((stepCounts['Won / Lost']/total)*100)}% of total`, progress: `w-[${Math.round((stepCounts['Won / Lost']/total)*100)}%]` }
-  ]
-})
-
-const sourceData = computed(() => {
-  const total = rawLeads.value.length || 1;
-  const sources: Record<string, number> = { 'Website': 0, 'Outbond AI': 0, 'Referral': 0, 'Events': 0, 'Partners': 0 };
-  
-  rawLeads.value.forEach(lead => {
-    let source = lead.source_page;
-    if (source === 'Outbound') source = 'Outbond AI';
-    else if (source === 'Partner') source = 'Partners';
-    else if (source === 'Event') source = 'Events';
-    else if (source === 'LinkedIn') source = 'Referral'; // mapping linkedin to referral to match categories
-    
-    if (sources[source] !== undefined) {
-      sources[source]!++;
-    } else {
-      sources['Website']!++;
-    }
-  });
-
-  const colors = ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE'];
-  let currentOffset = 0;
-
-  return Object.keys(sources).map((key, index) => {
-    const count = sources[key] || 0;
-    const percentNum = Math.round((count / total) * 100);
-    const dasharray = `${percentNum} ${100 - percentNum}`;
-    const dashoffset = -currentOffset;
-    
-    currentOffset += percentNum;
-    
-    return {
-      label: key,
-      count: count.toLocaleString(),
-      percent: `${percentNum}%`,
-      color: colors[index],
-      dasharray: dasharray,
-      dashoffset: dashoffset.toString()
-    }
-  });
-})
+const sourceData = [
+  { label: 'Website', count: '4,210', percent: '34%', color: '#2563EB', dasharray: '33 67', dashoffset: '0' },
+  { label: 'Outbond AI', count: '3,120', percent: '25%', color: '#3B82F6', dasharray: '24 76', dashoffset: '-34' },
+  { label: 'Referral', count: '2,122', percent: '17%', color: '#60A5FA', dasharray: '16 84', dashoffset: '-59' },
+  { label: 'Events', count: '1,498', percent: '12%', color: '#93C5FD', dasharray: '11 89', dashoffset: '-76' },
+  { label: 'Partners', count: '1,532', percent: '11%', color: '#BFDBFE', dasharray: '10 90', dashoffset: '-88' }
+]
 </script>
 
 <template>
-  <!-- BUNGKUS DENGAN MAINLAYOUT -->
-  <!-- Set active-menu="dashboard" agar Sidebar tahu mana yang harus disorot biru -->
   <MainLayout active-menu="dashboard">
-    
-    <!-- DASHBOARD BODY (Otomatis masuk ke dalam slot MainLayout) -->
-    <main class="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto overflow-x-hidden">
+    <main class="flex-1 p-8 space-y-8 overflow-y-auto">
       
-      <div>
+      <!-- Menambahkan animate-fade-in -->
+      <div class="animate-fade-in">
         <h1 class="text-[32px] font-bold text-[#0F172A]">Overview</h1>
         <p class="text-[16px] text-[#64748B] mt-0.5">Your AI Workforce performance for the last 7 days</p>
       </div>
 
-      <!-- KPI Cards Grid -->
-      <div class="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <!-- KPI Cards Grid (Menambahkan animate-fade-in) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in">
         <div 
           v-for="(card, index) in kpiCards" 
           :key="index" 
@@ -215,111 +122,116 @@ const sourceData = computed(() => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <!-- Leads by Country (Bar Chart) -->
-      <div class="bg-white p-4 md:p-6 rounded-2xl border border-[#E2E8F0] shadow-sm overflow-x-auto">
-        <div class="mb-2">
-          <h2 class="text-[20px] font-bold text-[#0F172A]">Leads by Country</h2>
-          <p class="text-[12px] text-[#64748B]">Distribution across active markets</p>
-        </div>
-
-        <div class="flex mt-4 h-[280px] min-w-[400px]">
-          <div class="flex flex-col justify-between text-[11px] text-[#94A3B8] font-medium pr-4 text-right mb-6">
-            <span>6000</span>
-            <span>4500</span>
-            <span>3000</span>
-            <span>1500</span>
-            <span>0</span>
+      <!-- Grid Container: Berdampingan di Desktop (Menambahkan animate-fade-in) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+        
+        <!-- 1. Leads by Country (Bar Chart) -->
+        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
+          <div class="mb-4">
+            <h2 class="text-[18px] font-bold text-[#0F172A]">Leads by Country</h2>
+            <p class="text-[12px] text-[#64748B]">Distribution across active markets</p>
           </div>
 
-          <div class="flex-1 border-b border-[#E2E8F0] flex items-end justify-around pb-0 mb-6 relative">
-            <div v-for="item in countryData" :key="item.name" class="flex flex-col items-center w-20 relative">
-              <div 
-                class="w-16 bg-[#2563EB] rounded-t-xl transition-all duration-1000 ease-out origin-bottom" 
-                :class="showBars ? item.height : 'h-0'"
-              ></div>
-              <span class="absolute -bottom-6 text-xs text-[#64748B] font-medium whitespace-nowrap">
-                {{ item.name }}
-              </span>
+          <div class="flex-1 flex mt-2 h-[220px]">
+            <div class="flex flex-col justify-between text-[10px] text-[#94A3B8] font-medium pr-3 text-right">
+              <span>6k</span>
+              <span>4.5k</span>
+              <span>3k</span>
+              <span>1.5k</span>
+              <span>0</span>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Leads by Source (Donut Chart) -->
-      <div class="bg-white p-4 md:p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
-        <div class="mb-6">
-          <h2 class="text-[20px] font-bold text-[#0F172A]">Leads by Source</h2>
-          <p class="text-[12px] text-[#64748B]">Where qualified leads originate</p>
-        </div>
-
-        <div class="flex flex-col md:flex-row items-center justify-around gap-8 py-4">
-          <div class="relative w-48 h-48 flex items-center justify-center">
-            <div class="absolute flex flex-col items-center justify-center pointer-events-none">
-              <span class="text-3xl font-bold text-[#0F172A] tracking-tight">{{ rawLeads.length.toLocaleString() }}</span>
-              <span class="text-sm text-[#64748B] font-semibold mt-1">Total</span>
-            </div>
-            
-            <svg viewBox="0 0 44 44" class="w-full h-full -rotate-90">
-              <defs>
-                <mask id="circular-wipe">
-                  <circle cx="22" cy="22" r="15.915" fill="transparent" stroke="white" stroke-width="10" 
-                    :stroke-dasharray="`${maskProgress} 100`" stroke-dashoffset="0"></circle>
-                </mask>
-              </defs>
-
-              <g mask="url(#circular-wipe)">
-                <circle 
-                  v-for="(item, index) in sourceData" 
-                  :key="index"
-                  cx="22" cy="22" r="15.915" fill="transparent" stroke-width="7" 
-                  :stroke="item.color" 
-                  :stroke-dasharray="item.dasharray" 
-                  :stroke-dashoffset="item.dashoffset"
-                  class="transition-opacity duration-300 cursor-pointer"
-                  :class="hoveredSource && hoveredSource !== item ? 'opacity-80' : 'opacity-100'"
-                  @mouseenter="hoveredSource = item" 
-                  @mouseleave="hoveredSource = null"
-                  @mousemove="updateTooltip"
-                ></circle>
-              </g>
-            </svg>
-          </div>
-
-          <div 
-            v-if="hoveredSource" 
-            class="fixed z-50 bg-white px-4 py-2.5 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-gray-100 pointer-events-none transition-opacity duration-200"
-            :style="{ top: `${tooltipY + 15}px`, left: `${tooltipX + 15}px` }"
-          >
-            <span class="text-[13px] text-gray-800 font-medium">
-              {{ hoveredSource.label }} : {{ hoveredSource.count }}
-            </span>
-          </div>
-
-          <div class="space-y-3 w-full max-w-xs relative z-0">
-            <div 
-              v-for="source in sourceData" :key="source.label" 
-              class="flex items-center justify-between text-xs p-1.5 rounded transition-colors cursor-pointer"
-              :class="hoveredSource === source ? 'bg-[#EFF6FF]' : ''"
-              @mouseenter="hoveredSource = source" 
-              @mouseleave="hoveredSource = null"
-              @mousemove="updateTooltip"
-            >
-              <div class="flex items-center gap-2 pointer-events-none">
-                <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: source.color }"></span>
-                <span class="font-medium" :class="hoveredSource === source ? 'text-[#2563EB]' : 'text-[#475569]'">
-                  {{ source.label }}
+            <div class="flex-1 border-b border-[#E2E8F0] flex items-end justify-around pb-0 relative">
+              <div v-for="item in countryData" :key="item.name" class="flex flex-col items-center w-full max-w-[60px] relative group">
+                <div class="absolute -top-8 bg-[#0F172A] text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                  {{ item.count.toLocaleString() }} Leads
+                </div>
+                
+                <div 
+                  class="w-full max-w-[32px] bg-[#2563EB] rounded-t-md transition-all duration-1000 ease-out origin-bottom hover:bg-blue-600" 
+                  :class="showBars ? item.height : 'h-0'"
+                ></div>
+                <span class="absolute -bottom-6 text-[11px] text-[#64748B] font-medium whitespace-nowrap text-center">
+                  {{ item.name }}
                 </span>
               </div>
-              <span class="font-bold text-[#0F172A] pointer-events-none">{{ source.percent }}</span>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- 2. Leads by Source (Donut Chart) -->
+        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
+          <div class="mb-4">
+            <h2 class="text-[18px] font-bold text-[#0F172A]">Leads by Source</h2>
+            <p class="text-[12px] text-[#64748B]">Where qualified leads originate</p>
+          </div>
+
+          <div class="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 py-2">
+            
+            <!-- Donut Chart -->
+            <div class="relative w-40 h-40 flex items-center justify-center flex-shrink-0">
+              
+              <div class="absolute flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
+                <span class="text-2xl font-bold text-[#0F172A] tracking-tight">
+                  {{ hoveredSource ? hoveredSource.count : '12.4k' }}
+                </span>
+                <span class="text-[10px] text-[#64748B] font-semibold mt-0.5">
+                  {{ hoveredSource ? hoveredSource.label : 'Total' }}
+                </span>
+              </div>
+              
+              <svg viewBox="0 0 42 42" class="w-full h-full -rotate-90">
+                <defs>
+                  <mask id="circular-wipe">
+                    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="white" stroke-width="10" 
+                      :stroke-dasharray="`${maskProgress} 100`" stroke-dashoffset="0"></circle>
+                  </mask>
+                </defs>
+
+                <g mask="url(#circular-wipe)">
+                  <circle 
+                    v-for="(item, index) in sourceData" 
+                    :key="index"
+                    cx="21" cy="21" r="15.915" fill="transparent" stroke-width="7" 
+                    :stroke="item.color" 
+                    :stroke-dasharray="item.dasharray" 
+                    :stroke-dashoffset="item.dashoffset"
+                    class="transition-opacity duration-300 cursor-pointer"
+                    :class="hoveredSource && hoveredSource !== item ? 'opacity-80' : 'opacity-100'"
+                    @mouseenter="hoveredSource = item" 
+                    @mouseleave="hoveredSource = null"
+                    @mousemove="updateTooltip"
+                  ></circle>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Legend -->
+            <div class="space-y-2.5 w-full max-w-[180px]">
+              <div 
+                v-for="source in sourceData" :key="source.label" 
+                class="flex items-center justify-between text-[11px] p-1.5 rounded transition-colors cursor-pointer"
+                :class="hoveredSource === source ? 'bg-[#EFF6FF]' : ''"
+                @mouseenter="hoveredSource = source" 
+                @mouseleave="hoveredSource = null"
+                @mousemove="updateTooltip"
+              >
+                <div class="flex items-center gap-2 pointer-events-none">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: source.color }"></span>
+                  <span class="font-medium truncate" :class="hoveredSource === source ? 'text-[#2563EB]' : 'text-[#475569]'">
+                    {{ source.label }}
+                  </span>
+                </div>
+                <span class="font-bold text-[#0F172A] pointer-events-none flex-shrink-0">{{ source.percent }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Pipeline Status Summary -->
-      <div class="bg-white p-4 md:p-6 rounded-2xl border border-[#E2E8F0] shadow-sm">
+      <!-- Pipeline Status Summary (Menambahkan animate-fade-in) -->
+      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm animate-fade-in">
         <div class="mb-6">
           <h2 class="text-[20px] font-bold text-[#0F172A]">Pipeline Status Summary</h2>
           <p class="text-[12px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>
@@ -349,7 +261,6 @@ const sourceData = computed(() => {
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="text-center text-[11px] text-[#94A3B8] pt-4 pb-6">
         © 2026 DDTech. All rights reserved.
       </div>
@@ -357,3 +268,21 @@ const sourceData = computed(() => {
     </main>
   </MainLayout>
 </template>
+
+<style scoped>
+/* CSS Animasi Fade In Seragam */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
