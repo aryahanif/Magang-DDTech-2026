@@ -107,7 +107,7 @@ ${JSON.stringify(leadData, null, 2)}`;
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C"], description: "Kategori tier klien" },
+              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Spam"], description: "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal." },
               fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
               qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
               recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },
@@ -139,7 +139,7 @@ ${JSON.stringify(leadData, null, 2)}`;
 
       this.logger.log(`Berhasil menganalisis lead ${leadId} dengan AI.`);
 
-      if (updatedLead.lead_tier === 'Tier A') {
+      if (updatedLead.lead_tier !== 'Spam') {
         // Fire-and-forget so a slow/failing Resend call never blocks qualification.
         this.emailService
           .sendNewLeadAlert(updatedLead)
