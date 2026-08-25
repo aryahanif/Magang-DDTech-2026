@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class LeadsService {
@@ -10,6 +11,7 @@ export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qualificationService: QualificationService,
+    private readonly emailService: EmailService,
   ) {}
 
   async createLead(data: CreateLeadDto) {
@@ -27,6 +29,11 @@ export class LeadsService {
     // since it isn't known yet at creation time.
     this.qualificationService.analyzeLeadWithAI(lead.id, data, initialScore).catch((error) => {
       this.logger.error('Failed to analyze lead with AI asynchronously', error);
+    });
+
+    // Prospect auto-reply is sent unconditionally, regardless of tier.
+    this.emailService.sendProspectAutoReply(lead).catch((error) => {
+      this.logger.error('Failed to send auto-reply to prospect', error);
     });
 
     return lead;

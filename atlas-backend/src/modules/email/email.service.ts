@@ -48,4 +48,24 @@ export class EmailService {
       throw new Error(`Failed to send new lead alert email: ${error.message}`);
     }
   }
+
+  async sendProspectAutoReply(lead: Lead) {
+    const html = `
+      <p>Hi ${lead.full_name ?? 'there'},</p>
+      <p>Thank you for reaching out to Atlas. We have received your request regarding <strong>${lead.company_name ?? 'your business'}</strong>.</p>
+      <p>Our team is currently reviewing your details to understand how our AI Workforce Platform can best assist you. One of our automation specialists will be in touch with you shortly.</p>
+      <p>Best regards,<br>The Atlas Team</p>
+    `;
+
+    const { error } = await this.resend.emails.send({
+      from: this.emailFrom,
+      to: lead.email,
+      subject: "We've Received Your Request - Atlas AI Platform",
+      html,
+    });
+
+    if (error) {
+      throw new Error(`Failed to send prospect auto-reply email: ${error.message}`);
+    }
+  }
 }
