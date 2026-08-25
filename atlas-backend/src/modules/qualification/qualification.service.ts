@@ -107,7 +107,7 @@ ${JSON.stringify(leadData, null, 2)}`;
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Spam"], description: "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal." },
+              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Disqualified", "Spam"], description: "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal, dan Disqualified untuk data sah yang tidak cocok dengan bisnis." },
               fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
               qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
               recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },
