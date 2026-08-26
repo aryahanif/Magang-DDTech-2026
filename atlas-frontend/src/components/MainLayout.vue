@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-
+import ToastNotification from './ToastNotification.vue'
 defineProps<{
   activeMenu: string
 }>()
@@ -413,6 +413,9 @@ const getIconColor = (menuName: string, currentMenu: string) => {
       </div>
     </div>
   </div>
+  <!-- MODAL LOGOUT GLOBAL (Kode yang sudah ada) -->
+  <div v-if="isLogoutModalOpen"> ... </div>
+  <ToastNotification />
 </template>
 
 <style scoped>
