@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
+import api from '../services/api'
 
 // ==========================================
 // STATE MANAGEMENT
@@ -9,19 +10,15 @@ const activeTab = ref('profile')
 
 // Data: Profile
 const profileForm = ref({
-  fullName: 'Jordan Miles',
-  workEmail: 'jordan.miles@atlas.ai',
-  jobTitle: 'Sales Ops'
+  fullName: '',
+  workEmail: '',
+  jobTitle: ''
 })
 
-// Data: Team Management (Mock)
-const teamMembers = ref([
-  { id: 1, name: 'Jordan Miles', email: 'jordan.miles@atlas.ai', role: 'Super Admin', status: 'Active' },
-  { id: 2, name: 'Aldean', email: 'aldean@atlas.ai', role: 'Sales Rep', status: 'Active' },
-  { id: 3, name: 'Sarah Whitfield', email: 'sarah.w@atlas.ai', role: 'Sales Rep', status: 'Pending' }
-])
+// Data: Team Management
+const teamMembers = ref<any[]>([])
 
-// Data: AI Scoring Rules (Mock)
+// Data: AI Scoring Rules (Stubbed)
 const aiRules = ref({
   autoTiering: true,
   spamDetection: true,
@@ -29,18 +26,84 @@ const aiRules = ref({
   dataEnrichment: true
 })
 
-// Data: Email Integration (Mock)
+// Data: Email Integration (Stubbed)
 const emailSettings = ref({
-  isConnected: true,
-  signature: 'Jordan Miles\nSales Operations | Atlas CRM\n+1 (555) 019-2837'
+  isConnected: false,
+  signature: ''
+})
+
+const isLoading = ref(false)
+
+// ==========================================
+// API CALLS
+// ==========================================
+const fetchSettingsData = async () => {
+  isLoading.value = true
+  try {
+    // 1. Fetch Profile
+    try {
+      const profileRes = await api.get('/api/admin/users/profile')
+      if (profileRes.data && profileRes.data.success) {
+        profileForm.value = profileRes.data.data
+      }
+    } catch (e) {
+      console.warn('Backend API Not Ready: /api/admin/users/profile')
+      // Fallback
+      profileForm.value = { fullName: 'Fallback User', workEmail: 'waiting@backend', jobTitle: 'Developer' }
+    }
+
+    // 2. Fetch Team
+    try {
+      const teamRes = await api.get('/api/admin/users')
+      if (teamRes.data && teamRes.data.success) {
+        teamMembers.value = teamRes.data.data
+      }
+    } catch (e) {
+      console.warn('Backend API Not Ready: /api/admin/users')
+      // Fallback
+      teamMembers.value = [{ id: 1, name: 'Fallback User', email: 'waiting@backend', role: 'Admin', status: 'Active' }]
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchSettingsData()
 })
 
 // ==========================================
 // ACTIONS
 // ==========================================
-const saveProfile = () => alert('Profile Settings Saved!')
-const inviteMember = () => alert('Fitur undangan akan mengirimkan email ke anggota baru!')
-const saveEmailSettings = () => alert('Pengaturan Email & Signature berhasil disimpan!')
+const saveProfile = async () => {
+  try {
+    await api.put('/api/admin/users/profile', profileForm.value)
+    alert('Profile Settings Saved Successfully!')
+  } catch (error) {
+    console.error('Save profile error:', error)
+    alert('Backend API Error: Failed to save profile.')
+  }
+}
+
+const inviteEmail = ref('')
+const inviteMember = async () => {
+  // Simulating an email prompt for simplicity
+  const email = prompt("Enter the email of the new member:")
+  if (!email) return
+  
+  try {
+    await api.post('/api/admin/users/invite', { email })
+    alert('Invitation sent successfully!')
+    await fetchSettingsData()
+  } catch (error) {
+    console.error('Invite member error:', error)
+    alert('Backend API Error: Failed to send invitation.')
+  }
+}
+
+const saveEmailSettings = () => {
+  alert('API Endpoint for Email Settings not yet implemented.')
+}
 </script>
 
 <template>

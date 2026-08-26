@@ -8,12 +8,34 @@ const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const showPassword = ref(false)
+const errorMessage = ref('')
 const router = useRouter()
 
-const handleLogin = () => {
-  router.push('/admin/dashboard')
-  // Nanti ini akan disambungkan ke API backend (Axios/Fetch)
-//   console.log('Mencoba login dengan:', email.value, password.value)
+import api from '../services/api'
+
+const handleLogin = async () => {
+  try {
+    errorMessage.value = ''
+    const response = await api.post('/api/auth/login', {
+      email: email.value,
+      password: password.value
+    })
+
+    if (response.data && response.data.success) {
+      // Simpan token dan data user ke localStorage
+      localStorage.setItem('auth_token', response.data.token)
+      localStorage.setItem('user', JSON.stringify(response.data.user))
+      
+      router.push('/admin/dashboard')
+    }
+  } catch (error: any) {
+    console.error('Login failed:', error)
+    if (error.response && error.response.status === 401) {
+      errorMessage.value = 'Email atau password salah.'
+    } else {
+      errorMessage.value = 'Terjadi kesalahan pada server. Coba lagi nanti.'
+    }
+  }
 }
 </script>
 
@@ -55,6 +77,10 @@ const handleLogin = () => {
         <!-- Form Input -->
         <form @submit.prevent="handleLogin" class="space-y-6 mt-8">
           
+          <div v-if="errorMessage" class="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200">
+            {{ errorMessage }}
+          </div>
+
           <!-- Email -->
           <div>
             <label class="block text-sm font-semibold text-gray-900 mb-2">Email address</label>

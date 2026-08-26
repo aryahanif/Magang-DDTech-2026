@@ -14,14 +14,10 @@ const router = useRouter()
 const isNotificationOpen = ref(false)
 const isNotificationDrawerOpen = ref(false) // State untuk panel laci (drawer) kanan
 
-// Data Dummy Notifikasi (Diperbanyak untuk demo panel laci)
-const notifications = ref([
-  { id: 1, title: 'New Lead Assigned', message: 'Sarah Whitfield has been assigned to you by System.', time: '5m ago', unread: true, icon: 'user' },
-  { id: 2, title: 'AI Qualification Complete', message: 'Kowhai Health scored 92 (Tier A). Ready for review.', time: '1h ago', unread: true, icon: 'sparkles' },
-  { id: 3, title: 'Demo Reminder', message: 'Upcoming demo with Pacific Brokerage in 15 mins.', time: '2h ago', unread: false, icon: 'calendar' },
-  { id: 4, title: 'Weekly Report Ready', message: 'Your AI workforce generated 634 new leads this week.', time: '1d ago', unread: false, icon: 'sparkles' },
-  { id: 5, title: 'Deal Won!', message: 'Bandung Textiles has signed the proposal. Value: $110k.', time: '2d ago', unread: false, icon: 'user' },
-  { id: 6, title: 'System Update', message: 'Atlas CRM has been updated to version 2.4.1.', time: '3d ago', unread: false, icon: 'calendar' }
+// TODO: API Fetch Notifikasi
+// Saat endpoint Notifikasi sudah siap, buat fungsi onMounted(() => fetchNotifications())
+const notifications = ref<any[]>([
+  // Array kosong, siap menampung data dari API backend
 ])
 
 const unreadCount = computed(() => notifications.value.filter(n => n.unread).length)
@@ -49,10 +45,11 @@ const closeNotificationDrawer = () => {
 }
 
 // ==========================================
-// STATE UNTUK USER POPOVER MENU
+// STATE UNTUK USER POPOVER MENU & AUTH
 // ==========================================
 const isUserMenuOpen = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
+const currentUser = ref<any>({ name: 'User', email: '', role: 'Admin', initials: 'U' })
 
 const toggleUserMenu = (event: Event) => {
   event.stopPropagation() 
@@ -69,7 +66,44 @@ const handleClickOutside = (event: MouseEvent) => {
 // STATE UNTUK MODAL LOGOUT & MOBILE MENU
 // ==========================================
 const isLogoutModalOpen = ref(false)
-const openLogoutModal = () => isLogoutModalOpen.value = true
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  
+  // Load user data from localStorage
+  const userData = localStorage.getItem('user')
+  if (userData) {
+    try {
+      const parsed = JSON.parse(userData)
+      currentUser.value = {
+        name: parsed.name || 'User',
+        email: parsed.email || '',
+        role: parsed.role || 'Admin',
+        initials: (parsed.name || 'U').substring(0, 2).toUpperCase()
+      }
+    } catch (e) {
+      console.error('Failed to parse user data')
+    }
+  }
+
+  const savedState = localStorage.getItem('atlas_sidebar_collapsed')
+  if (savedState === 'true') {
+    isSidebarCollapsed.value = true
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// ==========================================
+// LOGOUT
+// ==========================================
+const openLogoutModal = () => {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('user')
+  router.push('/admin/login')
+}
 const closeLogoutModal = () => isLogoutModalOpen.value = false
 const confirmLogout = () => { closeLogoutModal(); router.push('/admin') }
 
@@ -200,14 +234,6 @@ const getIconColor = (menuName: string, currentMenu: string) => {
           </div>
         </div>
 
-        <div class="hidden sm:block w-px h-6 bg-[#E2E8F0] mx-1"></div>
-
-        <!-- TOMBOL LOGOUT -->
-        <button @click="openLogoutModal" class="flex items-center gap-2 text-[#64748B] hover:text-red-600 font-semibold text-[13px] bg-white border border-[#E2E8F0] hover:border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all shadow-sm">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 5 12 10 7" /><line x1="15" y1="12" x2="5" y2="12" /></svg>
-          <span class="hidden sm:block">Log Out</span>
-        </button>
-
       </div>
     </header>
 
@@ -265,8 +291,8 @@ const getIconColor = (menuName: string, currentMenu: string) => {
           <div ref="userMenuRef">
             <div v-if="isUserMenuOpen" class="absolute bottom-full left-4 mb-2 w-52 bg-white border border-[#E2E8F0] shadow-[0_10px_40px_rgba(0,0,0,0.08)] rounded-xl z-50 overflow-hidden animate-fade-in origin-bottom-left transition-colors">
               <div class="px-4 py-3 border-b border-[#E2E8F0] bg-[#F8FAFC]">
-                <p class="text-[13px] font-bold text-[#0F172A] truncate">Aldean Tegar</p>
-                <p class="text-[11px] text-[#64748B] truncate">aldean@atlas.ai</p>
+                <p class="text-[13px] font-bold text-[#0F172A] truncate">{{ currentUser.name }}</p>
+                <p class="text-[11px] text-[#64748B] truncate">{{ currentUser.email }}</p>
               </div>
               <div class="p-1.5">
                 <RouterLink to="/admin/settings" @click="isUserMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium text-[#475569] hover:bg-blue-50 hover:text-[#2563EB] rounded-lg transition-colors">
@@ -281,14 +307,21 @@ const getIconColor = (menuName: string, currentMenu: string) => {
               </div>
             </div>
 
-            <div @click="toggleUserMenu" class="flex items-center gap-3 hover:bg-gray-50 p-2 -m-2 rounded-xl transition-colors cursor-pointer" :class="isVisuallyWide ? '' : 'lg:justify-center'">
-              <div class="w-[40px] h-[40px] rounded-xl bg-[#EFF6FF] text-[#2563EB] font-bold text-[14px] flex items-center justify-center border border-[#BFDBFE] flex-shrink-0 shadow-sm transition-colors">
-                AT
+            <div class="flex items-center justify-between hover:bg-gray-50 p-2 -m-2 rounded-xl transition-colors cursor-pointer group" :class="isVisuallyWide ? 'w-full' : 'lg:justify-center'">
+              <div @click="toggleUserMenu" class="flex items-center gap-3 min-w-0">
+                <div class="w-[40px] h-[40px] rounded-xl bg-[#EFF6FF] text-[#2563EB] font-bold text-[14px] flex items-center justify-center border border-[#BFDBFE] flex-shrink-0 shadow-sm transition-colors">
+                  {{ currentUser.initials }}
+                </div>
+                <div class="flex flex-col truncate" :class="isVisuallyWide ? 'block' : 'lg:hidden'">
+                  <span class="text-[14px] font-bold text-[#0F172A] leading-tight truncate transition-colors">{{ currentUser.name }}</span>
+                  <span class="text-[12px] font-medium text-[#64748B] truncate transition-colors">{{ currentUser.role }}</span>
+                </div>
               </div>
-              <div class="flex flex-col truncate" :class="isVisuallyWide ? 'block' : 'lg:hidden'">
-                <span class="text-[14px] font-bold text-[#0F172A] leading-tight truncate transition-colors">Aldean Tegar</span>
-                <span class="text-[12px] font-medium text-[#64748B] truncate transition-colors">Super Admin</span>
-              </div>
+
+              <!-- TOMBOL LOGOUT -->
+              <button v-if="isVisuallyWide" @click.stop="openLogoutModal" title="Log Out" class="text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-all flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 5 12 10 7" /><line x1="15" y1="12" x2="5" y2="12" /></svg>
+              </button>
             </div>
           </div>
         </div>

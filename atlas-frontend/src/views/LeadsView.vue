@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from 'vue-router';
 import MainLayout from "../components/MainLayout.vue";
+import api from "../services/api";
 
 // Cetak Biru Data (Interface)
 interface Lead {
-  id: number;
+  id: string;
   name: string;
   role: string;
   company: string;
@@ -24,49 +25,78 @@ const handleRowClick = (leadData: any) => {
   router.push(`/admin/leads/${leadData.id}`)
 }
 
-// Data Summary
-const summaryCards = [
-  {
-    title: "Total Leads",
-    value: "12",
-    description: "All active records",
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-  },
-  {
-    title: "Tier A Leads",
-    value: "6",
-    description: "High-fit accounts",
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none" /><path fill="#9CA3AF" d="m8.85 16.825l3.15-1.9l3.15 1.925l-.825-3.6l2.775-2.4l-3.65-.325l-1.45-3.4l-1.45 3.375l-3.65.325l2.775 2.425zm3.15-.723l-3.63 2.192q-.16.079-.297.064q-.136-.016-.265-.094q-.13-.08-.196-.226t-.012-.319l.966-4.11l-3.195-2.77q-.135-.11-.178-.263t.019-.293t.165-.23q.104-.087.28-.118l4.216-.368l1.644-3.892q.068-.165.196-.238T12 5.364t.288.073t.195.238l1.644 3.892l4.215.368q.177.03.281.119q.104.088.166.229q.061.14.018.293t-.178.263l-3.195 2.77l.966 4.11q.056.171-.011.318t-.197.226q-.128.08-.265.095q-.136.015-.296-.064zm0-3.852" /></svg>`,
-  },
-  {
-    title: "Demo Request",
-    value: "2",
-    description: "Scheduled this week",
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
-  },
-  {
-    title: "Open Pipeline Value",
-    value: "$367.5K",
-    description: "Excludes won & lost",
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
-  },
-];
+// Data Summary (Sekarang dinamis dari Database)
+const summaryCards = computed(() => {
+  const total = leadsData.value.length;
+  const tierA = leadsData.value.filter(l => l.tier === 'Tier A').length;
+  const demoReq = leadsData.value.filter(l => l.status === 'Demo' || l.status === 'Demo Booked' || l.status === 'Demo Scheduled').length;
+  const pipelineValue = leadsData.value
+    .filter(l => l.status !== 'Won' && l.status !== 'Lost')
+    .reduce((acc, curr) => acc + (parseInt(curr.value) || 0), 0);
+  
+  // Format angka ke format mata uang ringkas (contoh: $367.5K)
+  const formatValue = (val: number) => {
+    if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
+    return `$${val}`;
+  };
 
-// Data Asli
-const leadsData = ref<Lead[]>([
-  { id: 1, name: "Sarah", role: "Head of Ops", company: "Meridian Logistics", country: "Australia", source: "Website", tier: "Tier A", status: "Demo", value: "Value", updated: "2h ago", isValid: true },
-  { id: 2, name: "Anton", role: "COO", company: "Kowhai Health", country: "New Zealand", source: "Referral", tier: "Tier B", status: "Proposal", value: "60k", updated: "4h ago", isValid: true },
-  { id: 3, name: "Budi", role: "VP Customer", company: "Nusantara Pay", country: "Indonesia", source: "LinkedIn", tier: "Tier B", status: "Qualified", value: "60k", updated: "6h ago", isValid: true },
-  { id: 4, name: "Michael", role: "Director of CX", company: "Southbank Retail", country: "New Zealand", source: "Outbound", tier: "Tier A", status: "Contacted", value: "34k", updated: "Yesterday", isValid: true },
-  { id: 5, name: "Kevin", role: "Founder", company: "Tuia Studio", country: "New Zealand", source: "Website", tier: "Tier C", status: "New Lead", value: "21.5k", updated: "2d ago", isValid: true },
-  { id: 6, name: "Amelia", role: "Head Of Support", company: "Garuda Flight", country: "Indonesia", source: "Partner", tier: "Tier B", status: "Demo", value: "12k", updated: "Yesterday", isValid: true },
-  { id: 7, name: "Putri", role: "CTO", company: "Haliburton", country: "Indonesia", source: "Event", tier: "Tier A", status: "Qualified", value: "50k", updated: "2d ago", isValid: true },
-  { id: 8, name: "Siti", role: "Supervisor", company: "Bandung Textiles", country: "Indonesia", source: "LinkedIn", tier: "Tier B", status: "Won", value: "110k", updated: "3 days ago", isValid: true },
-  { id: 9, name: "Chloe", role: "COO", company: "PT Astra", country: "Indonesia", source: "Outbound", tier: "Tier C", status: "Lost", value: "12k", updated: "4d ago", isValid: true },
-  { id: 10, name: "Jason", role: "GM Commercial", company: "Perth Marine", country: "Australia", source: "Referral", tier: "Tier A", status: "Contacted", value: "17k", updated: "5d ago", isValid: true },
-  { id: 11, name: "Mickey Mouse", role: "Test", company: "Disney", country: "Australia", source: "Website", tier: "Tier C", status: "New Lead", value: "-", updated: "1h ago", isValid: false },
-  { id: 12, name: "hsdjkfhk", role: "-", company: "asdfg", country: "Indonesia", source: "Website", tier: "Tier C", status: "New Lead", value: "-", updated: "2h ago", isValid: false },
-]);
+  return [
+    {
+      title: "Total Leads",
+      value: total.toString(),
+      description: "All active records",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    },
+    {
+      title: "Tier A Leads",
+      value: tierA.toString(),
+      description: "High-fit accounts",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none" /><path fill="#9CA3AF" d="m8.85 16.825l3.15-1.9l3.15 1.925l-.825-3.6l2.775-2.4l-3.65-.325l-1.45-3.4l-1.45 3.375l-3.65.325l2.775 2.425zm3.15-.723l-3.63 2.192q-.16.079-.297.064q-.136-.016-.265-.094q-.13-.08-.196-.226t-.012-.319l.966-4.11l-3.195-2.77q-.135-.11-.178-.263t.019-.293t.165-.23q.104-.087.28-.118l4.216-.368l1.644-3.892q.068-.165.196-.238T12 5.364t.288.073t.195.238l1.644 3.892l4.215.368q.177.03.281.119q.104.088.166.229q.061.14.018.293t-.178.263l-3.195 2.77l.966 4.11q.056.171-.011.318t-.197.226q-.128.08-.265.095q-.136.015-.296-.064zm0-3.852" /></svg>`,
+    },
+    {
+      title: "Demo Request",
+      value: demoReq.toString(),
+      description: "Scheduled this week",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
+    },
+    {
+      title: "Open Pipeline Value",
+      value: formatValue(pipelineValue),
+      description: "Excludes won & lost",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    },
+  ];
+});
+
+// Data Asli dari Backend
+const leadsData = ref<Lead[]>([]);
+
+const fetchLeads = async () => {
+  try {
+    const response = await api.get('/api/leads');
+    if (response.data.success) {
+      leadsData.value = response.data.data.map((lead: any) => ({
+        id: lead.id,
+        name: lead.full_name || lead.email || 'Unknown',
+        role: lead.role || '-',
+        company: lead.company_name || '-',
+        country: lead.country || '-',
+        source: lead.source_page || '-',
+        tier: lead.lead_tier || '-',
+        status: lead.status || 'New Lead',
+        value: lead.lead_score ? `${lead.lead_score}` : '-',
+        updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
+        isValid: lead.fit_status !== 'Invalid'
+      }));
+    }
+  } catch (error) {
+    console.error("Failed to fetch leads from API", error);
+  }
+};
+
+onMounted(() => {
+  fetchLeads();
+});
 
 // ==========================================
 // LOGIKA TABS & FILTER PENCARIAN
@@ -134,7 +164,7 @@ const paginationText = computed(() => {
 // ==========================================
 // LOGIKA SELECT ALL & BULK ACTIONS
 // ==========================================
-const selectedLeads = ref<number[]>([]);
+const selectedLeads = ref<string[]>([]);
 
 const isAllSelected = computed(
   () => filteredLeads.value.length > 0 && selectedLeads.value.length === filteredLeads.value.length
@@ -155,71 +185,81 @@ const deleteSelectedLeads = () => {
 // LOGIKA CRUD TUNGGAL & MODAL FORM
 // ==========================================
 const isModalOpen = ref(false);
-const editingId = ref<number | null>(null);
-const activeDropdownId = ref<number | null>(null);
+const editingId = ref<string | null>(null);
+const activeDropdownId = ref<string | null>(null);
 
 const newLead = ref({
-  name: "", role: "", company: "", country: "Australia", source: "Website", tier: "Tier A", status: "Proposal", value: ""
+  full_name: "", email: "", phone: "", company_name: "", country: "", business_type: "", industry: "",
+  role: "", website_url: "", company_size: "", automation_interest: "", preferred_contact_method: "", 
+  current_problem: "", message: "", tier: "Tier C", status: "New Lead"
 });
 
 const openAddModal = () => {
   editingId.value = null;
-  newLead.value = { name: "", role: "", company: "", country: "Australia", source: "Website", tier: "Tier A", status: "Proposal", value: "" };
+  newLead.value = {
+    full_name: "", email: "", phone: "", company_name: "", country: "", business_type: "", industry: "",
+    role: "", website_url: "", company_size: "", automation_interest: "", preferred_contact_method: "", 
+    current_problem: "", message: "", tier: "Tier C", status: "New Lead"
+  };
   isModalOpen.value = true;
 };
 
-const openEditModal = (lead: Lead) => {
+const openEditModal = async (lead: Lead) => {
   activeDropdownId.value = null;
-  editingId.value = lead.id;
-  newLead.value = { name: lead.name, role: lead.role, company: lead.company, country: lead.country, source: lead.source, tier: lead.tier, status: lead.status, value: lead.value };
+  editingId.value = lead.id.toString();
+  // Fetch full details from backend if needed, but for now we map what we have or leave blank
+  newLead.value = { 
+    full_name: lead.name, 
+    email: (lead as any).email || "", 
+    phone: (lead as any).phone || "", 
+    company_name: lead.company, 
+    country: lead.country, 
+    business_type: (lead as any).business_type || "", 
+    industry: (lead as any).industry || "",
+    role: lead.role, 
+    website_url: (lead as any).website_url || "", 
+    company_size: (lead as any).company_size || "", 
+    automation_interest: (lead as any).automation_interest || "", 
+    preferred_contact_method: (lead as any).preferred_contact_method || "", 
+    current_problem: (lead as any).current_problem || "", 
+    message: (lead as any).message || "", 
+    tier: lead.tier, 
+    status: lead.status
+  };
   isModalOpen.value = true;
 };
 
-const deleteLead = (id: number) => {
-  leadsData.value = leadsData.value.filter((lead) => lead.id !== id);
-  activeDropdownId.value = null;
-  selectedLeads.value = selectedLeads.value.filter((selectedId) => selectedId !== id);
-  if (paginatedLeads.value.length === 0 && currentPage.value > 1) currentPage.value--;
-};
-
-const submitForm = () => {
-  if (editingId.value) {
-    const index = leadsData.value.findIndex((l) => l.id === editingId.value);
-    if (index !== -1) {
-      const oldData = leadsData.value[index];
-      if (oldData) {
-        leadsData.value.splice(index, 1, {
-          id: oldData.id,
-          isValid: oldData.isValid,
-          name: newLead.value.name,
-          role: newLead.value.role || "-",
-          company: newLead.value.company,
-          country: newLead.value.country,
-          source: newLead.value.source,
-          tier: newLead.value.tier,
-          status: newLead.value.status,
-          value: newLead.value.value,
-          updated: "Just now",
-        });
-      }
+const deleteLead = async (id: string) => {
+  if (confirm('Are you sure you want to delete this lead?')) {
+    try {
+      await api.delete(`/api/leads/${id}`);
+      fetchLeads(); // refresh
+    } catch (error) {
+      console.error("Failed to delete lead", error);
     }
-  } else {
-    const newId = leadsData.value.length ? Math.max(...leadsData.value.map((l) => l.id)) + 1 : 1;
-    leadsData.value.unshift({
-      id: newId,
-      name: newLead.value.name || "Unknown",
-      role: newLead.value.role || "-",
-      company: newLead.value.company || "-",
-      country: newLead.value.country,
-      source: newLead.value.source,
-      tier: newLead.value.tier,
-      status: newLead.value.status,
-      value: newLead.value.value || "-",
-      updated: "Just now",
-      isValid: true 
-    });
   }
-  closeModal();
+  activeDropdownId.value = null;
+};
+
+const submitForm = async () => {
+  try {
+    const payload = {
+      ...newLead.value,
+      lead_tier: newLead.value.tier // Map to DB column if needed
+    };
+
+    if (editingId.value) {
+      await api.patch(`/api/leads/${editingId.value}`, payload);
+    } else {
+      await api.post('/api/leads', payload);
+    }
+    
+    closeModal();
+    fetchLeads(); // Refresh list after save
+  } catch (error) {
+    console.error("Failed to save lead", error);
+    alert("Failed to save lead. Please check the console.");
+  }
 };
 
 const closeModal = () => {
@@ -357,8 +397,8 @@ const getStatusClass = (status: string) => {
           </div>
         </div>
 
-        <!-- Table View -->
-        <div class="overflow-x-auto min-h-[300px]">
+        <!-- Table Container -->
+        <div class="bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-visible min-h-75">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="border-b border-[#E2E8F0] bg-white">
@@ -436,26 +476,73 @@ const getStatusClass = (status: string) => {
   <!-- MODAL (CREATE & UPDATE LEAD) -->
   <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
     <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-[480px] p-8 overflow-y-auto max-h-[90vh] animate-fade-in">
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-175 p-8 overflow-y-auto max-h-[90vh] animate-fade-in">
       <div class="mb-6">
         <h2 class="text-[26px] font-bold text-black tracking-tight leading-none mb-1">{{ editingId ? "Edit lead" : "Add new lead" }}</h2>
       </div>
       <form @submit.prevent="submitForm" class="space-y-4">
-        <div><label class="block text-[15px] font-bold text-black mb-1.5">Full Name</label><input v-model="newLead.name" type="text" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-[14px]" /></div>
-        <div><label class="block text-[15px] font-bold text-black mb-1.5">Company</label><input v-model="newLead.company" type="text" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-[14px]" /></div>
         
-        <div class="flex gap-4">
-            <div class="w-1/2">
-                <label class="block text-[15px] font-bold text-black mb-1.5">Tier</label>
-                <select v-model="newLead.tier" class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-[14px]"><option>Tier A</option><option>Tier B</option><option>Tier C</option></select>
-            </div>
-            <div class="w-1/2">
-                <label class="block text-[15px] font-bold text-black mb-1.5">Status</label>
-                <select v-model="newLead.status" class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-[14px]"><option>New Lead</option><option>Qualified</option><option>Demo</option></select>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Full Name</label><input v-model="newLead.full_name" type="text" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Email</label><input v-model="newLead.email" type="email" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Phone</label><input v-model="newLead.phone" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Company Name</label><input v-model="newLead.company_name" type="text" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Role</label><input v-model="newLead.role" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Website URL</label><input v-model="newLead.website_url" type="url" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Country</label>
+            <select v-model="newLead.country" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option value="">Select country</option>
+              <option value="australia">Australia</option>
+              <option value="newzealand">New Zealand</option>
+              <option value="Indonesia">Indonesia</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Business Type</label>
+            <select v-model="newLead.business_type" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option value="">Select business type</option>
+              <option value="B2B">B2B (Business to Business)</option>
+              <option value="B2C">B2C (Business to Consumer)</option>
+              <option value="B2B2C">B2B2C</option>
+            </select>
+          </div>
+
+          <div><label class="block text-[13px] font-bold text-black mb-1.5">Industry</label><input v-model="newLead.industry" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Company Size</label>
+            <select v-model="newLead.company_size" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option value="">Select size</option>
+              <option value="1-10">1-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="51-200">51-200 employees</option>
+              <option value="201-500">201-500 employees</option>
+              <option value="500+">500+ employees</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Tier (Internal)</label>
+            <select v-model="newLead.tier" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option>Tier A</option><option>Tier B</option><option>Tier C</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Status (Internal)</label>
+            <select v-model="newLead.status" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option>New Lead</option><option>Qualified</option><option>Contacted</option><option>Demo</option><option>Proposal</option><option>Won</option><option>Lost</option>
+            </select>
+          </div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+        <div><label class="block text-[13px] font-bold text-black mb-1.5">Current Problem</label><textarea v-model="newLead.current_problem" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]"></textarea></div>
+        <div><label class="block text-[13px] font-bold text-black mb-1.5">Message / Note</label><textarea v-model="newLead.message" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]"></textarea></div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
           <button type="button" @click="closeModal" class="px-5 py-2 border border-gray-300 rounded-lg text-[14px] font-bold hover:bg-gray-50 transition">Cancel</button>
           <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">{{ editingId ? "Save changes" : "Add lead" }}</button>
         </div>

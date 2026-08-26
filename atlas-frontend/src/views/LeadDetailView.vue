@@ -1,106 +1,63 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MainLayout from '../components/MainLayout.vue'
+import api from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
 const leadId = route.params.id
 
 // ==========================================
-// 1. DATA DUMMY DEFAULT 
+// 1. STATE MANAGEMENT
 // ==========================================
-const defaultLead = {
-  id: leadId,
-  full_name: 'Sarah Whitfield',
-  email: 'sarah@meridianlogistics.com.au',
-  phone: '+61 412 345 678',
-  company_name: 'Meridian Logistics',
-  country: 'Australia',
-  business_type: 'Mortgage Broker',
-  industry: 'Finance & Logistics',
-  role: 'Head of Operations',
-  website_url: 'https://meridianlogistics.com.au',
-  company_size: '51-200',
-  current_problem: 'Manual client onboarding and document collection is taking too much time.',
-  automation_interest: 'AI assistant for broker workflow and document parsing.',
-  preferred_contact_method: 'Email',
-  message: 'We want to explore automation for our intake process.',
-  source_page: '/requestdemo',
-  utm_source: 'linkedin',
-  consent_status: true,
-  created_at: '2026-08-20T10:00:00Z',
-  
-  // AI Qualification Fields
-  lead_score: 86,
-  lead_tier: 'Tier A',
-  fit_status: 'Strong fit',
-  qualification_summary: 'Australian mortgage broker firm seeking automation for client intake and document processing. Strong fit for Atlas AI Workforce Platform.',
-  recommended_next_action: 'Schedule discovery call within 24 hours.',
-  risk_flags: ['Needs budget confirmation', 'No employee count provided'],
-  
-  // CRM Fields
-  status: 'Demo Scheduled',
-  assigned_owner: 'AC (Aldean)',
-  next_follow_up_at: '2026-08-22T14:00:00Z',
-
-  // Notes & Activity
-  notes: [
-    { id: 1, note: 'Lead requested a demo via LinkedIn campaign.', created_by: 'System', created_at: '2026-08-20T10:05:00Z' },
-    { id: 2, note: 'Called the office, spoke with Sarah. Very interested in document parsing.', created_by: 'AC (Aldean)', created_at: '2026-08-20T15:30:00Z' }
-  ],
-  activity_logs: [
-    { id: 1, type: 'lead_created', description: 'Lead submitted via website form.', created_at: '2026-08-20T10:00:00Z' },
-    { id: 2, type: 'ai_qualified', description: 'AI assigned Tier A with score 86.', created_at: '2026-08-20T10:00:05Z' },
-    { id: 3, type: 'status_changed', description: 'Status changed from New Lead to Demo Scheduled.', created_at: '2026-08-20T15:35:00Z' },
-    { id: 4, type: 'note_added', description: 'Internal note added by AC.', created_at: '2026-08-20T15:30:00Z' }
-  ]
-}
-
-// ==========================================
-// 2. LOGIKA DINAMIS 
-// ==========================================
-const getInitialData = () => {
-  const storedData = sessionStorage.getItem('selectedLead')
-  if (storedData) {
-    try {
-      const parsed = JSON.parse(storedData)
-      
-      // Jika data dari tabel LeadsView (struktur lama: name, company, tier, status)
-      // Mapping ke struktur LeadDetailView
-      if (parsed.name && !parsed.full_name) {
-        return {
-          ...defaultLead, // Pakai semua data default sebagai base
-          id: parsed.id || defaultLead.id,
-          full_name: parsed.name || defaultLead.full_name,
-          company_name: parsed.company || defaultLead.company_name,
-          role: parsed.role || defaultLead.role,
-          country: parsed.country || defaultLead.country,
-          lead_tier: parsed.tier || defaultLead.lead_tier,
-          status: parsed.status || defaultLead.status,
-          source: parsed.source || defaultLead.utm_source,
-        }
-      }
-      
-      // Jika data sudah lengkap (format baru)
-      if (parsed.full_name) {
-        return parsed
-      }
-    } catch (e) {
-      console.error('Failed to parse stored lead data', e)
-    }
-  }
-  return defaultLead
-}
-
-const lead = ref<any>(getInitialData())
-
-// ==========================================
-// 3. UI STATE & FUNCTIONS (Tanpa API)
-// ==========================================
+const lead = ref<any>({
+  notes: [],
+  activity_logs: []
+})
+const isLoading = ref(true)
+const errorMessage = ref('')
 const isEditingSummary = ref(false)
 const newNote = ref('')
 
+// ==========================================
+// 2. API CALLS
+// ==========================================
+const fetchLeadDetail = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const response = await api.get(`/api/admin/leads/${leadId}`)
+    if (response.data && response.data.success) {
+      lead.value = response.data.data
+    } else {
+      errorMessage.value = 'Failed to load lead details.'
+    }
+  } catch (error) {
+    console.error('Error fetching lead detail:', error)
+    errorMessage.value = 'API Error: Failed to load lead details.'
+    
+    // TEMPORARY FALLBACK (To prevent breaking the UI completely while backend is not ready)
+    lead.value = {
+      id: leadId,
+      full_name: 'Backend API Not Ready',
+      email: 'waiting@backend.com',
+      notes: [],
+      activity_logs: [],
+      status: 'New Lead'
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchLeadDetail()
+})
+
+// ==========================================
+// 3. UI FUNCTIONS
+// ==========================================
 const formatDate = (dateString: string | null) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
@@ -110,34 +67,36 @@ const formatDate = (dateString: string | null) => {
   })
 }
 
-const updateStatus = (newStatus: string) => {
+const updateStatus = async (newStatus: string) => {
+  const previousStatus = lead.value.status
   lead.value.status = newStatus
-  lead.value.activity_logs.unshift({
-    id: Date.now(),
-    type: 'status_changed',
-    description: `Status diubah menjadi ${newStatus}.`,
-    created_at: new Date().toISOString()
-  })
+  
+  try {
+    await api.patch(`/api/admin/leads/${leadId}`, { status: newStatus })
+    // Refresh to get new activity logs
+    await fetchLeadDetail()
+  } catch (error) {
+    console.error('Failed to update status:', error)
+    lead.value.status = previousStatus // Revert on fail
+    alert('Backend API Error: Failed to update status.')
+  }
 }
 
-const submitNote = () => {
+const submitNote = async () => {
   if (!newNote.value.trim()) return
   
-  lead.value.notes.unshift({
-    id: Date.now(),
-    note: newNote.value,
-    created_by: 'AC (Aldean)',
-    created_at: new Date().toISOString()
-  })
+  const noteText = newNote.value
+  newNote.value = '' // Optimistic UI clear
   
-  lead.value.activity_logs.unshift({
-    id: Date.now(),
-    type: 'note_added',
-    description: 'Catatan internal ditambahkan.',
-    created_at: new Date().toISOString()
-  })
-  
-  newNote.value = ''
+  try {
+    await api.post(`/api/admin/leads/${leadId}/notes`, { note: noteText })
+    // Refresh to get new notes and activity logs
+    await fetchLeadDetail()
+  } catch (error) {
+    console.error('Failed to submit note:', error)
+    newNote.value = noteText // Revert on fail
+    alert('Backend API Error: Failed to submit note.')
+  }
 }
 
 const toggleEditSummary = () => {

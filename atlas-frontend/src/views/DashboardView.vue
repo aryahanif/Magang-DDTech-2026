@@ -12,10 +12,12 @@ const tooltipX = ref(0)
 const tooltipY = ref(0)
 
 onMounted(() => {
-  setTimeout(() => {
-    showBars.value = true
-    animateNumbers() 
-  }, 150)
+  fetchDashboardData().then(() => {
+    setTimeout(() => {
+      showBars.value = true
+      animateNumbers() 
+    }, 150)
+  })
 })
 
 const animateNumbers = () => {
@@ -51,36 +53,132 @@ const updateTooltip = (event: MouseEvent) => {
   tooltipY.value = event.clientY;
 }
 
-const kpiCards = [
-  { label: 'Tier A leads', value: '12,207', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
-  { label: 'Total Leads', value: '12,482', trendValue: '+ 3.1%', trendText: 'vs last week', isPositive: true },
-  { label: 'New Leads This Week', value: '634', trendValue: '+ 12.4%', trendText: 'vs last week', isPositive: true },
-  { label: 'Demo Request', value: '289', trendValue: '- 2.4%', trendText: 'vs last week', isPositive: false },
-  { label: 'Conversion Rate', value: '4.8%', trendValue: '+ 0.6pp', trendText: 'vs last week', isPositive: true }
-]
+import { computed } from 'vue'
+import api from '../services/api'
 
-const countryData = [
-  { name: 'Australia', count: 5900, height: 'h-[190px]' },
-  { name: 'New Zealand', count: 3000, height: 'h-[95px]' },
-  { name: 'Indonesia', count: 3600, height: 'h-[115px]' }
-]
+// Data state holding backend response
+const dashboardData = ref<any>({
+  total_leads: 0,
+  new_leads_this_week: 0,
+  tier_a_leads: 0,
+  demo_requests: 0,
+  conversion_rate: 0,
+  leads_by_country: { Australia: 0, 'New Zealand': 0, Indonesia: 0 },
+  leads_by_source: { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 },
+  pipeline_summary: {
+    'New Lead': 0,
+    Qualified: 0,
+    Contacted: 0,
+    'Demo Booked': 0,
+    Proposal: 0,
+    'Won / Lost': 0
+  }
+})
 
-const pipelineSteps = ref([
-  { step: '1', title: 'New Lead', targetCount: 12482, displayCount: '0', percentage: '100% of total', progress: 'w-full' },
-  { step: '2', title: 'Qualified', targetCount: 7310, displayCount: '0', percentage: '59% of total', progress: 'w-[59%]' },
-  { step: '3', title: 'Contacted', targetCount: 4180, displayCount: '0', percentage: '33% of total', progress: 'w-[33%]' },
-  { step: '4', title: 'Demo Booked', targetCount: 1620, displayCount: '0', percentage: '13% of total', progress: 'w-[13%]' },
-  { step: '5', title: 'Proposal', targetCount: 740, displayCount: '0', percentage: '6% of total', progress: 'w-[6%]' },
-  { step: '6', title: 'Won / Lost', targetCount: 598, displayCount: '0', percentage: '5% of total', progress: 'w-[5%]' }
+const fetchDashboardData = async () => {
+  try {
+    const response = await api.get('/api/admin/dashboard');
+    if (response.data && response.data.success) {
+      // Expecting backend to provide exactly what the PDF defines
+      dashboardData.value = response.data.data;
+      updatePipelineSteps();
+    }
+  } catch (error) {
+    console.warn("Backend API Not Ready: /api/admin/dashboard. Using fallback data.", error);
+    // FALLBACK DATA (To prevent UI from breaking completely)
+    dashboardData.value = {
+      total_leads: 152,
+      new_leads_this_week: 24,
+      tier_a_leads: 45,
+      demo_requests: 12,
+      conversion_rate: 18.5,
+      leads_by_country: { Australia: 80, 'New Zealand': 40, Indonesia: 32 },
+      leads_by_source: { Website: 70, 'Outbound AI': 40, Referral: 20, Events: 12, Partners: 10 },
+      pipeline_summary: {
+        'New Lead': 45,
+        Qualified: 30,
+        Contacted: 25,
+        'Demo Booked': 15,
+        Proposal: 10,
+        'Won / Lost': 27
+      }
+    };
+    updatePipelineSteps();
+  }
+}
+
+const kpiCards = computed(() => {
+  const data = dashboardData.value;
+  return [
+    { label: 'Tier A leads', value: data.tier_a_leads.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
+    { label: 'Total Leads', value: data.total_leads.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
+    { label: 'New Leads', value: data.new_leads_this_week.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
+    { label: 'Demo Request', value: data.demo_requests.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: false },
+    { label: 'Conversion Rate', value: `${data.conversion_rate}%`, trendValue: '+ 0pp', trendText: 'Live Data', isPositive: true }
+  ]
+})
+
+const countryData = computed(() => {
+  const counts = dashboardData.value.leads_by_country || {};
+  const maxCount = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, 1);
+
+  return [
+    { name: 'Australia', count: counts['Australia'] || 0, height: `h-[${Math.round(((counts['Australia'] || 0) / maxCount) * 190)}px]` },
+    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: `h-[${Math.round(((counts['New Zealand'] || 0) / maxCount) * 190)}px]` },
+    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: `h-[${Math.round(((counts['Indonesia'] || 0) / maxCount) * 190)}px]` }
+  ];
+})
+
+const pipelineSteps = ref<any[]>([
+  { step: '1', title: 'New Lead', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
+  { step: '2', title: 'Qualified', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
+  { step: '3', title: 'Contacted', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
+  { step: '4', title: 'Demo Booked', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
+  { step: '5', title: 'Proposal', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
+  { step: '6', title: 'Won / Lost', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' }
 ])
 
-const sourceData = [
-  { label: 'Website', count: '4,210', percent: '34%', color: '#2563EB', dasharray: '33 67', dashoffset: '0' },
-  { label: 'Outbond AI', count: '3,120', percent: '25%', color: '#3B82F6', dasharray: '24 76', dashoffset: '-34' },
-  { label: 'Referral', count: '2,122', percent: '17%', color: '#60A5FA', dasharray: '16 84', dashoffset: '-59' },
-  { label: 'Events', count: '1,498', percent: '12%', color: '#93C5FD', dasharray: '11 89', dashoffset: '-76' },
-  { label: 'Partners', count: '1,532', percent: '11%', color: '#BFDBFE', dasharray: '10 90', dashoffset: '-88' }
-]
+const updatePipelineSteps = () => {
+  const total = dashboardData.value.total_leads || 1; 
+  const stepCounts = dashboardData.value.pipeline_summary || {
+    'New Lead': 0, 'Qualified': 0, 'Contacted': 0, 'Demo Booked': 0, 'Proposal': 0, 'Won / Lost': 0
+  }
+
+  pipelineSteps.value = [
+    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}%]` },
+    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}%]` },
+    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}%]` },
+    { step: '4', title: 'Demo Booked', targetCount: stepCounts['Demo Booked'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Demo Booked'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Demo Booked'] || 0)/total)*100)}%]` },
+    { step: '5', title: 'Proposal', targetCount: stepCounts['Proposal'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Proposal'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Proposal'] || 0)/total)*100)}%]` },
+    { step: '6', title: 'Won / Lost', targetCount: stepCounts['Won / Lost'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Won / Lost'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Won / Lost'] || 0)/total)*100)}%]` }
+  ]
+}
+
+const sourceData = computed(() => {
+  const total = dashboardData.value.total_leads || 1;
+  const sources = dashboardData.value.leads_by_source || { 'Website': 0, 'Outbound AI': 0, 'Referral': 0, 'Events': 0, 'Partners': 0 };
+
+  const colors = ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE'];
+  let currentOffset = 0;
+
+  return Object.keys(sources).map((key, index) => {
+    const count = sources[key] || 0;
+    const percentNum = Math.round((count / total) * 100);
+    const dasharray = `${percentNum} ${100 - percentNum}`;
+    const dashoffset = -currentOffset;
+    
+    currentOffset += percentNum;
+    
+    return {
+      label: key,
+      count: count.toLocaleString(),
+      percent: `${percentNum}%`,
+      color: colors[index],
+      dasharray: dasharray,
+      dashoffset: dashoffset.toString()
+    }
+  });
+})
 </script>
 
 <template>

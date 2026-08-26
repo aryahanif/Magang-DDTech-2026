@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
+import api from '../services/api'
 
 // ==========================================
-// 1. TIPE DATA & DUMMY DATA GENERATOR
+// 1. TIPE DATA & API FETCH
 // ==========================================
 interface Deal {
-  id: number
-  lead_id: number
+  id: string
+  lead_id: string
   name: string
   company: string
-  tier: 'Tier A' | 'Tier B' | 'Tier C'
+  tier: 'Tier A' | 'Tier B' | 'Tier C' | string
   value: number
   owner: string
   stage: 'New Lead' | 'Qualified' | 'Contacted' | 'Demo Scheduled' | 'Proposal Sent' | 'Won' | 'Lost'
@@ -19,47 +20,36 @@ interface Deal {
 
 type StageKey = Deal['stage']
 
-const generateDummyDeals = (count: number): Deal[] => {
-  const firstNames = ['James', 'Sarah', 'David', 'Jessica', 'Michael', 'Rachel', 'Tom', 'Elena', 'John', 'Alice', 'Robert', 'Linda', 'William', 'Karen', 'Richard']
-  const lastNames = ['Whitfield', 'Miller', 'Tan', 'Chang', 'Green', 'Hardy', 'Rostova', 'Doe', 'Smith', 'Johnson', 'Brown', 'Davis', 'Wilson', 'Moore', 'Taylor']
-  const companyPrefixes = ['Meridian', 'Aussie', 'Pacific', 'Apex', 'Summit', 'Horizon', 'Nordic', 'Tech', 'Global', 'Prime', 'Nexus', 'Alpha']
-  const companySuffixes = ['Logistics', 'Finance Group', 'Brokerage', 'Lending', 'Solutions', 'Tech', 'Express', 'Nova', 'Build', 'Industries', 'Systems']
-  const stagesList: StageKey[] = ['New Lead', 'Qualified', 'Contacted', 'Demo Scheduled', 'Proposal Sent', 'Won', 'Lost']
-  const ownersList = ['AC (Aldean)', 'JM (Jordan)']
-  const tiersList: ('Tier A' | 'Tier B' | 'Tier C')[] = ['Tier A', 'Tier B', 'Tier C']
+const allDeals = ref<Deal[]>([])
 
-  const deals: Deal[] = []
-  
-  for (let i = 1; i <= count; i++) {
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]!
-    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]!
-    const prefix = companyPrefixes[Math.floor(Math.random() * companyPrefixes.length)]!
-    const suffix = companySuffixes[Math.floor(Math.random() * companySuffixes.length)]!
-    
-    const stage = stagesList[Math.floor(Math.random() * stagesList.length)]!
-    const owner = ownersList[Math.floor(Math.random() * ownersList.length)]!
-    const tier = tiersList[Math.floor(Math.random() * tiersList.length)]!
-    
-    const value = Math.floor(Math.random() * 95 + 5) * 1000 
-    const day = Math.floor(Math.random() * 28) + 1
-    const dateStr = `2026-08-${day.toString().padStart(2, '0')}`
+const fetchDeals = async () => {
+  try {
+    const response = await api.get('/api/leads')
+    if (response.data.success) {
+      allDeals.value = response.data.data.map((lead: any) => {
+        let stageStr = lead.status || 'New Lead';
+        if (stageStr === 'Demo' || stageStr === 'Demo Booked') stageStr = 'Demo Scheduled';
+        if (stageStr === 'Proposal') stageStr = 'Proposal Sent';
 
-    deals.push({
-      id: i,
-      lead_id: 100 + i,
-      name: `${firstName} ${lastName}`,
-      company: `${prefix} ${suffix}`,
-      tier: tier,
-      value: value,
-      owner: owner,
-      stage: stage,
-      updated_at: dateStr
-    })
+        return {
+          id: lead.id,
+          lead_id: lead.id,
+          name: lead.full_name || lead.email || 'Unknown',
+          company: lead.company_name || 'Unknown Company',
+          tier: lead.lead_tier || 'Tier C',
+          value: lead.lead_score ? lead.lead_score * 1000 : 0, 
+          owner: lead.assigned_owner || 'Unassigned',
+          stage: stageStr as StageKey,
+          updated_at: new Date(lead.updated_at || lead.created_at).toISOString().slice(0, 10)
+        }
+      })
+    }
+  } catch(error) {
+    console.error("Failed to fetch leads for pipeline", error)
   }
-  return deals
 }
 
-const allDeals = ref<Deal[]>(generateDummyDeals(100))
+onMounted(() => fetchDeals())
 
 const stages: { key: StageKey; label: string; color: string }[] = [
   { key: 'New Lead', label: 'New Lead', color: '#64748B' },
@@ -98,7 +88,7 @@ const stageLimits = ref<Record<StageKey, number>>({
 })
 
 const loadMore = (stageKey: StageKey) => {
-  stageLimits.value[stageKey] += 10
+  stageLimits.value[stageKey] = (stageLimits.value[stageKey] || 10) + 10
 }
 
 // ==========================================
@@ -133,18 +123,30 @@ const getStageColor = (stageKey: StageKey) => {
 // ==========================================
 // 5. DRAG AND DROP LOGIC
 // ==========================================
-const draggedDealId = ref<number | null>(null)
+const draggedDealId = ref<string | null>(null)
 
-const handleDragStart = (dealId: number) => {
+const handleDragStart = (dealId: string) => {
   draggedDealId.value = dealId
 }
 
-const handleDrop = (targetStage: Deal['stage']) => {
+const handleDrop = async (targetStage: Deal['stage']) => {
   if (draggedDealId.value === null) return
   const targetDeal = allDeals.value.find(d => d.id === draggedDealId.value)
   if (targetDeal) {
+    const previousStage = targetDeal.stage;
     targetDeal.stage = targetStage
     targetDeal.updated_at = new Date().toISOString().slice(0, 10)
+
+    let backendStatus = targetStage as string;
+    if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo';
+    if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal';
+
+    try {
+      await api.patch(`/api/leads/${targetDeal.id}`, { status: backendStatus })
+    } catch(error) {
+      console.error("Failed to update status in DB", error)
+      targetDeal.stage = previousStage // revert on failure
+    }
   }
   draggedDealId.value = null
 }
@@ -157,7 +159,7 @@ const handleDrop = (targetStage: Deal['stage']) => {
       <!-- ==========================================
            HEADER & FILTER BAR 
       ========================================== -->
-      <div class="p-6 pb-4 border-b border-[#E2E8F0] bg-white flex-shrink-0 shadow-sm z-10">
+      <div class="p-6 pb-4 border-b border-[#E2E8F0] bg-white shrink-0 shadow-sm z-10">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div>
             <h1 class="text-[32px] font-bold text-[#0F172A]">Sales Pipeline</h1>
@@ -192,12 +194,12 @@ const handleDrop = (targetStage: Deal['stage']) => {
 
         <!-- QUICK FILTERS -->
         <div class="flex flex-wrap items-center gap-3">
-          <div class="relative flex-1 min-w-[200px] max-w-xs">
+          <div class="relative flex-1 min-w-50 max-w-xs">
             <input 
               v-model="searchQuery"
               type="text" 
-              placeholder="Cari deal / perusahaan..."
-              class="w-full text-[13px] border border-[#E2E8F0] rounded-lg pl-9 pr-3 py-2 bg-[#F8FAFC] focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#2563EB] transition-colors"
+              placeholder="Search by name or company..."
+              class="w-full text-[13px] border border-[#E2E8F0] rounded-lg pl-9 pr-3 py-2 bg-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors"
             />
             <svg class="w-4 h-4 text-[#94A3B8] absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </div>
@@ -220,7 +222,6 @@ const handleDrop = (targetStage: Deal['stage']) => {
       <!-- ==========================================
            TAMPILAN KANBAN (DRAG & DROP)
       ========================================== -->
-      <!-- Menambahkan class animate-fade-in di sini -->
       <div v-if="viewMode === 'kanban'" class="flex-1 overflow-x-auto p-6 flex gap-4 items-start custom-scrollbar animate-fade-in">
         <!-- COLUMN PER STAGE -->
         <div 
@@ -229,10 +230,10 @@ const handleDrop = (targetStage: Deal['stage']) => {
           @dragover.prevent
           @drop="handleDrop(stage.key)"
           :class="[
-            'bg-[#F1F5F9]/80 rounded-xl border border-[#E2E8F0] flex flex-col max-h-full transition-all duration-300 ease-in-out',
-            collapsedStages[stage.key] ? 'w-[60px] flex-shrink-0 items-center py-4 cursor-pointer hover:bg-[#E2E8F0]' : 'w-[300px] flex-shrink-0 p-3'
+            'flex flex-col bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl overflow-hidden transition-all duration-300',
+            collapsedStages[stage.key] ? 'w-15 shrink-0 items-center py-4 cursor-pointer hover:bg-[#E2E8F0]' : 'w-75 shrink-0 p-3'
           ]"
-          @dblclick="collapsedStages[stage.key] && toggleCollapse(stage.key)"
+          @click="collapsedStages[stage.key] ? toggleCollapse(stage.key) : null"
         >
           <!-- HEADER: COLLAPSED MODE -->
           <div v-if="collapsedStages[stage.key]" class="flex flex-col items-center h-full justify-between gap-4">
@@ -247,7 +248,7 @@ const handleDrop = (targetStage: Deal['stage']) => {
 
           <!-- HEADER: EXPANDED MODE -->
           <template v-else>
-            <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/60 flex-shrink-0">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/60 shrink-0">
               <div class="flex items-center gap-2">
                 <div class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: stage.color }"></div>
                 <h2 class="text-[14px] font-bold text-[#0F172A]">{{ stage.label }}</h2>
@@ -265,13 +266,13 @@ const handleDrop = (targetStage: Deal['stage']) => {
             </div>
 
             <!-- CARDS LIST -->
-            <div class="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[150px] custom-scrollbar">
+            <div class="flex-1 overflow-y-auto space-y-3 pr-1 min-h-37.5 custom-scrollbar">
               <div 
                 v-for="deal in getDealsByStage(stage.key).slice(0, stageLimits[stage.key])"
                 :key="deal.id"
                 draggable="true"
                 @dragstart="handleDragStart(deal.id)"
-                class="bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm hover:shadow-md hover:border-blue-200 cursor-grab active:cursor-grabbing transition-all duration-200"
+                class="bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm hover:shadow-md hover:border-blue-200 cursor-grab transition-all duration-200"
               >
                 <!-- Tier & Value -->
                 <div class="flex items-center justify-between mb-1.5">
@@ -303,7 +304,7 @@ const handleDrop = (targetStage: Deal['stage']) => {
               </div>
 
               <!-- LOAD MORE BUTTON -->
-              <div v-if="getDealsByStage(stage.key).length > stageLimits[stage.key]" class="pt-2 pb-1">
+              <div v-if="getDealsByStage(stage.key).length > (stageLimits[stage.key] || 10)" class="pt-2 pb-1">
                 <button 
                   @click="loadMore(stage.key)"
                   class="w-full py-2 text-[11px] font-bold text-[#2563EB] bg-blue-50 hover:bg-blue-100 rounded-lg transition border border-blue-100"
