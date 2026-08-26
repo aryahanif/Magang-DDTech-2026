@@ -84,26 +84,8 @@ const fetchDashboardData = async () => {
       updatePipelineSteps();
     }
   } catch (error) {
-    console.warn("Backend API Not Ready: /api/admin/dashboard. Using fallback data.", error);
-    // FALLBACK DATA (To prevent UI from breaking completely)
-    dashboardData.value = {
-      total_leads: 152,
-      new_leads_this_week: 24,
-      tier_a_leads: 45,
-      demo_requests: 12,
-      conversion_rate: 18.5,
-      leads_by_country: { Australia: 80, 'New Zealand': 40, Indonesia: 32 },
-      leads_by_source: { Website: 70, 'Outbound AI': 40, Referral: 20, Events: 12, Partners: 10 },
-      pipeline_summary: {
-        'New Lead': 45,
-        Qualified: 30,
-        Contacted: 25,
-        'Demo Booked': 15,
-        Proposal: 10,
-        'Won / Lost': 27
-      }
-    };
-    updatePipelineSteps();
+    console.warn("Failed to fetch dashboard data.", error);
+    // showToast("Failed to load dashboard data.", "error"); // Use toast if available
   }
 }
 
