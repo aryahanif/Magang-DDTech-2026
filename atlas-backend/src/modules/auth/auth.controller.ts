@@ -1,27 +1,18 @@
-import { Controller, Post, Body, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() body: any) {
-    if (!body.email || !body.password) {
-      throw new BadRequestException('Email and password are required');
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    const user = await this.authService.validateUser(loginDto.email, loginDto.password);
+    if (!user) {
+      throw new UnauthorizedException('Kredensial tidak valid');
     }
-    const result = await this.authService.login(body.email, body.password);
-    if (!result) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    return result;
-  }
-
-  @Post('register')
-  async register(@Body() body: any) {
-    if (!body.email || !body.password || !body.name) {
-      throw new BadRequestException('Name, email, and password are required');
-    }
-    return this.authService.register(body.name, body.email, body.password, body.role || 'Admin');
+    return this.authService.login(user);
   }
 }

@@ -1,18 +1,24 @@
 import { Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { JwtStrategy } from './jwt.strategy';
 import { PrismaModule } from '../../database/prisma.module';
 
 @Module({
   imports: [
     PrismaModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'super-secret-atlas-key',
-      signOptions: { expiresIn: '1d' },
+    PassportModule,
+    JwtModule.registerAsync({
+      useFactory: async () => ({
+        secret: process.env.JWT_SECRET || 'ganti_dengan_rahasia_jwt_yang_sangat_panjang_dan_aman',
+        signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any },
+      }),
     }),
   ],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
-  providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}
