@@ -3,6 +3,10 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from 'vue-router';
 import MainLayout from "../components/MainLayout.vue";
 import api from "../services/api";
+import { useToast } from "../composables/UseToast";
+
+const { showToast } = useToast();
+const isLoading = ref(true);
 
 // Cetak Biru Data (Interface)
 interface Lead {
@@ -72,6 +76,7 @@ const summaryCards = computed(() => {
 const leadsData = ref<Lead[]>([]);
 
 const fetchLeads = async () => {
+  isLoading.value = true;
   try {
     const response = await api.get('/api/leads');
     if (response.data.success) {
@@ -91,6 +96,8 @@ const fetchLeads = async () => {
     }
   } catch (error) {
     console.error("Failed to fetch leads from API", error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -233,9 +240,11 @@ const deleteLead = async (id: string) => {
   if (confirm('Are you sure you want to delete this lead?')) {
     try {
       await api.delete(`/api/leads/${id}`);
+      showToast("Lead successfully deleted!", "success");
       fetchLeads(); // refresh
     } catch (error) {
       console.error("Failed to delete lead", error);
+      showToast("Failed to delete lead.", "error");
     }
   }
   activeDropdownId.value = null;
@@ -250,15 +259,17 @@ const submitForm = async () => {
 
     if (editingId.value) {
       await api.patch(`/api/leads/${editingId.value}`, payload);
+      showToast("Lead successfully updated!", "success");
     } else {
       await api.post('/api/leads', payload);
+      showToast("Lead successfully added!", "success");
     }
     
     closeModal();
     fetchLeads(); // Refresh list after save
   } catch (error) {
     console.error("Failed to save lead", error);
-    alert("Failed to save lead. Please check the console.");
+    showToast("Failed to save lead. Please check the console.", "error");
   }
 };
 
