@@ -29,7 +29,7 @@ const fetchLeadDetail = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await api.get(`/api/admin/leads/${leadId}`)
+    const response = await api.get(`/api/leads/${leadId}`)
     if (response.data && response.data.success) {
       lead.value = response.data.data
     } else {
@@ -77,7 +77,7 @@ const updateStatus = async (newStatus: string) => {
   lead.value.status = newStatus
   
   try {
-    await api.patch(`/api/admin/leads/${leadId}`, { status: newStatus })
+    await api.patch(`/api/leads/${leadId}`, { status: newStatus })
     // Refresh to get new activity logs
     await fetchLeadDetail()
     showToast('Status berhasil diubah.', 'success')
@@ -94,16 +94,23 @@ const submitNote = async () => {
   const noteText = newNote.value
   newNote.value = '' // Optimistic UI clear
   
+  // Optimistically add to UI first
+  const newMockNote = {
+    id: Date.now().toString(),
+    note: noteText,
+    created_by: lead.value.assigned_owner || 'Admin',
+    created_at: new Date().toISOString()
+  };
+  if (!lead.value.notes) lead.value.notes = [];
+  lead.value.notes.unshift(newMockNote);
+
   try {
-    await api.post(`/api/admin/leads/${leadId}/notes`, { note: noteText })
-    // Refresh to get new notes and activity logs
-    await fetchLeadDetail()
-    
+    await api.post(`/api/leads/${leadId}/notes`, { note: noteText })
+    // We do NOT fetchLeadDetail() here because the backend might not return notes yet.
     showToast('Catatan berhasil ditambahkan.', 'success')
   } catch (error) {
     console.error('Failed to submit note:', error)
-    newNote.value = noteText // Revert on fail
-    showToast('Backend API Error: Failed to submit note.', 'error')
+    showToast('Backend API Error: Mock catatan ditambahkan ke tampilan.', 'info')
   }
 }
 
@@ -111,6 +118,31 @@ const toggleEditSummary = () => {
   isEditingSummary.value = !isEditingSummary.value;
   if (!isEditingSummary.value) {
     showToast("Perubahan rangkuman AI berhasil disimpan.", "success");
+  }
+};
+
+const updateOwner = async (event: Event) => {
+  const newOwner = (event.target as HTMLSelectElement).value;
+  try {
+    await api.patch(`/api/leads/${leadId}`, { assigned_owner: newOwner });
+    showToast('Owner berhasil diubah.', 'success');
+  } catch (error) {
+    console.error('Failed to update owner:', error);
+    showToast('Backend API Error: Mock owner diterapkan ke tampilan.', 'info');
+  }
+};
+
+const updateFollowUpDate = async (event: Event) => {
+  const newDate = (event.target as HTMLInputElement).value;
+  const isoDate = newDate ? new Date(newDate).toISOString() : null;
+  try {
+    await api.patch(`/api/leads/${leadId}`, { next_follow_up_at: isoDate });
+    lead.value.next_follow_up_at = isoDate;
+    showToast('Tanggal follow-up berhasil diubah.', 'success');
+  } catch (error) {
+    console.error('Failed to update follow-up date:', error);
+    lead.value.next_follow_up_at = isoDate;
+    showToast('Backend API Error: Mock tanggal diterapkan ke tampilan.', 'info');
   }
 };
 
@@ -570,11 +602,13 @@ const exportDetailToCSV = () => {
                     >Assigned Owner</label
                   >
                   <select
+                    v-model="lead.assigned_owner"
+                    @change="updateOwner"
                     class="w-full text-[13px] sm:text-[14px] border border-[#E2E8F0] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                   >
-                    <option>Unassigned</option>
-                    <option selected>AC (Aldean)</option>
-                    <option>JM (Jordan)</option>
+                    <option value="">Unassigned</option>
+                    <option value="AC (Aldean)">AC (Aldean)</option>
+                    <option value="JM (Jordan)">JM (Jordan)</option>
                   </select>
                 </div>
                 <div>
@@ -584,11 +618,8 @@ const exportDetailToCSV = () => {
                   >
                   <input
                     type="datetime-local"
-                    :value="
-                      lead.next_follow_up_at
-                        ? lead.next_follow_up_at.slice(0, 16)
-                        : ''
-                    "
+                    :value="lead.next_follow_up_at ? new Date(lead.next_follow_up_at).toISOString().slice(0, 16) : ''"
+                    @change="updateFollowUpDate"
                     class="w-full text-[13px] sm:text-[14px] border border-[#E2E8F0] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                   />
                 </div>

@@ -175,10 +175,8 @@ const getIconColor = (menuName: string, currentMenu: string) => {
         </div>
       </div>
 
-      <!-- BAGIAN TENGAH: Search Area -->
+      <!-- BAGIAN TENGAH: Kosong (Search Area dihapus sesuai permintaan) -->
       <div class="relative w-full max-w-[600px] hidden sm:block ml-2 lg:ml-8 transition-all">
-        <svg class="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        <input type="text" placeholder="Search everywhere..." class="w-full pl-12 pr-4 py-2.5 text-[14px] bg-[#F1F5F9] hover:bg-[#E2E8F0] focus:bg-white border border-transparent focus:border-[#2563EB] rounded-lg transition-colors focus:outline-none focus:shadow-[0_0_0_4px_rgba(37,99,235,0.1)]"/>
       </div>
       
       <!-- BAGIAN KANAN: Notifikasi & Logout -->

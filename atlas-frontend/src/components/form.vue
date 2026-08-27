@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { apiClient } from '../utils/api';
 import { RouterLink } from 'vue-router';
 import { Form, Field, ErrorMessage } from 'vee-validate';
@@ -39,9 +39,9 @@ const props = defineProps({
 
 const schema = toTypedSchema(
   z.object({
-    full_name: z.string({ required_error: "Full name is required" }).min(1, "Full name is required").max(50, "Name is too long"),
+    full_name: z.string({ required_error: "Full name is required" }).min(1, "Full name is required").max(50, "Name is too long").regex(/^[a-zA-Z\s\.,]+$/, "Only letters, spaces, dots, and commas allowed"),
     company_name: z.string({ required_error: "Company name is required" }).min(1, "Company name is required").max(50, "Company name is too long"),
-    phone: z.string().max(15, "Phone number is too long").optional().or(z.literal('')),
+    phone: z.string().max(15, "Phone number is too long").regex(/^[0-9\+]*$/, "Only numbers and + allowed").optional().or(z.literal('')),
     email: z.string({ required_error: "Email is required" }).min(1, "Email is required").email("Invalid email format").max(50, "Email is too long"),
     country: z.string().optional().or(z.literal('')),
     business_type: z.string().optional().or(z.literal('')),
@@ -79,6 +79,29 @@ const initialValues = {
 
 const isSubmitting = ref(false);
 const submitMessage = ref('');
+const isSuccess = ref(false);
+
+const successTitle = computed(() => {
+  switch (props.type) {
+    case 'demo': return "Permintaan Demo Berhasil!";
+    case 'assessment': return "Assessment Berhasil Dikirim!";
+    case 'waitlist': return "Terdaftar di Waitlist!";
+    case 'contact': return "Pesan Berhasil Dikirim!";
+    case 'partner': return "Pengajuan Kemitraan Berhasil!";
+    default: return "Form Berhasil Dikirim!";
+  }
+});
+
+const successMessage = computed(() => {
+  switch (props.type) {
+    case 'demo': return "Terima kasih! Tim kami akan segera memproses jadwal demo Anda dan menghubungi Anda kembali.";
+    case 'assessment': return "Terima kasih telah mengisi assessment. Tim kami akan menganalisa profil Anda dan segera memberikan rekomendasi terbaik.";
+    case 'waitlist': return "Terima kasih telah bergabung. Tim kami akan segera memproses permintaan Anda dan menghubungi Anda kembali.";
+    case 'contact': return "Terima kasih telah menghubungi kami. Representatif dari tim Sales kami akan segera merespons Anda.";
+    case 'partner': return "Terima kasih atas pengajuan Anda. Tim kemitraan kami akan meninjau data Anda dan menghubungi Anda segera.";
+    default: return "Terima kasih atas ketertarikan Anda. Tim kami akan segera memproses permintaan Anda dan menghubungi Anda kembali.";
+  }
+});
 
 const submitForm = async (values, { resetForm }) => {
   // PENCEGAHAN: Jangan kirim form jika Cloudflare belum dicentang
@@ -104,7 +127,7 @@ const submitForm = async (values, { resetForm }) => {
   try {
     const response = await apiClient.post('/api/leads', payload);
     if(response.status === 200 || response.status === 201) {
-      submitMessage.value = "Terima kasih! Permintaan Anda berhasil dikirim.";
+      isSuccess.value = true;
       resetForm();
     }
   } catch (error) {
@@ -118,7 +141,17 @@ const submitForm = async (values, { resetForm }) => {
 
 <template>
   <div class="bg-fbg p-8 rounded-2xl">
-    <Form :validation-schema="schema" :initial-values="initialValues" @submit="submitForm" class="grid grid-cols-1 lg:grid-cols-2 gap-4" novalidate v-slot="{ meta }">
+    <!-- Success State -->
+    <div v-if="isSuccess" class="flex flex-col items-center justify-center py-16 text-center animate-fade-in w-full min-h-[400px]">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      </div>
+      <h3 class="text-2xl lg:text-3xl font-bold text-[#0F172A] mb-4">{{ successTitle }}</h3>
+      <p class="text-[#64748B] text-lg max-w-md mx-auto leading-relaxed">{{ successMessage }}</p>
+    </div>
+
+    <!-- Form State -->
+    <Form v-else :validation-schema="schema" :initial-values="initialValues" @submit="submitForm" class="grid grid-cols-1 lg:grid-cols-2 gap-4" novalidate v-slot="{ meta }">
       <div class="flex flex-col">
         <label for="full_name" class="text-sm font-medium text-ff">Full Name</label>
         <Field
@@ -366,8 +399,18 @@ const submitForm = async (values, { resetForm }) => {
         >
           {{ isSubmitting ? 'Submitting...' : 'Submit' }}
         </button>
-        <p v-if="submitMessage" class="mt-2 text-center text-sm font-medium text-ff text-red">{{ submitMessage }}</p>
+        <p v-if="submitMessage" class="mt-2 text-center text-sm font-medium text-red-500">{{ submitMessage }}</p>
       </div>
     </Form>
   </div>
 </template>
+
+<style scoped>
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>

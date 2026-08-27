@@ -266,7 +266,7 @@ onMounted(() => {
               
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-bold text-[#64748B]">{{ formatCurrency(getStageTotalValue(stage.key)) }}</span>
-                <button @click="toggleCollapse(stage.key)" class="p-1 hover:bg-gray-200 rounded text-[#94A3B8] hover:text-[#0F172A] transition" title="Ciutkan Kolom">
+                <button @click.stop="toggleCollapse(stage.key)" class="p-1 hover:bg-gray-200 rounded text-[#94A3B8] hover:text-[#0F172A] transition" title="Ciutkan Kolom">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </button>
               </div>
@@ -286,6 +286,11 @@ onMounted(() => {
                   <div class="h-3 bg-gray-200 rounded w-20"></div>
                 </div>
               </div>
+            </div>
+
+            <!-- JIKA LOADING SELESAI & KOSONG -->
+            <div v-else-if="kanbanColumns[stage.key].length === 0" class="h-24 mt-2 mb-2 flex items-center justify-center border-2 border-dashed border-[#CBD5E1] rounded-lg text-[12px] text-[#94A3B8] bg-white/50">
+              Belum ada data
             </div>
 
             <!-- JIKA LOADING SELESAI (TAMPILKAN VUEDRAGGABLE ASLI) -->
@@ -347,10 +352,6 @@ onMounted(() => {
               >
                 Load +10 More
               </button>
-            </div>
-
-            <div v-if="!isLoading && kanbanColumns[stage.key].length === 0" class="h-24 flex items-center justify-center border-2 border-dashed border-[#CBD5E1] rounded-lg text-[12px] text-[#94A3B8] bg-white/50">
-              Belum ada data
             </div>
           </template>
         </div>

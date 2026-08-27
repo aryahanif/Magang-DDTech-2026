@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router';
 import MainLayout from "../components/MainLayout.vue";
 import api from "../services/api";
 import { useToast } from "../composables/UseToast";
+import { Form, Field, ErrorMessage } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
+import * as z from 'zod';
 
 const { showToast } = useToast();
 const isLoading = ref(true);
@@ -12,6 +15,8 @@ const isLoading = ref(true);
 interface Lead {
   id: string;
   name: string;
+  email: string;
+  phone: string;
   role: string;
   company: string;
   country: string;
@@ -83,6 +88,8 @@ const fetchLeads = async () => {
       leadsData.value = response.data.data.map((lead: any) => ({
         id: lead.id,
         name: lead.full_name || lead.email || 'Unknown',
+        email: lead.email || '',
+        phone: lead.phone || '',
         role: lead.role || '-',
         company: lead.company_name || '-',
         country: lead.country || '-',
@@ -91,7 +98,7 @@ const fetchLeads = async () => {
         status: lead.status || 'New Lead',
         value: lead.lead_score ? `${lead.lead_score}` : '-',
         updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
-        isValid: lead.fit_status !== 'Invalid'
+        isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified'
       }));
     }
   } catch (error) {
@@ -113,6 +120,7 @@ const searchQuery = ref("");
 const filterStatus = ref("");
 const filterCountry = ref("");
 const filterTier = ref("");
+const filterSource = ref("");
 
 const invalidCount = computed(() => leadsData.value.filter(l => !l.isValid).length);
 
@@ -125,12 +133,14 @@ const filteredLeads = computed(() => {
 
     const matchSearch =
       lead.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchQuery.value.toLowerCase());
+      lead.company.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      (lead.email && lead.email.toLowerCase().includes(searchQuery.value.toLowerCase()));
     const matchStatus = filterStatus.value ? lead.status === filterStatus.value : true;
     const matchCountry = filterCountry.value ? lead.country === filterCountry.value : true;
     const matchTier = filterTier.value ? lead.tier === filterTier.value : true;
+    const matchSource = filterSource.value ? lead.source === filterSource.value : true;
     
-    return matchTab && matchSearch && matchStatus && matchCountry && matchTier;
+    return matchTab && matchSearch && matchStatus && matchCountry && matchTier && matchSource;
   });
 });
 
@@ -140,7 +150,7 @@ const filteredLeads = computed(() => {
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
-watch([activeTab, searchQuery, filterStatus, filterCountry, filterTier], () => {
+watch([activeTab, searchQuery, filterStatus, filterCountry, filterTier, filterSource], () => {
   currentPage.value = 1; 
 });
 
@@ -201,6 +211,25 @@ const newLead = ref({
   current_problem: "", message: "", tier: "Tier C", status: "New Lead"
 });
 
+const leadSchema = toTypedSchema(
+  z.object({
+    full_name: z.string({ required_error: "Full name is required" }).min(1, "Full name is required").max(50, "Name is too long").regex(/^[a-zA-Z\s\.,]+$/, "Only letters, spaces, dots, and commas allowed"),
+    email: z.string({ required_error: "Email is required" }).min(1, "Email is required").email("Invalid email format").max(50, "Email is too long"),
+    phone: z.string().max(15, "Phone number is too long").regex(/^[0-9\+]*$/, "Only numbers and + allowed").optional().or(z.literal('')),
+    company_name: z.string({ required_error: "Company name is required" }).min(1, "Company name is required").max(50, "Company name is too long"),
+    role: z.string({ required_error: "Role is required" }).min(1, "Role is required").max(50, "Role is too long"),
+    website_url: z.string().url("Invalid URL format").max(500, "URL is too long").optional().or(z.literal('')),
+    country: z.string().optional().or(z.literal('')),
+    business_type: z.string().optional().or(z.literal('')),
+    industry: z.string().max(50, "Industry name is too long").optional().or(z.literal('')),
+    company_size: z.string().optional().or(z.literal('')),
+    tier: z.string().optional().or(z.literal('')),
+    status: z.string().optional().or(z.literal('')),
+    current_problem: z.string().max(500, "Text is too long").optional().or(z.literal('')),
+    message: z.string().max(500, "Text is too long").optional().or(z.literal(''))
+  })
+);
+
 const openAddModal = () => {
   editingId.value = null;
   newLead.value = {
@@ -250,11 +279,11 @@ const deleteLead = async (id: string) => {
   activeDropdownId.value = null;
 };
 
-const submitForm = async () => {
+const submitForm = async (values: any) => {
   try {
     const payload = {
-      ...newLead.value,
-      lead_tier: newLead.value.tier // Map to DB column if needed
+      ...values,
+      lead_tier: values.tier // Map to DB column if needed
     };
 
     if (editingId.value) {
@@ -271,6 +300,43 @@ const submitForm = async () => {
     console.error("Failed to save lead", error);
     showToast("Failed to save lead. Please check the console.", "error");
   }
+};
+
+const exportToCSV = () => {
+  if (filteredLeads.value.length === 0) {
+    showToast("No leads to export.", "error");
+    return;
+  }
+  
+  const headers = ["Name", "Company", "Email", "Phone", "Country", "Source", "Tier", "Status", "Value", "Updated"];
+  const rows = filteredLeads.value.map(lead => [
+    lead.name,
+    lead.company,
+    lead.email,
+    lead.phone,
+    lead.country,
+    lead.source,
+    lead.tier,
+    lead.status,
+    lead.value,
+    lead.updated
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(","))
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "leads_export.csv");
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast("Export successful!", "success");
 };
 
 const closeModal = () => {
@@ -378,6 +444,15 @@ const getStatusClass = (status: string) => {
               <option value="New Zealand">New Zealand</option>
             </select>
 
+            <select v-model="filterSource" class="text-[13px] border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium">
+              <option value="">All sources</option>
+              <option value="/requestdemo">Request Demo</option>
+              <option value="/assessment">Assessment</option>
+              <option value="/contact-sales">Contact Sales</option>
+              <option value="/waitlist">Waitlist</option>
+              <option value="/partner-inquiry">Partner Inquiry</option>
+            </select>
+
             <select v-model="filterTier" class="text-[13px] border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium">
               <option value="">All Tiers</option>
               <option value="Tier A">Tier A</option>
@@ -385,6 +460,10 @@ const getStatusClass = (status: string) => {
               <option value="Tier C">Tier C</option>
             </select>
 
+            <button @click="exportToCSV" class="text-[13px] rounded-lg px-4 py-1.5 border border-gray-300 bg-white text-gray-700 font-medium flex items-center gap-1.5 hover:bg-gray-50 transition shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export CSV
+            </button>
             <button @click="openAddModal" class="text-[13px] rounded-lg px-4 py-1.5 bg-[#2563EB] text-white font-medium flex items-center gap-1 hover:bg-blue-700 transition shadow-sm">
               Add lead +
             </button>
@@ -491,73 +570,114 @@ const getStatusClass = (status: string) => {
       <div class="mb-6">
         <h2 class="text-[26px] font-bold text-black tracking-tight leading-none mb-1">{{ editingId ? "Edit lead" : "Add new lead" }}</h2>
       </div>
-      <form @submit.prevent="submitForm" class="space-y-4">
+      <Form :validation-schema="leadSchema" :initial-values="newLead" @submit="submitForm" class="space-y-4" v-slot="{ meta }">
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Full Name</label><input v-model="newLead.full_name" type="text" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Email</label><input v-model="newLead.email" type="email" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Full Name</label>
+            <Field name="full_name" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="full_name" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Email</label>
+            <Field name="email" type="email" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="email" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
           
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Phone</label><input v-model="newLead.phone" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Company Name</label><input v-model="newLead.company_name" type="text" required class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Phone</label>
+            <Field name="phone" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="phone" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Company Name</label>
+            <Field name="company_name" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="company_name" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
           
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Role</label><input v-model="newLead.role" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Website URL</label><input v-model="newLead.website_url" type="url" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Role</label>
+            <Field name="role" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="role" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Website URL</label>
+            <Field name="website_url" type="url" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="website_url" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
 
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Country</label>
-            <select v-model="newLead.country" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <Field name="country" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
               <option value="">Select country</option>
               <option value="australia">Australia</option>
               <option value="newzealand">New Zealand</option>
               <option value="Indonesia">Indonesia</option>
               <option value="Other">Other</option>
-            </select>
+            </Field>
+            <ErrorMessage name="country" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Business Type</label>
-            <select v-model="newLead.business_type" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <Field name="business_type" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
               <option value="">Select business type</option>
               <option value="B2B">B2B (Business to Business)</option>
               <option value="B2C">B2C (Business to Consumer)</option>
               <option value="B2B2C">B2B2C</option>
-            </select>
+            </Field>
+            <ErrorMessage name="business_type" class="text-red-500 text-[11px] mt-1 block" />
           </div>
 
-          <div><label class="block text-[13px] font-bold text-black mb-1.5">Industry</label><input v-model="newLead.industry" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" /></div>
+          <div>
+            <label class="block text-[13px] font-bold text-black mb-1.5">Industry</label>
+            <Field name="industry" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <ErrorMessage name="industry" class="text-red-500 text-[11px] mt-1 block" />
+          </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Company Size</label>
-            <select v-model="newLead.company_size" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <Field name="company_size" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
               <option value="">Select size</option>
               <option value="1-10">1-10 employees</option>
               <option value="11-50">11-50 employees</option>
               <option value="51-200">51-200 employees</option>
               <option value="201-500">201-500 employees</option>
               <option value="500+">500+ employees</option>
-            </select>
+            </Field>
+            <ErrorMessage name="company_size" class="text-red-500 text-[11px] mt-1 block" />
           </div>
 
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Tier (Internal)</label>
-            <select v-model="newLead.tier" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
-              <option>Tier A</option><option>Tier B</option><option>Tier C</option>
-            </select>
+            <Field name="tier" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option value="Tier A">Tier A</option><option value="Tier B">Tier B</option><option value="Tier C">Tier C</option>
+            </Field>
+            <ErrorMessage name="tier" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Status (Internal)</label>
-            <select v-model="newLead.status" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
-              <option>New Lead</option><option>Qualified</option><option>Contacted</option><option>Demo</option><option>Proposal</option><option>Won</option><option>Lost</option>
-            </select>
+            <Field name="status" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option value="New Lead">New Lead</option><option value="Qualified">Qualified</option><option value="Contacted">Contacted</option><option value="Demo">Demo</option><option value="Proposal">Proposal</option><option value="Won">Won</option><option value="Lost">Lost</option>
+            </Field>
+            <ErrorMessage name="status" class="text-red-500 text-[11px] mt-1 block" />
           </div>
         </div>
 
-        <div><label class="block text-[13px] font-bold text-black mb-1.5">Current Problem</label><textarea v-model="newLead.current_problem" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]"></textarea></div>
-        <div><label class="block text-[13px] font-bold text-black mb-1.5">Message / Note</label><textarea v-model="newLead.message" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]"></textarea></div>
+        <div>
+          <label class="block text-[13px] font-bold text-black mb-1.5">Current Problem</label>
+          <Field name="current_problem" as="textarea" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+          <ErrorMessage name="current_problem" class="text-red-500 text-[11px] mt-1 block" />
+        </div>
+        <div>
+          <label class="block text-[13px] font-bold text-black mb-1.5">Message / Note</label>
+          <Field name="message" as="textarea" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+          <ErrorMessage name="message" class="text-red-500 text-[11px] mt-1 block" />
+        </div>
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
           <button type="button" @click="closeModal" class="px-5 py-2 border border-gray-300 rounded-lg text-[14px] font-bold hover:bg-gray-50 transition">Cancel</button>
           <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">{{ editingId ? "Save changes" : "Add lead" }}</button>
         </div>
-      </form>
+      </Form>
     </div>
   </div>
 </template>
