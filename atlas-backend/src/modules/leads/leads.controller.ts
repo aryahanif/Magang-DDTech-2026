@@ -27,6 +27,33 @@ export class LeadsController {
     };
   }
 
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    try {
+      const lead = await this.leadsService.findOne(id);
+      return {
+        success: true,
+        data: lead,
+      };
+    } catch (error) {
+      return { success: false, message: 'Lead not found or invalid ID' };
+    }
+  }
+
+  @Post(':id/notes')
+  async addNote(@Param('id') id: string, @Body() body: { note: string }) {
+    try {
+      const note = await this.leadsService.addNote(id, body.note);
+      return {
+        success: true,
+        data: note,
+        message: 'Note added successfully',
+      };
+    } catch (error) {
+      return { success: false, message: 'Failed to add note' };
+    }
+  }
+
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateData: any) {
     const lead = await this.leadsService.update(id, updateData);

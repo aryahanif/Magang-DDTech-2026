@@ -45,6 +45,26 @@ export class LeadsService {
     });
   }
 
+  async findOne(id: string) {
+    return this.prisma.lead.findUnique({
+      where: { id },
+      include: {
+        notes: { orderBy: { created_at: 'desc' } },
+        activity_logs: { orderBy: { created_at: 'desc' } },
+      },
+    });
+  }
+
+  async addNote(leadId: string, note: string, createdBy: string = 'Admin') {
+    return this.prisma.leadNote.create({
+      data: {
+        lead_id: leadId,
+        note,
+        created_by: createdBy,
+      },
+    });
+  }
+
   async update(id: string, data: any) {
     return this.prisma.lead.update({
       where: { id },
