@@ -1,6 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
+import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
+import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
 import { EmailService } from '../email/email.service';
 
@@ -37,5 +40,46 @@ export class LeadsService {
     });
 
     return lead;
+  }
+
+  async findAll(query: GetLeadsQueryDto) {
+    const where: Prisma.LeadWhereInput = {};
+
+    if (query.status) where.status = query.status;
+    if (query.tier) where.lead_tier = query.tier;
+    if (query.country) where.country = query.country;
+    if (query.search_keyword) {
+      where.OR = [
+        { full_name: { contains: query.search_keyword, mode: 'insensitive' } },
+        { company_name: { contains: query.search_keyword, mode: 'insensitive' } },
+      ];
+    }
+
+    return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+  }
+
+  async updateLeadStatus(leadId: string, data: UpdateLeadDto, adminUserId: string) {
+    const activityType = data.status ? 'STATUS_UPDATE' : data.assigned_owner ? 'OWNER_ASSIGNED' : 'LEAD_UPDATED';
+
+    try {
+      const [lead] = await this.prisma.$transaction([
+        this.prisma.lead.update({ where: { id: leadId }, data }),
+        this.prisma.leadActivityLog.create({
+          data: {
+            lead_id: leadId,
+            activity_type: activityType,
+            description: `Lead updated by admin ${adminUserId}: ${JSON.stringify(data)}`,
+            metadata: { admin_user_id: adminUserId, changes: { ...data } },
+          },
+        }),
+      ]);
+
+      return lead;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Lead ${leadId} not found`);
+      }
+      throw error;
+    }
   }
 }

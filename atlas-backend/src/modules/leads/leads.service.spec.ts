@@ -1,4 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { LeadsService } from './leads.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -7,7 +9,11 @@ import { EmailService } from '../email/email.service';
 
 describe('LeadsService', () => {
   let service: LeadsService;
-  let prisma: { lead: { create: jest.Mock } };
+  let prisma: {
+    lead: { create: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    leadActivityLog: { create: jest.Mock };
+    $transaction: jest.Mock;
+  };
   let qualificationService: {
     calculateRuleBasedScore: jest.Mock;
     analyzeLeadWithAI: jest.Mock;
@@ -25,7 +31,11 @@ describe('LeadsService', () => {
   };
 
   beforeEach(async () => {
-    prisma = { lead: { create: jest.fn() } };
+    prisma = {
+      lead: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      leadActivityLog: { create: jest.fn() },
+      $transaction: jest.fn(async (ops: unknown[]) => Promise.all(ops)),
+    };
     qualificationService = {
       calculateRuleBasedScore: jest.fn().mockReturnValue(55),
       analyzeLeadWithAI: jest.fn().mockResolvedValue(undefined),
@@ -87,5 +97,98 @@ describe('LeadsService', () => {
     emailService.sendProspectAutoReply.mockRejectedValue(new Error('Resend is down'));
 
     await expect(service.createLead(dto)).resolves.toBe(created);
+  });
+
+  describe('findAll', () => {
+    it('queries with no filters when the query is empty', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+
+      await service.findAll({});
+
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        where: {},
+        orderBy: { created_at: 'desc' },
+      });
+    });
+
+    it('builds a where clause from status, tier, and country filters', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+
+      await service.findAll({ status: 'New Lead', tier: 'Tier A', country: 'Australia' });
+
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        where: { status: 'New Lead', lead_tier: 'Tier A', country: 'Australia' },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+
+    it('searches full_name and company_name case-insensitively for search_keyword', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+
+      await service.findAll({ search_keyword: 'acme' });
+
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { full_name: { contains: 'acme', mode: 'insensitive' } },
+            { company_name: { contains: 'acme', mode: 'insensitive' } },
+          ],
+        },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+  });
+
+  describe('updateLeadStatus', () => {
+    it('updates the lead and logs the activity atomically via $transaction', async () => {
+      const updated = { id: 'lead-1', status: 'Demo Scheduled' };
+      prisma.lead.update.mockResolvedValue(updated);
+      prisma.leadActivityLog.create.mockResolvedValue({ id: 'log-1' });
+
+      const result = await service.updateLeadStatus(
+        'lead-1',
+        { status: 'Demo Scheduled' },
+        'admin-1',
+      );
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.lead.update).toHaveBeenCalledWith({
+        where: { id: 'lead-1' },
+        data: { status: 'Demo Scheduled' },
+      });
+      expect(prisma.leadActivityLog.create).toHaveBeenCalledWith({
+        data: {
+          lead_id: 'lead-1',
+          activity_type: 'STATUS_UPDATE',
+          description: expect.stringContaining('admin-1'),
+          metadata: { admin_user_id: 'admin-1', changes: { status: 'Demo Scheduled' } },
+        },
+      });
+      expect(result).toBe(updated);
+    });
+
+    it('logs as OWNER_ASSIGNED when only assigned_owner changes', async () => {
+      prisma.lead.update.mockResolvedValue({ id: 'lead-1' });
+      prisma.leadActivityLog.create.mockResolvedValue({ id: 'log-1' });
+
+      await service.updateLeadStatus('lead-1', { assigned_owner: 'Jane' }, 'admin-1');
+
+      expect(prisma.leadActivityLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ activity_type: 'OWNER_ASSIGNED' }) }),
+      );
+    });
+
+    it('throws NotFoundException when the lead does not exist', async () => {
+      prisma.$transaction.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record not found', {
+          code: 'P2025',
+          clientVersion: '5.0.0',
+        }),
+      );
+
+      await expect(
+        service.updateLeadStatus('missing-id', { status: 'Demo Scheduled' }, 'admin-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 });
