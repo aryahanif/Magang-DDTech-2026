@@ -12,6 +12,7 @@ describe('LeadsService', () => {
   let prisma: {
     lead: { create: jest.Mock; findMany: jest.Mock; update: jest.Mock };
     leadActivityLog: { create: jest.Mock };
+    leadNote: { create: jest.Mock };
     $transaction: jest.Mock;
   };
   let qualificationService: {
@@ -34,6 +35,7 @@ describe('LeadsService', () => {
     prisma = {
       lead: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
       leadActivityLog: { create: jest.fn() },
+      leadNote: { create: jest.fn() },
       $transaction: jest.fn(async (ops: unknown[]) => Promise.all(ops)),
     };
     qualificationService = {
@@ -188,6 +190,33 @@ describe('LeadsService', () => {
 
       await expect(
         service.updateLeadStatus('missing-id', { status: 'Demo Scheduled' }, 'admin-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('addNoteToLead', () => {
+    it('creates a lead note tied to the lead and the admin user', async () => {
+      const created = { id: 'note-1', lead_id: 'lead-1', created_by: 'admin-1', note: 'Called, left voicemail' };
+      prisma.leadNote.create.mockResolvedValue(created);
+
+      const result = await service.addNoteToLead('lead-1', 'admin-1', { note: 'Called, left voicemail' });
+
+      expect(prisma.leadNote.create).toHaveBeenCalledWith({
+        data: { lead_id: 'lead-1', created_by: 'admin-1', note: 'Called, left voicemail' },
+      });
+      expect(result).toBe(created);
+    });
+
+    it('throws NotFoundException when the lead does not exist', async () => {
+      prisma.leadNote.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
+          code: 'P2003',
+          clientVersion: '5.0.0',
+        }),
+      );
+
+      await expect(
+        service.addNoteToLead('missing-id', 'admin-1', { note: 'test' }),
       ).rejects.toThrow(NotFoundException);
     });
   });

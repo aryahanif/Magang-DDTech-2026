@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
@@ -77,6 +78,23 @@ export class LeadsService {
       return lead;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Lead ${leadId} not found`);
+      }
+      throw error;
+    }
+  }
+
+  async addNoteToLead(leadId: string, adminUserId: string, data: AddLeadNoteDto) {
+    try {
+      return await this.prisma.leadNote.create({
+        data: {
+          lead_id: leadId,
+          created_by: adminUserId,
+          note: data.note,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
         throw new NotFoundException(`Lead ${leadId} not found`);
       }
       throw error;
