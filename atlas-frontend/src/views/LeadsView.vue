@@ -354,7 +354,8 @@ const getTierClass = (tier: string) => {
   switch (tier) {
     case "Tier A": return "bg-[#2563EB] text-white";
     case "Tier B": return "bg-[#94A3B8] text-white";
-    case "Tier C": return "bg-[#CBD5E1] text-[#475569]";
+    case "Tier C": return "bg-[#FEF3C7] text-[#D97706]";
+    case "Spam": return "bg-[#FEF2F2] text-[#DC2626]";
     default: return "bg-gray-200 text-gray-700";
   }
 };
