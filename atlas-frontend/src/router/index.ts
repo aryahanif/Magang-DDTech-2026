@@ -13,6 +13,7 @@ import LeadsView from '../views/LeadsView.vue'
 import PipelineView from '../views/PipelineView.vue'
 import SettingsView from '../views/SettingsView.vue'
 import LeadDetailView from '../views/LeadDetailView.vue'
+import TasksView from '../views/TasksView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -80,6 +81,11 @@ const router = createRouter({
       path: '/admin/pipeline',
       name: 'pipeline',
       component: PipelineView
+    },
+    {
+      path: '/admin/tasks',
+      name: 'tasks',
+      component: TasksView
     },
     {
       path: '/admin/settings',
