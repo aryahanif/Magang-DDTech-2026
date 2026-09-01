@@ -283,7 +283,8 @@ const submitForm = async (values: any) => {
   try {
     const payload = {
       ...values,
-      lead_tier: values.tier // Map to DB column if needed
+      lead_tier: values.tier, // Map to DB column if needed
+      consent_status: true // Required by backend validation
     };
 
     if (editingId.value) {
