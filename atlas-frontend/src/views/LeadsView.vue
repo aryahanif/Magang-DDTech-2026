@@ -85,21 +85,26 @@ const fetchLeads = async () => {
   try {
     const response = await api.get('/api/leads');
     if (response.data.success) {
-      leadsData.value = response.data.data.map((lead: any) => ({
-        id: lead.id,
-        name: lead.full_name || lead.email || 'Unknown',
-        email: lead.email || '',
-        phone: lead.phone || '',
-        role: lead.role || '-',
-        company: lead.company_name || '-',
-        country: lead.country || '-',
-        source: lead.source_page || '-',
-        tier: lead.lead_tier || '-',
-        status: lead.status || 'New Lead',
-        value: lead.lead_score ? `${lead.lead_score}` : '-',
-        updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
-        isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified'
-      }));
+      leadsData.value = response.data.data.map((lead: any) => {
+        const stageStr = lead.status || 'New Lead'
+        const mappedStatus = stageStr === 'Demo' || stageStr === 'Demo Booked' ? 'Demo Scheduled' :
+                             stageStr === 'Proposal' ? 'Proposal Sent' : stageStr;
+        return {
+          id: lead.id,
+          name: lead.full_name || lead.email || 'Unknown',
+          email: lead.email || '',
+          phone: lead.phone || '',
+          role: lead.role || '-',
+          company: lead.company_name || '-',
+          country: lead.country || '-',
+          source: lead.source_page || '-',
+          tier: lead.lead_tier || '-',
+          status: mappedStatus,
+          value: lead.lead_score ? `${lead.lead_score}` : '-',
+          updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
+          isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified'
+        }
+      });
     }
   } catch (error) {
     console.error("Failed to fetch leads from API", error);
