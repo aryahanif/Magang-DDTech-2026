@@ -31,7 +31,15 @@ const fetchLeadDetail = async () => {
   try {
     const response = await api.get(`/api/leads/${leadId}`)
     if (response.data && response.data.success) {
-      lead.value = response.data.data
+      const data = response.data.data
+      
+      // Standardize status mapping (same as PipelineView)
+      let stageStr = data.status || 'New Lead'
+      if (stageStr === 'Demo' || stageStr === 'Demo Booked') stageStr = 'Demo Scheduled'
+      if (stageStr === 'Proposal') stageStr = 'Proposal Sent'
+      data.status = stageStr
+      
+      lead.value = data
     } else {
       errorMessage.value = 'Failed to load lead details.'
     }
@@ -76,8 +84,13 @@ const updateStatus = async (newStatus: string) => {
   const previousStatus = lead.value.status
   lead.value.status = newStatus
   
+  // Standardize status mapping for backend (same as PipelineView)
+  let backendStatus = newStatus
+  if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo'
+  if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal'
+
   try {
-    await api.patch(`/api/leads/${leadId}`, { status: newStatus })
+    await api.patch(`/api/leads/${leadId}`, { status: backendStatus })
     // Refresh to get new activity logs
     await fetchLeadDetail()
     showToast('Status berhasil diubah.', 'success')
@@ -291,7 +304,7 @@ const exportDetailToCSV = () => {
             Export CSV
           </button>
           <select
-            :value="lead.status"
+            v-model="lead.status"
             @change="updateStatus(($event.target as HTMLSelectElement).value)"
             class="flex-1 sm:flex-none text-[13px] sm:text-[14px] font-semibold border border-[#E2E8F0] rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
           >
