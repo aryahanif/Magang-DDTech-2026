@@ -100,4 +100,41 @@ export class LeadsService {
       throw error;
     }
   }
+
+  async handleDemoScheduled(email: string, eventTime: Date, meetingUrl: string) {
+    // Cari prospek terbaru berdasarkan email (karena bisa jadi ada submission dobel)
+    const lead = await this.prisma.lead.findFirst({
+      where: { email },
+      orderBy: { created_at: 'desc' },
+    });
+
+    if (!lead) {
+      this.logger.warn(`Webhook received for email ${email}, but no lead found in DB.`);
+      return;
+    }
+
+    try {
+      await this.prisma.$transaction([
+        this.prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            status: 'Demo Scheduled',
+            next_follow_up_at: eventTime,
+          },
+        }),
+        this.prisma.leadActivityLog.create({
+          data: {
+            lead_id: lead.id,
+            activity_type: 'DEMO_SCHEDULED',
+            description: `Demo scheduled via Calendly for ${eventTime.toISOString()}`,
+            metadata: { meeting_url: meetingUrl, event_time: eventTime.toISOString() },
+          },
+        }),
+      ]);
+      this.logger.log(`Successfully updated lead ${lead.id} status to Demo Scheduled from webhook.`);
+    } catch (error) {
+      this.logger.error(`Error updating lead ${lead.id} from webhook`, error);
+      throw error;
+    }
+  }
 }
