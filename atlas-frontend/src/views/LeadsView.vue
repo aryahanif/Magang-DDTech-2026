@@ -346,10 +346,10 @@ const closeModal = () => {
 
 const getTierClass = (tier: string) => {
   switch (tier) {
-    case "Tier A": return "bg-[#2563EB] text-white";
-    case "Tier B": return "bg-[#94A3B8] text-white";
-    case "Tier C": return "bg-[#CBD5E1] text-[#475569]";
-    default: return "bg-gray-200 text-gray-700";
+    case "Tier A": return "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]";
+    case "Tier B": return "bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]";
+    case "Tier C": return "bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]";
+    default: return "bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]";
   }
 };
 
@@ -488,8 +488,8 @@ const getStatusClass = (status: string) => {
         </div>
 
         <!-- Table Container -->
-        <div class="bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-visible min-h-75">
-          <table class="w-full text-left border-collapse">
+        <div class="bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-x-auto min-h-75">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr class="border-b border-[#E2E8F0] bg-white">
                 <th class="py-3 px-4 w-12 text-center">

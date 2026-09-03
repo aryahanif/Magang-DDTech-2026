@@ -146,7 +146,7 @@ const handleDragChange = async (evt: any, stageKey: StageKey) => {
       if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal';
 
       try {
-        await api.patch(`/api/admin/leads/${deal.id}`, { status: backendStatus })
+        await api.patch(`/api/leads/${deal.id}`, { status: backendStatus })
       } catch(error) {
         console.error("Failed to update status in DB", error)
         deal.stage = previousStage // revert on failure
@@ -288,14 +288,9 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- JIKA LOADING SELESAI & KOSONG -->
-            <div v-else-if="kanbanColumns[stage.key].length === 0" class="h-24 mt-2 mb-2 flex items-center justify-center border-2 border-dashed border-[#CBD5E1] rounded-lg text-[12px] text-[#94A3B8] bg-white/50">
-              Belum ada data
-            </div>
-
-            <!-- JIKA LOADING SELESAI (TAMPILKAN VUEDRAGGABLE ASLI) -->
+            <!-- TAMPILKAN VUEDRAGGABLE SELALU AGAR BISA TERIMA DROP -->
             <draggable 
-              v-else
+              v-else-if="!isLoading"
               v-model="kanbanColumns[stage.key]" 
               group="pipeline" 
               item-key="id" 
@@ -322,6 +317,7 @@ onMounted(() => {
                           'text-[10px] font-bold px-2 py-0.5 rounded border whitespace-nowrap',
                           deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
                           deal.tier === 'Tier B' ? 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]' :
+                          deal.tier === 'Tier C' ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]' :
                           'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]'
                         ]"
                       >
@@ -341,6 +337,13 @@ onMounted(() => {
                       <span>{{ deal.updated_at }}</span>
                     </div>
                   </div>
+                </div>
+              </template>
+
+              <!-- SLOT FOOTER UNTUK MENAMPILKAN PESAN KOSONG -->
+              <template #footer>
+                <div v-if="kanbanColumns[stage.key].length === 0" class="h-24 mt-2 mb-2 flex items-center justify-center border-2 border-dashed border-[#CBD5E1] rounded-lg text-[12px] text-[#94A3B8] bg-white/50">
+                  Belum ada data
                 </div>
               </template>
             </draggable>
@@ -411,6 +414,7 @@ onMounted(() => {
                         'text-[11px] font-bold px-2.5 py-1 rounded-md border',
                         deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
                         deal.tier === 'Tier B' ? 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]' :
+                        deal.tier === 'Tier C' ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]' :
                         'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]'
                       ]"
                     >

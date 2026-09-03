@@ -39,20 +39,20 @@ const props = defineProps({
 
 const schema = toTypedSchema(
   z.object({
-    full_name: z.string({ required_error: "Full name is required" }).min(1, "Full name is required").max(50, "Name is too long").regex(/^[a-zA-Z\s\.,]+$/, "Only letters, spaces, dots, and commas allowed"),
-    company_name: z.string({ required_error: "Company name is required" }).min(1, "Company name is required").max(50, "Company name is too long"),
+    full_name: z.string({ required_error: "Full name is required" }).trim().min(1, "Full name is required").max(50, "Name is too long").regex(/^[a-zA-Z\s\.,]+$/, "Only letters, spaces, dots, and commas allowed"),
+    company_name: z.string({ required_error: "Company name is required" }).trim().min(1, "Company name is required").max(50, "Company name is too long"),
     phone: z.string().max(15, "Phone number is too long").regex(/^[0-9\+]*$/, "Only numbers and + allowed").optional().or(z.literal('')),
-    email: z.string({ required_error: "Email is required" }).min(1, "Email is required").email("Invalid email format").max(50, "Email is too long"),
+    email: z.string({ required_error: "Email is required" }).trim().min(1, "Email is required").email("Invalid email format").max(50, "Email is too long"),
     country: z.string().optional().or(z.literal('')),
     business_type: z.string().optional().or(z.literal('')),
-    industry: z.string().max(50, "Industry name is too long").optional().or(z.literal('')),
-    role: z.string({ required_error: "Role is required" }).min(1, "Role is required").max(50, "Role is too long"),
-    website_url: z.string().url("Invalid URL format").max(500, "URL is too long").optional().or(z.literal('')),
+    industry: z.string().trim().max(50, "Industry name is too long").optional().or(z.literal('')),
+    role: z.string({ required_error: "Role is required" }).trim().min(1, "Role is required").max(50, "Role is too long"),
+    website_url: z.string().trim().url("Invalid URL format").max(500, "URL is too long").optional().or(z.literal('')),
     company_size: z.string().optional().or(z.literal('')),
     automation_interest: z.string().optional().or(z.literal('')),
     preferred_contact_method: z.string().optional().or(z.literal('')),
-    current_problem: z.string().max(500, "Text is too long").optional().or(z.literal('')),
-    message: z.string().max(500, "Text is too long").optional().or(z.literal('')),
+    current_problem: z.string().trim().max(500, "Text is too long").optional().or(z.literal('')),
+    message: z.string().trim().max(500, "Text is too long").optional().or(z.literal('')),
     consent_status: z.boolean().refine(val => val === true, {
       message: "You must agree to the Privacy Policy"
     })
