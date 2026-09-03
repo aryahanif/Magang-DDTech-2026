@@ -1,12 +1,15 @@
-import { Body, Controller, Post, Get, Patch, Delete, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Get, Patch, Delete, Param, UseGuards, Query } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
+import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
+import { UpdateLeadDto } from './dto/update-lead.dto';
+import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 
 @Controller('api/leads')
 @UseGuards(ThrottlerGuard)
 export class LeadsController {
-  constructor(private readonly leadsService: LeadsService) {}
+  constructor(private readonly leadsService: LeadsService) { }
 
   @Post()
   async create(@Body() createLeadDto: CreateLeadDto) {
@@ -19,8 +22,8 @@ export class LeadsController {
   }
 
   @Get()
-  async findAll() {
-    const leads = await this.leadsService.findAll();
+  async findAll(@Query() query: GetLeadsQueryDto) {
+    const leads = await this.leadsService.findAll(query || {});
     return {
       success: true,
       data: leads,
@@ -41,9 +44,9 @@ export class LeadsController {
   }
 
   @Post(':id/notes')
-  async addNote(@Param('id') id: string, @Body() body: { note: string }) {
+  async addNote(@Param('id') id: string, @Body() body: AddLeadNoteDto) {
     try {
-      const note = await this.leadsService.addNote(id, body.note);
+      const note = await this.leadsService.addNoteToLead(id, 'Admin', body);
       return {
         success: true,
         data: note,
@@ -55,8 +58,8 @@ export class LeadsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateData: any) {
-    const lead = await this.leadsService.update(id, updateData);
+  async update(@Param('id') id: string, @Body() updateData: UpdateLeadDto) {
+    const lead = await this.leadsService.updateLeadStatus(id, updateData, 'Admin');
     return {
       success: true,
       data: lead,
