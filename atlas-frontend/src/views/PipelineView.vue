@@ -443,7 +443,7 @@ onMounted(() => {
                         :class="[
                           'text-[10px] font-bold px-2 py-0.5 rounded border whitespace-nowrap',
                           deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
-                          deal.tier === 'Tier B' ? 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]' :
+                          deal.tier === 'Tier B' ? 'bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE]' :
                           deal.tier === 'Tier C' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
                           deal.tier === 'Spam' ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]' :
                           'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]'
@@ -540,7 +540,7 @@ onMounted(() => {
                       :class="[
                         'text-[11px] font-bold px-2.5 py-1 rounded-md border',
                         deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
-                        deal.tier === 'Tier B' ? 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]' :
+                        deal.tier === 'Tier B' ? 'bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE]' :
                         deal.tier === 'Tier C' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
                         deal.tier === 'Spam' ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]' :
                         'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]'
