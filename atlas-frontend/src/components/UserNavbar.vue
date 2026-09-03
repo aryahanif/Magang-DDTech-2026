@@ -8,12 +8,12 @@ const isMenuOpen = ref(false)
 <header class="bg-fbg border-b border-gray-200 sticky top-0 z-50">
       <div class="py-4 px-8 flex justify-between items-center">
         <div class="text-2xl font-bold">
-          <RouterLink to="/" @click="isMenuOpen = false">Atlas</RouterLink>
+          <RouterLink to="/welcome" @click="isMenuOpen = false">Atlas</RouterLink>
         </div>
         
         <!-- Desktop Nav -->
         <nav class="hidden lg:flex gap-6 items-center">
-          <RouterLink to="/" class="hover:text-blue-600 transition font-medium">Home</RouterLink>
+          <RouterLink to="/welcome" class="hover:text-blue-600 transition font-medium">Home</RouterLink>
           <RouterLink to="/assessment" class="hover:text-blue-600 transition font-medium">Assessment</RouterLink>
           <RouterLink to="/contact-sales" class="hover:text-blue-600 transition font-medium">Contact Sales</RouterLink>
           <RouterLink to="/waitlist" class="hover:text-blue-600 transition font-medium">Waitlist</RouterLink>
@@ -37,7 +37,7 @@ const isMenuOpen = ref(false)
         v-show="isMenuOpen" 
         class="lg:hidden flex flex-col px-8 pb-4 space-y-3 bg-fbg border-t border-gray-100"
       >
-        <RouterLink to="/" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Home</RouterLink>
+        <RouterLink to="/welcome" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Home</RouterLink>
         <RouterLink to="/assessment" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Assessment</RouterLink>
         <RouterLink to="/contact-sales" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Contact Sales</RouterLink>
         <RouterLink to="/waitlist" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Waitlist</RouterLink>
