@@ -31,8 +31,6 @@ const fetchDeals = async () => {
     if (response.data.success) {
       allDeals.value = response.data.data.map((lead: any) => {
         let stageStr = lead.status || 'New Lead';
-        if (stageStr === 'Demo' || stageStr === 'Demo Booked') stageStr = 'Demo Scheduled';
-        if (stageStr === 'Proposal') stageStr = 'Proposal Sent';
 
         return {
           id: lead.id,
@@ -252,10 +250,7 @@ const onDrop = async (targetStageKey: StageKey, event: DragEvent) => {
     }
   }
 
-  // Mapping stage ke backend status
-  let backendStatus = targetStageKey as string
-  if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo'
-  if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal'
+  let backendStatus = targetStageKey
 
   // Persist ke backend
   try {

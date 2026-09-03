@@ -86,9 +86,6 @@ const fetchLeads = async () => {
     const response = await api.get('/api/leads');
     if (response.data.success) {
       leadsData.value = response.data.data.map((lead: any) => {
-        const stageStr = lead.status || 'New Lead'
-        const mappedStatus = stageStr === 'Demo' || stageStr === 'Demo Booked' ? 'Demo Scheduled' :
-                             stageStr === 'Proposal' ? 'Proposal Sent' : stageStr;
         return {
           id: lead.id,
           name: lead.full_name || lead.email || 'Unknown',
@@ -99,10 +96,11 @@ const fetchLeads = async () => {
           country: lead.country || '-',
           source: lead.source_page || '-',
           tier: lead.lead_tier || '-',
-          status: mappedStatus,
+          status: lead.status || 'New Lead',
           value: lead.lead_score ? `${lead.lead_score}` : '-',
           updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
-          isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified'
+          isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified',
+          assigned_owner: lead.assigned_owner || ''
         }
       });
     }
@@ -213,7 +211,7 @@ const activeDropdownId = ref<string | null>(null);
 const newLead = ref({
   full_name: "", email: "", phone: "", company_name: "", country: "", business_type: "", industry: "",
   role: "", website_url: "", company_size: "", automation_interest: "", preferred_contact_method: "", 
-  current_problem: "", message: "", tier: "Tier C", status: "New Lead"
+  current_problem: "", message: "", status: "New Lead", assigned_owner: ""
 });
 
 const leadSchema = toTypedSchema(
@@ -228,8 +226,8 @@ const leadSchema = toTypedSchema(
     business_type: z.string().optional().or(z.literal('')),
     industry: z.string().max(50, "Industry name is too long").optional().or(z.literal('')),
     company_size: z.string().optional().or(z.literal('')),
-    tier: z.string().optional().or(z.literal('')),
     status: z.string().optional().or(z.literal('')),
+    assigned_owner: z.string().optional().or(z.literal('')),
     current_problem: z.string().max(500, "Text is too long").optional().or(z.literal('')),
     message: z.string().max(500, "Text is too long").optional().or(z.literal(''))
   })
@@ -240,7 +238,7 @@ const openAddModal = () => {
   newLead.value = {
     full_name: "", email: "", phone: "", company_name: "", country: "", business_type: "", industry: "",
     role: "", website_url: "", company_size: "", automation_interest: "", preferred_contact_method: "", 
-    current_problem: "", message: "", tier: "Tier C", status: "New Lead"
+    current_problem: "", message: "", status: "New Lead", assigned_owner: ""
   };
   isModalOpen.value = true;
 };
@@ -264,8 +262,8 @@ const openEditModal = async (lead: Lead) => {
     preferred_contact_method: (lead as any).preferred_contact_method || "", 
     current_problem: (lead as any).current_problem || "", 
     message: (lead as any).message || "", 
-    tier: lead.tier, 
-    status: lead.status
+    status: lead.status,
+    assigned_owner: (lead as any).assigned_owner || ""
   };
   isModalOpen.value = true;
 };
@@ -286,16 +284,21 @@ const deleteLead = async (id: string) => {
 
 const submitForm = async (values: any) => {
   try {
-    const payload = {
-      ...values,
-      lead_tier: values.tier, // Map to DB column if needed
-      consent_status: true // Required by backend validation
-    };
-
     if (editingId.value) {
-      await api.patch(`/api/leads/${editingId.value}`, payload);
+      const updatePayload = {
+        status: values.status,
+        assigned_owner: values.assigned_owner
+      };
+      await api.patch(`/api/leads/${editingId.value}`, updatePayload);
       showToast("Lead successfully updated!", "success");
     } else {
+      const payload = {
+        ...values,
+        consent_status: true // Required by backend validation
+      };
+      // status & assigned_owner are not needed on POST, backend decides default status
+      delete payload.status;
+      delete payload.assigned_owner;
       await api.post('/api/leads', payload);
       showToast("Lead successfully added!", "success");
     }
@@ -362,7 +365,7 @@ const getTierClass = (tier: string) => {
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case "Demo": case "Proposal": return "text-[#2563EB]";
+    case "Demo Scheduled": case "Proposal Sent": return "text-[#2563EB]";
     case "Won": return "text-[#16A34A]";
     case "Lost": return "text-[#DC2626]";
     default: return "text-[#0F172A]";
@@ -438,8 +441,8 @@ const getStatusClass = (status: string) => {
               <option value="New Lead">New Lead</option>
               <option value="Contacted">Contacted</option>
               <option value="Qualified">Qualified</option>
-              <option value="Demo">Demo</option>
-              <option value="Proposal">Proposal</option>
+              <option value="Demo Scheduled">Demo Scheduled</option>
+              <option value="Proposal Sent">Proposal Sent</option>
               <option value="Won">Won</option>
               <option value="Lost">Lost</option>
             </select>
@@ -582,40 +585,40 @@ const getStatusClass = (status: string) => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Full Name</label>
-            <Field name="full_name" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="full_name" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="full_name" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Email</label>
-            <Field name="email" type="email" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="email" type="email" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="email" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Phone</label>
-            <Field name="phone" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="phone" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="phone" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Company Name</label>
-            <Field name="company_name" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="company_name" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="company_name" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Role</label>
-            <Field name="role" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="role" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="role" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Website URL</label>
-            <Field name="website_url" type="url" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="website_url" type="url" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="website_url" class="text-red-500 text-[11px] mt-1 block" />
           </div>
 
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Country</label>
-            <Field name="country" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <Field name="country" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
               <option value="">Select country</option>
               <option value="australia">Australia</option>
               <option value="newzealand">New Zealand</option>
@@ -626,7 +629,7 @@ const getStatusClass = (status: string) => {
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Business Type</label>
-            <Field name="business_type" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <Field name="business_type" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
               <option value="">Select business type</option>
               <option value="B2B">B2B (Business to Business)</option>
               <option value="B2C">B2C (Business to Consumer)</option>
@@ -637,12 +640,12 @@ const getStatusClass = (status: string) => {
 
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Industry</label>
-            <Field name="industry" type="text" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <Field name="industry" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
             <ErrorMessage name="industry" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
             <label class="block text-[13px] font-bold text-black mb-1.5">Company Size</label>
-            <Field name="company_size" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <Field name="company_size" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
               <option value="">Select size</option>
               <option value="1-10">1-10 employees</option>
               <option value="11-50">11-50 employees</option>
@@ -653,17 +656,19 @@ const getStatusClass = (status: string) => {
             <ErrorMessage name="company_size" class="text-red-500 text-[11px] mt-1 block" />
           </div>
 
-          <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Tier (Internal)</label>
-            <Field name="tier" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
-              <option value="Tier A">Tier A</option><option value="Tier B">Tier B</option><option value="Tier C">Tier C</option>
+          <div v-if="editingId">
+            <label class="block text-[13px] font-bold text-black mb-1.5">Assigned Owner (Internal)</label>
+            <Field name="assigned_owner" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+              <option value="">Unassigned</option>
+              <option value="AC (Aldean)">AC (Aldean)</option>
+              <option value="JM (Jordan)">JM (Jordan)</option>
             </Field>
-            <ErrorMessage name="tier" class="text-red-500 text-[11px] mt-1 block" />
+            <ErrorMessage name="assigned_owner" class="text-red-500 text-[11px] mt-1 block" />
           </div>
-          <div>
+          <div v-if="editingId">
             <label class="block text-[13px] font-bold text-black mb-1.5">Status (Internal)</label>
             <Field name="status" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
-              <option value="New Lead">New Lead</option><option value="Qualified">Qualified</option><option value="Contacted">Contacted</option><option value="Demo">Demo</option><option value="Proposal">Proposal</option><option value="Won">Won</option><option value="Lost">Lost</option>
+              <option value="New Lead">New Lead</option><option value="Qualified">Qualified</option><option value="Contacted">Contacted</option><option value="Demo Scheduled">Demo Scheduled</option><option value="Proposal Sent">Proposal Sent</option><option value="Won">Won</option><option value="Lost">Lost</option>
             </Field>
             <ErrorMessage name="status" class="text-red-500 text-[11px] mt-1 block" />
           </div>
@@ -671,12 +676,12 @@ const getStatusClass = (status: string) => {
 
         <div>
           <label class="block text-[13px] font-bold text-black mb-1.5">Current Problem</label>
-          <Field name="current_problem" as="textarea" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+          <Field name="current_problem" as="textarea" rows="2" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
           <ErrorMessage name="current_problem" class="text-red-500 text-[11px] mt-1 block" />
         </div>
         <div>
           <label class="block text-[13px] font-bold text-black mb-1.5">Message / Note</label>
-          <Field name="message" as="textarea" rows="2" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+          <Field name="message" as="textarea" rows="2" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
           <ErrorMessage name="message" class="text-red-500 text-[11px] mt-1 block" />
         </div>
 

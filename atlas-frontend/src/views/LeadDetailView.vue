@@ -33,10 +33,8 @@ const fetchLeadDetail = async () => {
     if (response.data && response.data.success) {
       const data = response.data.data
       
-      // Standardize status mapping (same as PipelineView)
-      let stageStr = data.status || 'New Lead'
-      if (stageStr === 'Demo' || stageStr === 'Demo Booked') stageStr = 'Demo Scheduled'
-      if (stageStr === 'Proposal') stageStr = 'Proposal Sent'
+      // Use backend status directly
+      const stageStr = data.status || 'New Lead'
       data.status = stageStr
       
       lead.value = data
@@ -84,10 +82,8 @@ const updateStatus = async (newStatus: string) => {
   const previousStatus = lead.value.status
   lead.value.status = newStatus
   
-  // Standardize status mapping for backend (same as PipelineView)
+  // Send the status exactly as selected
   let backendStatus = newStatus
-  if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo'
-  if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal'
 
   try {
     await api.patch(`/api/leads/${leadId}`, { status: backendStatus })
