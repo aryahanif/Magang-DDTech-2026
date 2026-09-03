@@ -57,22 +57,28 @@ const handleLogin = async () => {
     <!-- SISI KIRI (Biru) -->
     <div class="hidden lg:flex w-1/2 bg-gradient-to-br from-[#2563EB] to-[#0030AA] text-white items-center justify-center relative p-12">
       <!-- Content Container -->
-      <div class="w-full max-w-lg flex flex-col items-center text-center animate-fade-in-up">
+      <div class="w-full max-w-lg flex flex-col items-center text-center">
         
         <!-- Top Title -->
-        <h2 class="text-[42px] font-extrabold mb-0 tracking-tight relative z-10">Atlas AI Workforce</h2>
+        <div class="overflow-hidden mb-0 relative z-10">
+          <h2 class="block text-[42px] font-extrabold tracking-tight animate-mask-in">Atlas AI Workforce</h2>
+        </div>
         
         <!-- Animation -->
-        <Vue3Lottie :animationData="loginAnimationJSON" :height="450" :width="450" class="drop-shadow-2xl mb-4 pointer-events-none relative z-0" />
+        <Vue3Lottie :animationData="loginAnimationJSON" :height="450" :width="450" class="drop-shadow-2xl mb-4 pointer-events-none relative z-0 animate-fade-in-up" style="animation-delay: 0.1s" />
         
         <!-- Bottom Copywriting -->
-        <h1 class="text-[24px] font-bold mb-4 leading-tight">
-          AI Powered Workforce,human-quality Leads.
-        </h1>
-        <p class="text-blue-100 text-[14px] leading-relaxed max-w-md">
-          Manage, Qualify, and convert your B2B pipeline with Atlas<br/>
-          the modern CRM build for AI workforce teams.
-        </p>
+        <div class="overflow-hidden mb-4">
+          <h1 class="block text-[24px] font-bold leading-tight animate-mask-in-delay-1">
+            AI Powered Workforce,human-quality Leads.
+          </h1>
+        </div>
+        <div class="overflow-hidden">
+          <p class="block text-blue-100 text-[14px] leading-relaxed max-w-md animate-mask-in-delay-2">
+            Manage, Qualify, and convert your B2B pipeline with Atlas<br/>
+            the modern CRM build for AI workforce teams.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -90,12 +96,16 @@ const handleLogin = async () => {
         
         <!-- Header Form -->
         <div class="text-center sm:text-left">
-          <h2 class="text-3xl font-bold text-gray-900 mb-2">Sign in to your account</h2>
-          <p class="text-gray-500">Enter your credentials to access the dashboard.</p>
+          <div class="overflow-hidden mb-2">
+            <h2 class="block text-3xl font-bold text-gray-900 animate-mask-in-delay-1">Sign in to your account</h2>
+          </div>
+          <div class="overflow-hidden">
+            <p class="block text-gray-500 animate-mask-in-delay-2">Enter your credentials to access the dashboard.</p>
+          </div>
         </div>
 
         <!-- Form Input -->
-        <form @submit.prevent="handleLogin" class="space-y-6 mt-8">
+        <form @submit.prevent="handleLogin" class="space-y-6 mt-8 animate-fade-in-up" style="animation-delay: 0.4s; opacity: 0;">
           
           <div v-if="errorMessage" class="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200">
             {{ errorMessage }}
@@ -185,6 +195,33 @@ const handleLogin = async () => {
   </div>
 </template>
 <style scoped>
+@keyframes maskIn {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-mask-in {
+  animation: maskIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-mask-in-delay-1 {
+  animation: maskIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.15s;
+  opacity: 0;
+}
+
+.animate-mask-in-delay-2 {
+  animation: maskIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
 /* Membuat frame animasi dari bawah (transparan) ke atas (jelas) */
 @keyframes fadeInUp {
   0% {

@@ -385,7 +385,7 @@ const exportDetailToCSV = () => {
                 <div class="flex items-center gap-3">
                   <span
                     class="text-[12px] font-bold px-2.5 py-1 rounded bg-[#DBEAFE] text-[#1E40AF]"
-                    >Score: {{ lead.lead_score }}/100</span
+                    >Score: {{ lead.lead_score }}/5</span
                   >
                 </div>
               </div>
