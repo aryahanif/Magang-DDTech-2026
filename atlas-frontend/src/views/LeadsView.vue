@@ -531,8 +531,27 @@ const getStatusClass = (status: string) => {
                 <th class="py-3 px-2 w-10"></th>
               </tr>
             </thead>
+            <!-- JIKA SEDANG LOADING (TAMPILKAN SKELETON TABEL) -->
+            <tbody v-if="isLoading" class="divide-y divide-[#E2E8F0]">
+              <tr v-for="i in 8" :key="'skeleton-'+i">
+                <td class="py-3 px-4 text-center"><div class="h-4 bg-gray-200 rounded w-4 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2">
+                  <div class="h-4 bg-gray-200 rounded w-32 mb-1.5 animate-pulse"></div>
+                  <div class="h-3 bg-gray-100 rounded w-20 animate-pulse"></div>
+                </td>
+                <td class="py-3 px-2"><div class="h-4 bg-gray-200 rounded w-28 animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-5 bg-gray-200 rounded-md w-16 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-5 bg-gray-200 rounded-md w-20 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-24 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-4 text-right"><div class="h-4 bg-gray-200 rounded w-20 ml-auto animate-pulse"></div></td>
+                <td class="py-3 px-2"><div class="h-5 w-5 bg-gray-200 rounded mx-auto animate-pulse"></div></td>
+              </tr>
+            </tbody>
+
             <!-- TRICK ANIMASI VUE: Binding atribut key ke activeTab dan currentPage -->
-            <tbody :key="activeTab + currentPage" class="animate-fade-in">
+            <tbody v-else :key="activeTab + currentPage" class="animate-fade-in">
               <tr v-for="lead in paginatedLeads" :key="lead.id" @click="handleRowClick(lead)" class="border-b border-gray-100 transition group cursor-pointer hover:bg-gray-50" :class="selectedLeads.includes(lead.id) ? 'bg-[#EFF6FF] hover:bg-[#E0E7FF]' : ''">
                 <td class="py-3 px-4 text-center">
                   <input type="checkbox" :value="lead.id" v-model="selectedLeads" @click.stop class="rounded border-gray-300 text-[#2563EB] focus:ring-[#2563EB] transition cursor-pointer" :class="selectedLeads.includes(lead.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'" />
@@ -568,7 +587,7 @@ const getStatusClass = (status: string) => {
           </table>
 
           <!-- Empty State -->
-          <div v-if="filteredLeads.length === 0" class="py-16 text-center animate-fade-in">
+          <div v-if="!isLoading && filteredLeads.length === 0" class="py-16 text-center animate-fade-in">
             <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
             <p class="text-[14px] text-gray-500 font-medium">No leads found in this category.</p>
           </div>
