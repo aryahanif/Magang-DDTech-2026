@@ -197,10 +197,13 @@ const toggleSelectAll = (event: Event) => {
   selectedLeads.value = isChecked ? filteredLeads.value.map((lead) => lead.id) : [];
 };
 
+const isDeleteModalOpen = ref(false);
+const deleteTargetId = ref<string | null>(null);
+
 const deleteSelectedLeads = () => {
-  leadsData.value = leadsData.value.filter((lead) => !selectedLeads.value.includes(lead.id));
-  selectedLeads.value = [];
-  if (paginatedLeads.value.length === 0 && currentPage.value > 1) currentPage.value--;
+  if (selectedLeads.value.length === 0) return;
+  deleteTargetId.value = null; // null indicates bulk delete
+  isDeleteModalOpen.value = true;
 };
 
 // ==========================================
@@ -270,18 +273,31 @@ const openEditModal = async (lead: Lead) => {
   isModalOpen.value = true;
 };
 
-const deleteLead = async (id: string) => {
-  if (confirm('Are you sure you want to delete this lead?')) {
-    try {
-      await api.delete(`/api/leads/${id}`);
-      showToast("Lead successfully deleted!", "success");
-      fetchLeads(); // refresh
-    } catch (error) {
-      console.error("Failed to delete lead", error);
-      showToast("Failed to delete lead.", "error");
-    }
-  }
+const deleteLead = (id: string) => {
+  deleteTargetId.value = id;
+  isDeleteModalOpen.value = true;
   activeDropdownId.value = null;
+};
+
+const confirmDelete = async () => {
+  try {
+    if (deleteTargetId.value) {
+      await api.delete(`/api/leads/${deleteTargetId.value}`);
+      showToast("Lead successfully deleted!", "success");
+    } else {
+      await Promise.all(selectedLeads.value.map(id => api.delete(`/api/leads/${id}`)));
+      showToast(`${selectedLeads.value.length} leads successfully deleted!`, "success");
+      selectedLeads.value = [];
+      if (paginatedLeads.value.length === 0 && currentPage.value > 1) currentPage.value--;
+    }
+    fetchLeads();
+  } catch (error) {
+    console.error("Failed to delete lead(s)", error);
+    showToast("Failed to delete lead(s).", "error");
+  } finally {
+    isDeleteModalOpen.value = false;
+    deleteTargetId.value = null;
+  }
 };
 
 const submitForm = async (values: any) => {
@@ -291,6 +307,8 @@ const submitForm = async (values: any) => {
       lead_tier: values.tier, // Map to DB column if needed
       consent_status: true // Required by backend validation
     };
+    
+    delete payload.tier; // Fix Prisma error by removing undefined schema column
 
     if (editingId.value) {
       await api.patch(`/api/leads/${editingId.value}`, payload);
@@ -353,7 +371,7 @@ const closeModal = () => {
 const getTierClass = (tier: string) => {
   switch (tier) {
     case "Tier A": return "bg-[#2563EB] text-white";
-    case "Tier B": return "bg-[#94A3B8] text-white";
+    case "Tier B": return "bg-[#6366F1] text-white";
     case "Tier C": return "bg-[#FEF3C7] text-[#D97706]";
     case "Spam": return "bg-[#FEF2F2] text-[#DC2626]";
     default: return "bg-gray-200 text-gray-700";
@@ -685,6 +703,28 @@ const getStatusClass = (status: string) => {
           <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">{{ editingId ? "Save changes" : "Add lead" }}</button>
         </div>
       </Form>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-0">
+    <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="isDeleteModalOpen = false"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center animate-fade-in">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Confirm Delete</h3>
+      <p class="text-gray-500 text-sm mb-6">
+        Are you sure you want to delete {{ deleteTargetId ? 'this lead' : selectedLeads.length + ' selected leads' }}? This action cannot be undone.
+      </p>
+      <div class="flex items-center gap-3">
+        <button @click="isDeleteModalOpen = false" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
+          Cancel
+        </button>
+        <button @click="confirmDelete" class="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">
+          Delete
+        </button>
+      </div>
     </div>
   </div>
 </template>
