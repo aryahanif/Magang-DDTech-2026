@@ -100,12 +100,15 @@ onUnmounted(() => {
 // LOGOUT
 // ==========================================
 const openLogoutModal = () => {
-  localStorage.removeItem('auth_token')
-  localStorage.removeItem('user')
-  router.push('/admin/login')
+  isLogoutModalOpen.value = true
 }
 const closeLogoutModal = () => isLogoutModalOpen.value = false
-const confirmLogout = () => { closeLogoutModal(); router.push('/admin') }
+const confirmLogout = () => { 
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('user')
+  closeLogoutModal()
+  router.push('/admin') 
+}
 
 const isMobileMenuOpen = ref(false)
 const toggleMobileMenu = () => isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -166,13 +169,13 @@ const getIconColor = (menuName: string, currentMenu: string) => {
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
 
-        <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap cursor-default w-[140px] lg:w-[180px]">
-          <div class="bg-[#2563EB] text-white font-bold text-xs px-2 py-1 rounded">Logo</div>
+        <RouterLink to="/admin/dashboard" class="flex items-center gap-3 overflow-hidden whitespace-nowrap cursor-pointer w-[140px] lg:w-[180px] hover:opacity-80 transition-opacity">
+          <div class="bg-[#2563EB] text-white font-bold text-l px-2 py-1 rounded">A</div>
           <div class="flex flex-col justify-center">
             <span class="font-bold text-[22px] text-[#0F172A] leading-none">Atlas</span>
             <span class="text-[10px] font-extrabold text-[#2563EB] tracking-wider uppercase mt-1 leading-none">BY DDTECH</span>
           </div>
-        </div>
+        </RouterLink>
       </div>
 
       <!-- BAGIAN TENGAH: Kosong (Search Area dihapus sesuai permintaan) -->
@@ -273,6 +276,11 @@ const getIconColor = (menuName: string, currentMenu: string) => {
             <RouterLink to="/admin/pipeline" title="Pipeline" :class="[getMenuClass('pipeline', activeMenu), isVisuallyWide ? 'pl-[20px] pr-6' : 'lg:justify-center lg:px-0']" @click="closeMobileMenu">
               <svg class="w-[26px] h-[26px] flex-shrink-0" :class="getIconColor('pipeline', activeMenu)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="9" r="3"/><path d="M6 9v3a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V12"/></svg>
               <span class="text-[16px] tracking-wide whitespace-nowrap" :class="isVisuallyWide ? 'block' : 'lg:hidden'">Pipeline</span>
+            </RouterLink>
+
+            <RouterLink to="/admin/tasks" title="Tasks" :class="[getMenuClass('tasks', activeMenu), isVisuallyWide ? 'pl-[20px] pr-6' : 'lg:justify-center lg:px-0']" @click="closeMobileMenu">
+              <svg class="w-[26px] h-[26px] flex-shrink-0" :class="getIconColor('tasks', activeMenu)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              <span class="text-[16px] tracking-wide whitespace-nowrap" :class="isVisuallyWide ? 'block' : 'lg:hidden'">Tasks</span>
             </RouterLink>
           </div>
 

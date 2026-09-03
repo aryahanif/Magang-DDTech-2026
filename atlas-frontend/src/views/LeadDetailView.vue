@@ -31,7 +31,15 @@ const fetchLeadDetail = async () => {
   try {
     const response = await api.get(`/api/leads/${leadId}`)
     if (response.data && response.data.success) {
-      lead.value = response.data.data
+      const data = response.data.data
+      
+      // Standardize status mapping (same as PipelineView)
+      let stageStr = data.status || 'New Lead'
+      if (stageStr === 'Demo' || stageStr === 'Demo Booked') stageStr = 'Demo Scheduled'
+      if (stageStr === 'Proposal') stageStr = 'Proposal Sent'
+      data.status = stageStr
+      
+      lead.value = data
     } else {
       errorMessage.value = 'Failed to load lead details.'
     }
@@ -76,8 +84,13 @@ const updateStatus = async (newStatus: string) => {
   const previousStatus = lead.value.status
   lead.value.status = newStatus
   
+  // Standardize status mapping for backend (same as PipelineView)
+  let backendStatus = newStatus
+  if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo'
+  if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal'
+
   try {
-    await api.patch(`/api/leads/${leadId}`, { status: newStatus })
+    await api.patch(`/api/leads/${leadId}`, { status: backendStatus })
     // Refresh to get new activity logs
     await fetchLeadDetail()
     showToast('Status berhasil diubah.', 'success')
@@ -291,7 +304,7 @@ const exportDetailToCSV = () => {
             Export CSV
           </button>
           <select
-            :value="lead.status"
+            v-model="lead.status"
             @change="updateStatus(($event.target as HTMLSelectElement).value)"
             class="flex-1 sm:flex-none text-[13px] sm:text-[14px] font-semibold border border-[#E2E8F0] rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
           >
@@ -310,23 +323,26 @@ const exportDetailToCSV = () => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
         <!-- KOLOM KIRI (2/3): Informasi & AI -->
         <div class="lg:col-span-2 flex flex-col gap-6">
-          <!-- SKELETON KOLOM KIRI -->
+          <!-- SKELETON & AI LOADING KOLOM KIRI -->
           <template v-if="isLoading">
+            <!-- AI Loading State -->
             <div
-              class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 animate-pulse"
+              class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-8 flex flex-col items-center justify-center min-h-[300px] animate-fade-in relative overflow-hidden"
             >
-              <div class="h-6 bg-gray-200 rounded w-48 mb-6"></div>
-              <div class="space-y-4">
-                <div>
-                  <div class="h-3 bg-gray-200 rounded w-24 mb-2"></div>
-                  <div class="h-4 bg-gray-300 rounded w-full"></div>
-                </div>
-                <div>
-                  <div class="h-3 bg-gray-200 rounded w-24 mb-2"></div>
-                  <div class="h-16 bg-gray-300 rounded w-full"></div>
-                </div>
+              <div class="relative w-20 h-20 mb-5 flex items-center justify-center">
+                <!-- Ripple Effect -->
+                <div class="absolute inset-0 border-4 border-[#7C3AED] rounded-full animate-ping opacity-20"></div>
+                <!-- Spinner -->
+                <svg class="animate-spin w-12 h-12 text-[#7C3AED]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
               </div>
+              <h3 class="text-[18px] font-bold text-[#0F172A] bg-clip-text text-transparent bg-gradient-to-r from-[#2563EB] to-[#7C3AED] mb-2">Atlas AI is working...</h3>
+              <p class="text-[14px] text-[#64748B] font-medium animate-pulse">Reading profile & scoring lead</p>
             </div>
+            
+            <!-- Skeleton for form data -->
             <div
               class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 animate-pulse mt-6"
             >
@@ -343,7 +359,7 @@ const exportDetailToCSV = () => {
           <template v-else-if="lead">
             <!-- 1. AI Qualification Summary -->
             <div
-              class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 flex-shrink-0 animate-fade-in"
+              class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 flex-shrink-0 relative overflow-hidden transition-all"
             >
               <div
                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4"

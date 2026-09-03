@@ -2,7 +2,9 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
 import api from '../services/api'
-import draggable from 'vuedraggable' // Import library drag and drop
+import { useToast } from '../composables/UseToast'
+
+const { showToast } = useToast()
 
 // ==========================================
 // 1. TIPE DATA & API FETCH
@@ -114,45 +116,156 @@ const getStageColor = (stageKey: StageKey) => {
 }
 
 // ==========================================
-// 5. DRAG AND DROP LOGIC (VUEDRAGGABLE)
+// 5. DRAG AND DROP LOGIC (NATIVE HTML5)
 // ==========================================
 const kanbanColumns = ref<Record<StageKey, Deal[]>>({
   'New Lead': [], 'Qualified': [], 'Contacted': [], 'Demo Scheduled': [], 'Proposal Sent': [], 'Won': [], 'Lost': []
 })
 
-watch(filteredDeals, (newVal) => {
+const rebuildColumns = () => {
   const cols: Record<StageKey, Deal[]> = {
     'New Lead': [], 'Qualified': [], 'Contacted': [], 'Demo Scheduled': [], 'Proposal Sent': [], 'Won': [], 'Lost': []
   }
-  newVal.forEach(deal => cols[deal.stage].push(deal))
+  filteredDeals.value.forEach(deal => cols[deal.stage].push(deal))
   kanbanColumns.value = cols
-}, { immediate: true, deep: true })
+}
+
+watch([() => allDeals.value, searchQuery, selectedOwner, selectedTier], rebuildColumns, { immediate: true, deep: true })
 
 const getStageTotalValue = (stageKey: StageKey) => {
   return kanbanColumns.value[stageKey]?.reduce((acc, curr) => acc + curr.value, 0) || 0
 }
 
-const handleDragChange = async (evt: any, stageKey: StageKey) => {
-  if (evt.added) {
-    const dealId = evt.added.element.id
-    const deal = allDeals.value.find(d => d.id === dealId)
-    if (deal) {
-      const previousStage = deal.stage
-      deal.stage = stageKey
-      deal.updated_at = new Date().toISOString().slice(0, 10)
-      
-      let backendStatus = stageKey as string;
-      if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo';
-      if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal';
+// State untuk drag & drop
+const draggedDealId = ref<string | null>(null)
+const dragSourceStage = ref<StageKey | null>(null)
+const dragOverStage = ref<StageKey | null>(null)
+const dropTargetIndex = ref<number>(-1) // posisi drop indicator dalam kolom
 
-      try {
-        await api.patch(`/api/leads/${deal.id}`, { status: backendStatus })
-      } catch(error) {
-        console.error("Failed to update status in DB", error)
-        deal.stage = previousStage // revert on failure
-        fetchDeals()
+const onDragStart = (dealId: string, stageKey: StageKey, event: DragEvent) => {
+  draggedDealId.value = dealId
+  dragSourceStage.value = stageKey
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', dealId)
+  }
+  const target = event.target as HTMLElement
+  setTimeout(() => target.classList.add('opacity-40'), 0)
+}
+
+const onDragEnd = (event: DragEvent) => {
+  draggedDealId.value = null
+  dragSourceStage.value = null
+  dragOverStage.value = null
+  dropTargetIndex.value = -1
+  const target = event.target as HTMLElement
+  target.classList.remove('opacity-40')
+}
+
+const onDragOverColumn = (stageKey: StageKey, event: DragEvent) => {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverStage.value = stageKey
+  // Jika hover di area kosong kolom (bukan di atas card), drop di akhir
+  const target = event.target as HTMLElement
+  if (target.classList.contains('kanban-drop-zone')) {
+    dropTargetIndex.value = kanbanColumns.value[stageKey].length
+  }
+}
+
+const onDragOverCard = (stageKey: StageKey, cardIndex: number, event: DragEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverStage.value = stageKey
+  // Tentukan posisi: atas atau bawah card berdasarkan posisi mouse
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const midY = rect.top + rect.height / 2
+  dropTargetIndex.value = event.clientY < midY ? cardIndex : cardIndex + 1
+}
+
+const onDragLeaveColumn = (stageKey: StageKey, event: DragEvent) => {
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  const currentTarget = event.currentTarget as HTMLElement
+  if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+    if (dragOverStage.value === stageKey) {
+      dragOverStage.value = null
+      dropTargetIndex.value = -1
+    }
+  }
+}
+
+const onDrop = async (targetStageKey: StageKey, event: DragEvent) => {
+  event.preventDefault()
+  const targetIndex = dropTargetIndex.value
+  dragOverStage.value = null
+  dropTargetIndex.value = -1
+
+  const dealId = draggedDealId.value || event.dataTransfer?.getData('text/plain')
+  if (!dealId) return
+
+  const deal = allDeals.value.find(d => d.id === dealId)
+  if (!deal) return
+
+  const previousStage = deal.stage
+  const sourceStage = dragSourceStage.value
+
+  // === REORDER DALAM KOLOM YANG SAMA ===
+  if (previousStage === targetStageKey && sourceStage === targetStageKey) {
+    const column = kanbanColumns.value[targetStageKey]
+    const fromIndex = column.findIndex(d => d.id === dealId)
+    if (fromIndex !== -1 && targetIndex !== -1 && fromIndex !== targetIndex) {
+      const removed = column.splice(fromIndex, 1)
+      if (removed.length > 0) {
+        const insertAt = targetIndex > fromIndex ? targetIndex - 1 : targetIndex
+        const item = removed[0] as Deal
+        column.splice(insertAt, 0, item)
       }
     }
+    draggedDealId.value = null
+    dragSourceStage.value = null
+    return
+  }
+
+  // === PINDAH KE KOLOM LAIN ===
+  deal.stage = targetStageKey
+  deal.updated_at = new Date().toISOString().slice(0, 10)
+  draggedDealId.value = null
+  dragSourceStage.value = null
+
+  // Rebuild columns lalu insert di posisi yang tepat
+  rebuildColumns()
+  if (targetIndex >= 0 && targetIndex < kanbanColumns.value[targetStageKey].length) {
+    const col = kanbanColumns.value[targetStageKey]
+    const currentIdx = col.findIndex(d => d.id === dealId)
+    if (currentIdx !== -1 && currentIdx !== targetIndex) {
+      const removed = col.splice(currentIdx, 1)
+      if (removed.length > 0) {
+        const insertAt = targetIndex > currentIdx ? targetIndex - 1 : targetIndex
+        const item = removed[0] as Deal
+        col.splice(insertAt, 0, item)
+      }
+    }
+  }
+
+  // Mapping stage ke backend status
+  let backendStatus = targetStageKey as string
+  if (backendStatus === 'Demo Scheduled') backendStatus = 'Demo'
+  if (backendStatus === 'Proposal Sent') backendStatus = 'Proposal'
+
+  // Persist ke backend
+  try {
+    await api.patch(`/api/leads/${deal.id}`, { status: backendStatus })
+    showToast('Status deal berhasil diperbarui', 'success')
+  } catch (error) {
+    console.error('Failed to update status in DB', error)
+    showToast('Gagal memperbarui status ke database', 'error')
+    deal.stage = previousStage
+    rebuildColumns()
   }
 }
 
@@ -288,22 +401,36 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- TAMPILKAN VUEDRAGGABLE SELALU AGAR BISA TERIMA DROP -->
-            <draggable 
-              v-else-if="!isLoading"
-              v-model="kanbanColumns[stage.key]" 
-              group="pipeline" 
-              item-key="id" 
-              class="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[150px] custom-scrollbar-vertical"
-              :animation="200"
-              :delay="150"
-              :delayOnTouchOnly="true"
-              ghost-class="opacity-40"
-              @change="handleDragChange($event, stage.key)"
+            <!-- JIKA LOADING SELESAI (NATIVE HTML5 DRAG & DROP) -->
+            <div 
+              v-else
+              class="kanban-drop-zone flex-1 overflow-y-auto pr-1 min-h-[150px] custom-scrollbar-vertical transition-colors duration-200 rounded-lg"
+              :class="dragOverStage === stage.key && draggedDealId ? 'bg-blue-50/60 ring-2 ring-blue-300/50 ring-inset' : ''"
+              @dragover="onDragOverColumn(stage.key, $event)"
+              @dragleave="onDragLeaveColumn(stage.key, $event)"
+              @drop="onDrop(stage.key, $event)"
             >
-              <template #item="{ element: deal, index }">
-                <div v-show="index < stageLimits[stage.key]" class="bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm hover:shadow-md hover:border-blue-200 cursor-grab active:cursor-grabbing transition-all duration-200 group flex items-start gap-2">
-                  
+              <!-- Kolom kosong: drop target placeholder -->
+              <div v-if="kanbanColumns[stage.key].length === 0" class="h-24 flex items-center justify-center border-2 border-dashed rounded-lg text-[12px] bg-white/50 transition-colors duration-200" :class="dragOverStage === stage.key ? 'border-blue-400 text-blue-500' : 'border-[#CBD5E1] text-[#94A3B8]'">
+                Drop deal di sini
+              </div>
+
+              <!-- Card items with drop indicators -->
+              <template v-for="(deal, index) in kanbanColumns[stage.key]" :key="deal.id">
+                <!-- Drop indicator SEBELUM card -->
+                <div 
+                  v-if="draggedDealId && dragOverStage === stage.key && dropTargetIndex === index && draggedDealId !== deal.id"
+                  class="h-1 bg-blue-500 rounded-full mx-1 my-1 transition-all duration-150"
+                ></div>
+
+                <div 
+                  v-show="index < stageLimits[stage.key]" 
+                  draggable="true"
+                  @dragstart="onDragStart(deal.id, stage.key, $event)"
+                  @dragend="onDragEnd($event)"
+                  @dragover="onDragOverCard(stage.key, index, $event)"
+                  class="bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm hover:shadow-md hover:border-blue-200 cursor-grab active:cursor-grabbing transition-all duration-200 group flex items-start gap-2 mb-3"
+                >
                   <div class="md:hidden flex items-center text-[#CBD5E1] group-hover:text-[#94A3B8] pt-0.5 transition-colors flex-shrink-0">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm9-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Z" />
@@ -317,7 +444,8 @@ onMounted(() => {
                           'text-[10px] font-bold px-2 py-0.5 rounded border whitespace-nowrap',
                           deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
                           deal.tier === 'Tier B' ? 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]' :
-                          deal.tier === 'Tier C' ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]' :
+                          deal.tier === 'Tier C' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+                          deal.tier === 'Spam' ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]' :
                           'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]'
                         ]"
                       >
@@ -340,13 +468,12 @@ onMounted(() => {
                 </div>
               </template>
 
-              <!-- SLOT FOOTER UNTUK MENAMPILKAN PESAN KOSONG -->
-              <template #footer>
-                <div v-if="kanbanColumns[stage.key].length === 0" class="h-24 mt-2 mb-2 flex items-center justify-center border-2 border-dashed border-[#CBD5E1] rounded-lg text-[12px] text-[#94A3B8] bg-white/50">
-                  Belum ada data
-                </div>
-              </template>
-            </draggable>
+              <!-- Drop indicator SETELAH card terakhir -->
+              <div 
+                v-if="draggedDealId && dragOverStage === stage.key && dropTargetIndex === kanbanColumns[stage.key].length && kanbanColumns[stage.key].length > 0"
+                class="h-1 bg-blue-500 rounded-full mx-1 my-1 transition-all duration-150"
+              ></div>
+            </div>
 
             <div v-if="!isLoading && kanbanColumns[stage.key].length > stageLimits[stage.key]" class="pt-2 pb-1">
               <button 
@@ -414,7 +541,8 @@ onMounted(() => {
                         'text-[11px] font-bold px-2.5 py-1 rounded-md border',
                         deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
                         deal.tier === 'Tier B' ? 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]' :
-                        deal.tier === 'Tier C' ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]' :
+                        deal.tier === 'Tier C' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+                        deal.tier === 'Spam' ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]' :
                         'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0]'
                       ]"
                     >

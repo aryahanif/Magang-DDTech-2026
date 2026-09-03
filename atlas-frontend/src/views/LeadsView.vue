@@ -85,21 +85,26 @@ const fetchLeads = async () => {
   try {
     const response = await api.get('/api/leads');
     if (response.data.success) {
-      leadsData.value = response.data.data.map((lead: any) => ({
-        id: lead.id,
-        name: lead.full_name || lead.email || 'Unknown',
-        email: lead.email || '',
-        phone: lead.phone || '',
-        role: lead.role || '-',
-        company: lead.company_name || '-',
-        country: lead.country || '-',
-        source: lead.source_page || '-',
-        tier: lead.lead_tier || '-',
-        status: lead.status || 'New Lead',
-        value: lead.lead_score ? `${lead.lead_score}` : '-',
-        updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
-        isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified'
-      }));
+      leadsData.value = response.data.data.map((lead: any) => {
+        const stageStr = lead.status || 'New Lead'
+        const mappedStatus = stageStr === 'Demo' || stageStr === 'Demo Booked' ? 'Demo Scheduled' :
+                             stageStr === 'Proposal' ? 'Proposal Sent' : stageStr;
+        return {
+          id: lead.id,
+          name: lead.full_name || lead.email || 'Unknown',
+          email: lead.email || '',
+          phone: lead.phone || '',
+          role: lead.role || '-',
+          company: lead.company_name || '-',
+          country: lead.country || '-',
+          source: lead.source_page || '-',
+          tier: lead.lead_tier || '-',
+          status: mappedStatus,
+          value: lead.lead_score ? `${lead.lead_score}` : '-',
+          updated: new Date(lead.updated_at || lead.created_at).toLocaleDateString(),
+          isValid: lead.lead_tier !== 'Spam' && lead.lead_tier !== 'Disqualified'
+        }
+      });
     }
   } catch (error) {
     console.error("Failed to fetch leads from API", error);
@@ -283,7 +288,8 @@ const submitForm = async (values: any) => {
   try {
     const payload = {
       ...values,
-      lead_tier: values.tier // Map to DB column if needed
+      lead_tier: values.tier, // Map to DB column if needed
+      consent_status: true // Required by backend validation
     };
 
     if (editingId.value) {
@@ -346,10 +352,11 @@ const closeModal = () => {
 
 const getTierClass = (tier: string) => {
   switch (tier) {
-    case "Tier A": return "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]";
-    case "Tier B": return "bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]";
-    case "Tier C": return "bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]";
-    default: return "bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]";
+    case "Tier A": return "bg-[#2563EB] text-white";
+    case "Tier B": return "bg-[#94A3B8] text-white";
+    case "Tier C": return "bg-[#FEF3C7] text-[#D97706]";
+    case "Spam": return "bg-[#FEF2F2] text-[#DC2626]";
+    default: return "bg-gray-200 text-gray-700";
   }
 };
 

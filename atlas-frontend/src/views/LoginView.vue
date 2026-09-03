@@ -9,13 +9,19 @@ const password = ref('')
 const rememberMe = ref(false)
 const showPassword = ref(false)
 const errorMessage = ref('')
+const isLoading = ref(false)
+const isSuccess = ref(false)
 const router = useRouter()
 
 import api from '../services/api'
+import { Vue3Lottie } from 'vue3-lottie'
+import loginAnimationJSON from '../assets/login-lottie.json'
 
 const handleLogin = async () => {
   try {
     errorMessage.value = ''
+    isLoading.value = true
+    
     const response = await api.post('/api/auth/login', {
       email: email.value,
       password: password.value
@@ -26,9 +32,15 @@ const handleLogin = async () => {
       localStorage.setItem('auth_token', response.data.token)
       localStorage.setItem('user', JSON.stringify(response.data.user))
       
-      router.push('/admin/dashboard')
+      isSuccess.value = true
+      setTimeout(() => {
+        router.push('/admin/dashboard')
+      }, 1500)
+    } else {
+      isLoading.value = false
     }
   } catch (error: any) {
+    isLoading.value = false
     console.error('Login failed:', error)
     if (error.response && error.response.status === 401) {
       errorMessage.value = 'Email atau password salah.'
@@ -40,24 +52,24 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="flex h-screen w-full bg-white text-gray-800 font-sans">
+  <div class="flex h-screen w-full bg-white text-gray-800 font-sans relative overflow-hidden">
     
     <!-- SISI KIRI (Biru) -->
-    <div class="hidden lg:flex w-1/2 bg-gradient-to-br from-[#2563EB] to-[#0030AA] text-white flex-col relative p-12">
-      <!-- Logo -->
-      <div class="absolute top-12 left-12 flex items-center gap-3 font-bold text-2xl">
-        <div class="bg-white text-[#1a4bca] w-8 h-8 flex items-center justify-center rounded pt-0.5">
-          A
-        </div>
-        Atlas
-      </div>
-      
-      <!-- Copywriting -->
-      <div class="max-w-xl my-auto">
-        <h1 class="text-[48px] font-bold mb-6 animate-fade-in-up ">
-          AI Powered Workforce,<br/>human-quality Leads.
+    <div class="hidden lg:flex w-1/2 bg-linear-to-br from-[#2563EB] to-[#0030AA] text-white items-center justify-center relative p-12">
+      <!-- Content Container -->
+      <div class="w-full max-w-lg flex flex-col items-center text-center animate-fade-in-up">
+        
+        <!-- Top Title -->
+        <h2 class="text-[42px] font-extrabold mb-0 tracking-tight relative z-10">Atlas AI Workforce</h2>
+        
+        <!-- Animation -->
+        <Vue3Lottie :animationData="loginAnimationJSON" :height="450" :width="450" class="drop-shadow-2xl mb-4 pointer-events-none relative z-0" />
+        
+        <!-- Bottom Copywriting -->
+        <h1 class="text-[24px] font-bold mb-4 leading-tight">
+          AI Powered Workforce,human-quality Leads.
         </h1>
-        <p class="text-blue-100 text-[16px] leading-relaxed">
+        <p class="text-blue-100 text-[14px] leading-relaxed max-w-md">
           Manage, Qualify, and convert your B2B pipeline with Atlas<br/>
           the modern CRM build for AI workforce teams.
         </p>
@@ -65,11 +77,19 @@ const handleLogin = async () => {
     </div>
 
     <!-- SISI KANAN (Form) -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative overflow-hidden">
+      <!-- Logo -->
+      <div class="absolute top-8 left-8 lg:top-12 flex items-center gap-3 font-bold text-2xl text-gray-900 z-10">
+        <div class="bg-[#2563EB] text-white w-8 h-8 flex items-center justify-center rounded pt-0.5">
+          A
+        </div>
+        Atlas
+      </div>
+      
       <div class="w-full max-w-md space-y-8">
         
         <!-- Header Form -->
-        <div>
+        <div class="text-center sm:text-left">
           <h2 class="text-3xl font-bold text-gray-900 mb-2">Sign in to your account</h2>
           <p class="text-gray-500">Enter your credentials to access the dashboard.</p>
         </div>
@@ -95,7 +115,7 @@ const handleLogin = async () => {
                 type="email" 
                 required
                 placeholder="email" 
-                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a4bca] focus:border-[#1a4bca] outline-none transition-all"
+                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
               />
             </div>
           </div>
@@ -114,7 +134,7 @@ const handleLogin = async () => {
                 :type="showPassword ? 'text' : 'password'" 
                 required
                 placeholder="............" 
-                class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a4bca] focus:border-[#1a4bca] outline-none transition-all"
+                class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
               />
               <button 
                 type="button" 
@@ -146,8 +166,13 @@ const handleLogin = async () => {
           </div>
 
           <!-- Submit Button -->
-          <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#2250c6] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-            Sign in
+          <button 
+            type="submit" 
+            :disabled="isLoading"
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#2250c6] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <span v-if="isLoading">Signing in...</span>
+            <span v-else>Sign in</span>
           </button>
         </form>
 
@@ -176,5 +201,22 @@ const handleLogin = async () => {
 .animate-fade-in-up {
   opacity: 0; /* Mulai dari transparan sebelum animasi berjalan */
   animation: fadeInUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Animasi melayang untuk ilustrasi */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
 }
 </style>

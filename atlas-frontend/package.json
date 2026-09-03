@@ -19,7 +19,7 @@
     "vee-validate": "^4.15.1",
     "vue": "^3.5.40",
     "vue-router": "^4.6.4",
-    "vuedraggable": "^4.1.0",
+    "vue3-lottie": "^3.3.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
