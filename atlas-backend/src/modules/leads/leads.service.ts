@@ -1,6 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 import { CreateLeadDto } from './dto/create-lead.dto';
+import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
+import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
 import { EmailService } from '../email/email.service';
 
@@ -39,10 +43,26 @@ export class LeadsService {
     return lead;
   }
 
-  async findAll() {
-    return this.prisma.lead.findMany({
-      orderBy: { created_at: 'desc' },
-    });
+  async findAll(query?: GetLeadsQueryDto) {
+    if (!query || Object.keys(query).length === 0) {
+      return this.prisma.lead.findMany({
+        orderBy: { created_at: 'desc' },
+      });
+    }
+
+    const where: Prisma.LeadWhereInput = {};
+
+    if (query.status) where.status = query.status;
+    if (query.tier) where.lead_tier = query.tier;
+    if (query.country) where.country = query.country;
+    if (query.search_keyword) {
+      where.OR = [
+        { full_name: { contains: query.search_keyword, mode: 'insensitive' } },
+        { company_name: { contains: query.search_keyword, mode: 'insensitive' } },
+      ];
+    }
+
+    return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
   }
 
   async findOne(id: string) {
@@ -76,5 +96,84 @@ export class LeadsService {
     return this.prisma.lead.delete({
       where: { id },
     });
+  }
+
+  async updateLeadStatus(leadId: string, data: UpdateLeadDto, adminUserId: string) {
+    const activityType = data.status ? 'STATUS_UPDATE' : data.assigned_owner ? 'OWNER_ASSIGNED' : 'LEAD_UPDATED';
+
+    try {
+      const [lead] = await this.prisma.$transaction([
+        this.prisma.lead.update({ where: { id: leadId }, data }),
+        this.prisma.leadActivityLog.create({
+          data: {
+            lead_id: leadId,
+            activity_type: activityType,
+            description: `Lead updated by admin ${adminUserId}: ${JSON.stringify(data)}`,
+            metadata: { admin_user_id: adminUserId, changes: { ...data } },
+          },
+        }),
+      ]);
+
+      return lead;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Lead ${leadId} not found`);
+      }
+      throw error;
+    }
+  }
+
+  async addNoteToLead(leadId: string, adminUserId: string, data: AddLeadNoteDto) {
+    try {
+      return await this.prisma.leadNote.create({
+        data: {
+          lead_id: leadId,
+          created_by: adminUserId,
+          note: data.note,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new NotFoundException(`Lead ${leadId} not found`);
+      }
+      throw error;
+    }
+  }
+
+  async handleDemoScheduled(email: string, eventTime: Date, meetingUrl: string) {
+    // Cari prospek terbaru berdasarkan email (karena bisa jadi ada submission dobel)
+    const lead = await this.prisma.lead.findFirst({
+      where: { email },
+      orderBy: { created_at: 'desc' },
+    });
+
+    if (!lead) {
+      this.logger.warn(`Webhook received for email ${email}, but no lead found in DB.`);
+      return;
+    }
+
+    try {
+      await this.prisma.$transaction([
+        this.prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            status: 'Demo Scheduled',
+            next_follow_up_at: eventTime,
+          },
+        }),
+        this.prisma.leadActivityLog.create({
+          data: {
+            lead_id: lead.id,
+            activity_type: 'DEMO_SCHEDULED',
+            description: `Demo scheduled via Calendly for ${eventTime.toISOString()}`,
+            metadata: { meeting_url: meetingUrl, event_time: eventTime.toISOString() },
+          },
+        }),
+      ]);
+      this.logger.log(`Successfully updated lead ${lead.id} status to Demo Scheduled from webhook.`);
+    } catch (error) {
+      this.logger.error(`Error updating lead ${lead.id} from webhook`, error);
+      throw error;
+    }
   }
 }
