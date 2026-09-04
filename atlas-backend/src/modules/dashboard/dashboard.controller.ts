@@ -9,6 +9,10 @@ export class DashboardController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async getMetrics() {
-    return this.dashboardService.getMetrics();
+    const data = await this.dashboardService.getMetrics();
+    return {
+      success: true,
+      data,
+    };
   }
 }

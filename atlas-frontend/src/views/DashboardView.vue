@@ -84,15 +84,16 @@ const fetchDashboardData = async () => {
     const response = await api.get('/api/admin/dashboard');
     if (response.data) {
       // Merge backend data with default structure to prevent missing field errors
+      const resData = response.data.data || response.data;
       dashboardData.value = {
-        total_leads: response.data.total_leads || 0,
-        new_leads_this_week: response.data.new_leads_this_week || 0,
-        tier_a_leads: response.data.tier_a_leads || 0,
-        demo_requests: response.data.demo_requests || 0,
-        conversion_rate: response.data.conversion_rate || 0,
-        leads_by_country: response.data.leads_by_country || { Australia: 0, 'New Zealand': 0, Indonesia: 0 },
-        leads_by_source: response.data.leads_by_source || { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 },
-        pipeline_summary: response.data.pipeline_summary || {
+        total_leads: resData.total_leads || 0,
+        new_leads_this_week: resData.new_leads_this_week || 0,
+        tier_a_leads: resData.tier_a_leads || 0,
+        demo_requests: resData.demo_requests || 0,
+        conversion_rate: resData.conversion_rate || 0,
+        leads_by_country: resData.leads_by_country || { Australia: 0, 'New Zealand': 0, Indonesia: 0 },
+        leads_by_source: resData.leads_by_source || { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 },
+        pipeline_summary: resData.pipeline_summary || {
           'New Lead': 0,
           Qualified: 0,
           Contacted: 0,

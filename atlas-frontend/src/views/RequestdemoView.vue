@@ -7,14 +7,14 @@ import Form from "../components/form.vue";
     <section class="flex flex-col justify-center gap-6 px-8 py-16 sm:px-16 lg:px-24">
       <div class="max-w-xl">
         <h1
-          class="text-5xl font-extrabold text-ff sm:text-6xl lg:text-7xl"
+          class="text-5xl font-extrabold text-ff sm:text-6xl lg:text-7xl animate-slide-in"
         >
           Request a<br />
           Demo
         </h1>
 
         <p
-          class="mt-6 max-w-lg text-lg leading-7 text-ff sm:text-xl sm:leading-8"
+          class="mt-6 max-w-lg text-lg leading-7 text-ff sm:text-xl sm:leading-8 animate-slide-in delay-100"
         >
           Streamline operations, qualify leads faster, and reclaim hours of
           your day. See exactly how our custom automation solutions can work

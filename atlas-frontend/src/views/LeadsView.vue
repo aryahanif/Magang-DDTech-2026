@@ -189,17 +189,13 @@ const toggleSelectAll = (event: Event) => {
   selectedLeads.value = isChecked ? filteredLeads.value.map((lead) => lead.id) : [];
 };
 
-const deleteSelectedLeads = async () => {
-  if (!confirm(`Are you sure you want to delete ${selectedLeads.value.length} lead(s)?`)) return;
-  try {
-    await Promise.all(selectedLeads.value.map(id => api.delete(`/api/leads/${id}`)));
-    showToast(`${selectedLeads.value.length} lead(s) deleted successfully!`, 'success');
-    selectedLeads.value = [];
-    await fetchLeads();
-  } catch (error) {
-    console.error('Failed to delete leads', error);
-    showToast('Failed to delete some leads.', 'error');
-  }
+const isDeleteModalOpen = ref(false);
+const deleteTargetId = ref<string | null>(null);
+
+const deleteSelectedLeads = () => {
+  if (selectedLeads.value.length === 0) return;
+  deleteTargetId.value = null; // null indicates bulk delete
+  isDeleteModalOpen.value = true;
 };
 
 // ==========================================
@@ -269,22 +265,43 @@ const openEditModal = async (lead: Lead) => {
   isModalOpen.value = true;
 };
 
-const deleteLead = async (id: string) => {
-  if (confirm('Are you sure you want to delete this lead?')) {
-    try {
-      await api.delete(`/api/leads/${id}`);
-      showToast("Lead successfully deleted!", "success");
-      fetchLeads(); // refresh
-    } catch (error) {
-      console.error("Failed to delete lead", error);
-      showToast("Failed to delete lead.", "error");
-    }
-  }
+const deleteLead = (id: string) => {
+  deleteTargetId.value = id;
+  isDeleteModalOpen.value = true;
   activeDropdownId.value = null;
+};
+
+const confirmDelete = async () => {
+  try {
+    if (deleteTargetId.value) {
+      await api.delete(`/api/leads/${deleteTargetId.value}`);
+      showToast("Lead successfully deleted!", "success");
+    } else {
+      await Promise.all(selectedLeads.value.map(id => api.delete(`/api/leads/${id}`)));
+      showToast(`${selectedLeads.value.length} leads successfully deleted!`, "success");
+      selectedLeads.value = [];
+      if (paginatedLeads.value.length === 0 && currentPage.value > 1) currentPage.value--;
+    }
+    fetchLeads();
+  } catch (error) {
+    console.error("Failed to delete lead(s)", error);
+    showToast("Failed to delete lead(s).", "error");
+  } finally {
+    isDeleteModalOpen.value = false;
+    deleteTargetId.value = null;
+  }
 };
 
 const submitForm = async (values: any) => {
   try {
+    const payload = {
+      ...values,
+      lead_tier: values.tier, // Map to DB column if needed
+      consent_status: true // Required by backend validation
+    };
+    
+    delete payload.tier; // Fix Prisma error by removing undefined schema column
+
     if (editingId.value) {
       const updatePayload = {
         status: values.status,
@@ -356,11 +373,11 @@ const closeModal = () => {
 
 const getTierClass = (tier: string) => {
   switch (tier) {
-    case "Tier A": return "bg-blue-600 text-white";
-    case "Tier B": return "bg-slate-500 text-white";
-    case "Tier C": return "bg-amber-100 text-amber-600";
-    case "Spam": return "bg-red-50 text-red-600";
-    default: return "bg-slate-100 text-slate-700";
+    case "Tier A": return "bg-[#2563EB] text-white";
+    case "Tier B": return "bg-[#6366F1] text-white";
+    case "Tier C": return "bg-[#FEF3C7] text-[#D97706]";
+    case "Spam": return "bg-[#FEF2F2] text-[#DC2626]";
+    default: return "bg-gray-200 text-gray-700";
   }
 };
 
@@ -519,9 +536,28 @@ const getStatusClass = (status: string) => {
                 <th class="py-3 px-2 w-10"></th>
               </tr>
             </thead>
+            <!-- JIKA SEDANG LOADING (TAMPILKAN SKELETON TABEL) -->
+            <tbody v-if="isLoading" class="divide-y divide-[#E2E8F0]">
+              <tr v-for="i in 8" :key="'skeleton-'+i">
+                <td class="py-3 px-4 text-center"><div class="h-4 bg-gray-200 rounded w-4 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2">
+                  <div class="h-4 bg-gray-200 rounded w-32 mb-1.5 animate-pulse"></div>
+                  <div class="h-3 bg-gray-100 rounded w-20 animate-pulse"></div>
+                </td>
+                <td class="py-3 px-2"><div class="h-4 bg-gray-200 rounded w-28 animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-5 bg-gray-200 rounded-md w-16 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-5 bg-gray-200 rounded-md w-20 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-24 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-4 text-right"><div class="h-4 bg-gray-200 rounded w-20 ml-auto animate-pulse"></div></td>
+                <td class="py-3 px-2"><div class="h-5 w-5 bg-gray-200 rounded mx-auto animate-pulse"></div></td>
+              </tr>
+            </tbody>
+
             <!-- TRICK ANIMASI VUE: Binding atribut key ke activeTab dan currentPage -->
-            <tbody :key="activeTab + currentPage" class="animate-fade-in">
-              <tr v-for="lead in paginatedLeads" :key="lead.id" @click="handleRowClick(lead)" class="border-b border-slate-100 transition group cursor-pointer hover:bg-slate-50" :class="selectedLeads.includes(lead.id) ? 'bg-blue-50 hover:bg-blue-100' : ''">
+            <tbody v-else :key="activeTab + currentPage" class="animate-fade-in">
+              <tr v-for="lead in paginatedLeads" :key="lead.id" @click="handleRowClick(lead)" class="border-b border-gray-100 transition group cursor-pointer hover:bg-gray-50" :class="selectedLeads.includes(lead.id) ? 'bg-[#EFF6FF] hover:bg-[#E0E7FF]' : ''">
                 <td class="py-3 px-4 text-center">
                   <input type="checkbox" :value="lead.id" v-model="selectedLeads" @click.stop class="rounded border-slate-300 text-blue-600 focus:ring-blue-600 transition cursor-pointer" :class="selectedLeads.includes(lead.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'" />
                 </td>
@@ -556,9 +592,9 @@ const getStatusClass = (status: string) => {
           </table>
 
           <!-- Empty State -->
-          <div v-if="filteredLeads.length === 0" class="py-16 text-center animate-fade-in">
-            <SearchX class="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p class="text-[14px] text-slate-500 font-medium">No leads found in this category.</p>
+          <div v-if="!isLoading && filteredLeads.length === 0" class="py-16 text-center animate-fade-in">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+            <p class="text-[14px] text-gray-500 font-medium">No leads found in this category.</p>
           </div>
         </div>
 
@@ -696,6 +732,28 @@ const getStatusClass = (status: string) => {
           <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">{{ editingId ? "Save changes" : "Add lead" }}</button>
         </div>
       </Form>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-0">
+    <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="isDeleteModalOpen = false"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center animate-fade-in">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Confirm Delete</h3>
+      <p class="text-gray-500 text-sm mb-6">
+        Are you sure you want to delete {{ deleteTargetId ? 'this lead' : selectedLeads.length + ' selected leads' }}? This action cannot be undone.
+      </p>
+      <div class="flex items-center gap-3">
+        <button @click="isDeleteModalOpen = false" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
+          Cancel
+        </button>
+        <button @click="confirmDelete" class="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">
+          Delete
+        </button>
+      </div>
     </div>
   </div>
 </template>

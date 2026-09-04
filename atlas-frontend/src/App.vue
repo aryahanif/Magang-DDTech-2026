@@ -29,7 +29,7 @@ if (!sessionStorage.getItem('saved_traffic_source')) {
   <div class="min-h-screen bg-white text-ff">
     <div id="app">
     <!-- Tampilkan UserNavbar HANYA jika BUKAN halaman admin -->
-    <UserNavbar v-if="!$route.path.startsWith('/admin')" />
+    <UserNavbar v-if="!$route.path.startsWith('/admin') && $route.path !== '/'" />
     
     <!-- Tempat konten halaman akan muncul -->
     <RouterView />
@@ -41,5 +41,16 @@ if (!sessionStorage.getItem('saved_traffic_source')) {
 /* Active link styles if needed */
 .router-link-exact-active {
   /* color: blue; */
+}
+
+/* Page Transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

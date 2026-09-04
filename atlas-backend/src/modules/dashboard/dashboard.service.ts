@@ -9,94 +9,67 @@ export class DashboardService {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const [totalLeads, newLeadsThisWeek, tierALeads, convertedLeads, allLeads] = await Promise.all([
+    const [
+      totalLeads, 
+      newLeadsThisWeek, 
+      tierALeads, 
+      convertedLeads,
+      demoRequests,
+      leadsByCountryRaw,
+      leadsByStatusRaw,
+      leadsBySourceRaw
+    ] = await Promise.all([
       this.prisma.lead.count(),
       this.prisma.lead.count({
-        where: {
-          created_at: {
-            gte: sevenDaysAgo,
-          },
-        },
+        where: { created_at: { gte: sevenDaysAgo } },
       }),
       this.prisma.lead.count({
-        where: {
-          lead_tier: 'Tier A',
-        },
+        where: { lead_tier: 'Tier A' },
       }),
       this.prisma.lead.count({
-        where: {
-          status: 'Demo Scheduled',
-        },
+        where: { status: { in: ['Demo Scheduled', 'Demo', 'Demo Booked'] } },
       }),
-      this.prisma.lead.findMany({
-        select: {
-          country: true,
-          source_page: true,
-          status: true,
-        },
+      this.prisma.leadActivityLog.count({
+        where: { activity_type: 'DEMO_SCHEDULED' }
       }),
+      this.prisma.lead.groupBy({ by: ['country'], _count: { id: true } }),
+      this.prisma.lead.groupBy({ by: ['status'], _count: { id: true } }),
+      this.prisma.lead.groupBy({ by: ['source_page'], _count: { id: true } })
     ]);
 
     const conversionRate = totalLeads === 0 ? 0 : (convertedLeads / totalLeads) * 100;
 
-    const leads_by_country: Record<string, number> = { Australia: 0, 'New Zealand': 0, Indonesia: 0 };
-    const leads_by_source: Record<string, number> = { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 };
-    const pipeline_summary: Record<string, number> = {
-      'New Lead': 0,
-      'Qualified': 0,
-      'Contacted': 0,
-      'Meeting Requested': 0,
-      'Demo Scheduled': 0,
-      'Proposal Sent': 0,
-      'Negotiation': 0,
-      'Won': 0,
-      'Lost': 0,
-      'Disqualified': 0,
-    };
-    
-    let demo_requests = 0;
+    const leadsByCountry = leadsByCountryRaw.reduce((acc, curr) => {
+      if (curr.country) acc[curr.country] = curr._count.id;
+      return acc;
+    }, {});
 
-    allLeads.forEach(lead => {
-      // 1. Pipeline Summary
-      const status = lead.status || 'New Lead';
-      if (pipeline_summary[status] !== undefined) {
-        pipeline_summary[status]++;
-      } else {
-        pipeline_summary['New Lead']++; // Default if unknown status
+    const pipelineSummary = leadsByStatusRaw.reduce((acc, curr) => {
+      if (curr.status) {
+        let statusKey = curr.status;
+        if (statusKey === 'Demo' || statusKey === 'Demo Booked') {
+          statusKey = 'Demo Scheduled';
+        }
+        acc[statusKey] = (acc[statusKey] || 0) + curr._count.id;
       }
+      return acc;
+    }, {});
 
-      if (status === 'Demo Scheduled') {
-        demo_requests++;
-      }
-
-      // 2. Leads by Country
-      const country = lead.country;
-      if (country === 'Australia' || country === 'New Zealand' || country === 'Indonesia') {
-        leads_by_country[country]++;
-      } else if (country) {
-        // fallback unknown countries to Indonesia for mock data if needed, or leave it. 
-        // We'll just map unknown to Indonesia for charting purposes if we want it visible
-        leads_by_country['Indonesia']++;
-      }
-
-      // 3. Leads by Source
-      const source = lead.source_page;
-      if (source && leads_by_source[source] !== undefined) {
-        leads_by_source[source]++;
-      } else {
-        leads_by_source['Website']++;
-      }
-    });
+    const leadsBySource = leadsBySourceRaw.reduce((acc, curr) => {
+      const source = curr.source_page || 'Website';
+      acc[source] = (acc[source] || 0) + curr._count.id;
+      return acc;
+    }, {});
 
     return {
       total_leads: totalLeads,
       new_leads_this_week: newLeadsThisWeek,
       tier_a_leads: tierALeads,
-      demo_requests,
+      demo_requests: demoRequests > 0 ? demoRequests : convertedLeads,
       conversion_rate: parseFloat(conversionRate.toFixed(2)),
-      leads_by_country,
-      leads_by_source,
-      pipeline_summary,
+      leads_by_country: leadsByCountry,
+      pipeline_summary: pipelineSummary,
+      leads_by_source: leadsBySource
     };
   }
 }

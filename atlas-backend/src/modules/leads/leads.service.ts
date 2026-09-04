@@ -43,7 +43,13 @@ export class LeadsService {
     return lead;
   }
 
-  async findAll(query: GetLeadsQueryDto) {
+  async findAll(query?: GetLeadsQueryDto) {
+    if (!query || Object.keys(query).length === 0) {
+      return this.prisma.lead.findMany({
+        orderBy: { created_at: 'desc' },
+      });
+    }
+
     const where: Prisma.LeadWhereInput = {};
 
     if (query.status) where.status = query.status;
@@ -57,6 +63,39 @@ export class LeadsService {
     }
 
     return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+  }
+
+  async findOne(id: string) {
+    return this.prisma.lead.findUnique({
+      where: { id },
+      include: {
+        notes: { orderBy: { created_at: 'desc' } },
+        activity_logs: { orderBy: { created_at: 'desc' } },
+      },
+    });
+  }
+
+  async addNote(leadId: string, note: string, createdBy: string = 'Admin') {
+    return this.prisma.leadNote.create({
+      data: {
+        lead_id: leadId,
+        note,
+        created_by: createdBy,
+      },
+    });
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.lead.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.lead.delete({
+      where: { id },
+    });
   }
 
   async updateLeadStatus(leadId: string, data: UpdateLeadDto, adminUserId: string) {
@@ -136,21 +175,5 @@ export class LeadsService {
       this.logger.error(`Error updating lead ${lead.id} from webhook`, error);
       throw error;
     }
-  }
-
-  async findOne(id: string) {
-    return this.prisma.lead.findUnique({
-      where: { id },
-      include: {
-        notes: { orderBy: { created_at: 'desc' } },
-        activity_logs: { orderBy: { created_at: 'desc' } },
-      },
-    });
-  }
-
-  async remove(id: string) {
-    return this.prisma.lead.delete({
-      where: { id },
-    });
   }
 }

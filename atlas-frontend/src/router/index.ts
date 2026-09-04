@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import LandingView from '../views/LandingView.vue'
+import WelcomeView from '../views/WelcomeView.vue'
 import RequestDemoView from '../views/RequestdemoView.vue'
 import AssessmentView from '../views/AssessmentView.vue'
 import ContactSalesView from '../views/ContactSalesView.vue'
@@ -21,8 +22,13 @@ const router = createRouter({
     //Halaman user
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      name: 'landing',
+      component: LandingView
+    },
+    {
+      path: '/welcome',
+      name: 'welcome',
+      component: WelcomeView
     },
     {
       path: '/requestdemo',
