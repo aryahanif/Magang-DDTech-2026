@@ -8,7 +8,7 @@ import { useToast } from '../composables/UseToast'
 const route = useRoute();
 const router = useRouter();
 const { showToast } = useToast();
-const leadId = route.params.id;
+const leadId = route.params.id as string;
 
 // ==========================================
 // 1. STATE MANAGEMENT
@@ -19,6 +19,7 @@ const lead = ref<any>({
 })
 const isLoading = ref(true)
 const errorMessage = ref('')
+const tempFollowUpDate = ref('')
 const isEditingSummary = ref(false)
 const newNote = ref('')
 
@@ -40,6 +41,14 @@ const fetchLeadDetail = async () => {
       data.status = stageStr
       
       lead.value = data
+      
+      if (data.next_follow_up_at) {
+        const dateObj = new Date(data.next_follow_up_at);
+        const offset = dateObj.getTimezoneOffset() * 60000;
+        tempFollowUpDate.value = new Date(dateObj.getTime() - offset).toISOString().slice(0, 16);
+      } else {
+        tempFollowUpDate.value = '';
+      }
     } else {
       errorMessage.value = 'Failed to load lead details.'
     }
@@ -145,17 +154,16 @@ const updateOwner = async (event: Event) => {
   }
 };
 
-const updateFollowUpDate = async (event: Event) => {
-  const newDate = (event.target as HTMLInputElement).value;
-  const isoDate = newDate ? new Date(newDate).toISOString() : null;
+const updateFollowUpDate = async () => {
+  if (!tempFollowUpDate.value) return;
+  const isoDate = new Date(tempFollowUpDate.value).toISOString();
   try {
     await api.patch(`/api/leads/${leadId}`, { next_follow_up_at: isoDate });
     lead.value.next_follow_up_at = isoDate;
-    showToast('Tanggal follow-up berhasil diubah.', 'success');
+    showToast('Tanggal follow-up berhasil disimpan.', 'success');
   } catch (error) {
     console.error('Failed to update follow-up date:', error);
-    lead.value.next_follow_up_at = isoDate;
-    showToast('Backend API Error: Mock tanggal diterapkan ke tampilan.', 'info');
+    showToast('Backend API Error: Gagal menyimpan tanggal.', 'error');
   }
 };
 
@@ -632,12 +640,21 @@ const exportDetailToCSV = () => {
                     class="block text-[10px] sm:text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1"
                     >Next Follow-up</label
                   >
-                  <input
-                    type="datetime-local"
-                    :value="lead.next_follow_up_at ? new Date(lead.next_follow_up_at).toISOString().slice(0, 16) : ''"
-                    @change="updateFollowUpDate"
-                    class="w-full text-[13px] sm:text-[14px] border border-[#E2E8F0] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
-                  />
+                  <div class="flex flex-col gap-2">
+                    <div class="relative group">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#94A3B8] group-hover:text-[#2563EB] transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      </div>
+                      <input
+                        type="datetime-local"
+                        v-model="tempFollowUpDate"
+                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] border border-[#E2E8F0] rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer"
+                      />
+                    </div>
+                    <button @click="updateFollowUpDate" class="w-full py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm">
+                      Save Schedule
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label
@@ -739,20 +756,31 @@ const exportDetailToCSV = () => {
 </template>
 
 <style scoped>
-/* CSS Animasi Fade In Seragam dengan halaman lain */
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: 0.2s;
+  padding: 4px;
+  border-radius: 4px;
+}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: #EFF6FF;
 }
 
 .custom-scrollbar-vertical::-webkit-scrollbar {

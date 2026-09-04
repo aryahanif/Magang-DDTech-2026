@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import MainLayout from '../components/MainLayout.vue';
 import { useToast } from '../composables/UseToast';
+import api from '../services/api';
 
 const { showToast } = useToast();
 
@@ -9,6 +10,11 @@ const { showToast } = useToast();
 // STATE MANAGEMENT & LOCAL STORAGE
 // ==========================================
 const tasks = ref<any[]>([]);
+const apiTasks = ref<any[]>([]);
+
+const combinedTasks = computed(() => {
+  return [...tasks.value, ...apiTasks.value];
+});
 
 const loadTasks = () => {
   const saved = localStorage.getItem('atlas_mock_tasks');
@@ -30,9 +36,39 @@ const saveTasks = () => {
   localStorage.setItem('atlas_mock_tasks', JSON.stringify(tasks.value));
 };
 
+const fetchLeadsForTasks = async () => {
+  try {
+    const response = await api.get('/api/leads');
+    if (response.data && response.data.success) {
+      const leads = response.data.data;
+      apiTasks.value = leads
+        .filter((lead: any) => lead.next_follow_up_at)
+        .map((lead: any) => {
+          const dateObj = new Date(lead.next_follow_up_at);
+          const dateStr = dateObj.toISOString().split('T')[0];
+          const timeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+          
+          return {
+            id: `lead-${lead.id}`, // Unique ID format to prevent clash with local storage IDs
+            title: `Follow up: ${lead.full_name || lead.company_name || 'Unknown'}`,
+            date: dateStr,
+            time: timeStr,
+            type: 'meeting',
+            priority: 'high',
+            status: 'pending',
+            lead: lead.full_name || lead.email || '',
+            isReadOnly: true
+          };
+        });
+    }
+  } catch (error) {
+    console.error("Failed to fetch leads for tasks", error);
+  }
+};
+
 onMounted(() => {
   loadTasks();
-  generateCalendar();
+  fetchLeadsForTasks().then(() => generateCalendar());
 });
 
 watch(tasks, () => {
@@ -46,7 +82,7 @@ const viewMode = ref('list'); // 'list' or 'calendar'
 const filterStatus = ref('all'); // 'all', 'pending', 'completed'
 
 const filteredTasks = computed(() => {
-  let result = [...tasks.value];
+  let result = [...combinedTasks.value];
   if (filterStatus.value !== 'all') {
     result = result.filter(t => t.status === filterStatus.value);
   }
@@ -106,12 +142,20 @@ const submitTask = () => {
 };
 
 const toggleStatus = (task: any) => {
+  if (task.isReadOnly) {
+    showToast('Tugas otomatis dari Leads tidak dapat diubah di sini.', 'error');
+    return;
+  }
   task.status = task.status === 'completed' ? 'pending' : 'completed';
 };
 
-const deleteTask = (id: number) => {
+const deleteTask = (task: any) => {
+  if (task.isReadOnly) {
+    showToast('Tugas otomatis dari Leads tidak dapat dihapus di sini.', 'error');
+    return;
+  }
   if (confirm('Are you sure you want to delete this task?')) {
-    tasks.value = tasks.value.filter(t => t.id !== id);
+    tasks.value = tasks.value.filter(t => t.id !== task.id);
     showToast('Task deleted.', 'success');
   }
 };
@@ -189,7 +233,7 @@ const generateCalendar = () => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
     
     // Find tasks for this day
-    const dayTasks = tasks.value.filter(t => t.date === dateStr);
+    const dayTasks = combinedTasks.value.filter(t => t.date === dateStr);
     
     days.push({
       empty: false,
@@ -214,7 +258,7 @@ const nextMonth = () => {
 };
 
 // Regenerate calendar when tasks change so new tasks appear on it
-watch(tasks, generateCalendar, { deep: true });
+watch(combinedTasks, generateCalendar, { deep: true });
 
 </script>
 
@@ -305,7 +349,7 @@ watch(tasks, generateCalendar, { deep: true });
 
             <!-- Actions -->
             <div class="flex items-center gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition">
-              <button @click="deleteTask(task.id)" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded focus:outline-none">
+              <button @click="deleteTask(task)" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded focus:outline-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </div>
