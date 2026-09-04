@@ -126,7 +126,13 @@ const kpiCards = computed(() => {
 
 const maxChartValue = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
-  const max = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, 1);
+  let otherCount = 0;
+  for (const key in counts) {
+    if (key !== 'Australia' && key !== 'New Zealand' && key !== 'Indonesia') {
+      otherCount += counts[key];
+    }
+  }
+  const max = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, otherCount, 1);
   
   if (max <= 4) return 4;
   if (max <= 10) return 10;
@@ -161,12 +167,19 @@ const yAxisLabels = computed(() => {
 
 const countryData = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
+  let otherCount = 0;
+  for (const key in counts) {
+    if (key !== 'Australia' && key !== 'New Zealand' && key !== 'Indonesia') {
+      otherCount += counts[key];
+    }
+  }
   const maxVal = maxChartValue.value;
 
   return [
     { name: 'Australia', count: counts['Australia'] || 0, height: Math.round(((counts['Australia'] || 0) / maxVal) * 190) },
     { name: 'New Zealand', count: counts['New Zealand'] || 0, height: Math.round(((counts['New Zealand'] || 0) / maxVal) * 190) },
-    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: Math.round(((counts['Indonesia'] || 0) / maxVal) * 190) }
+    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: Math.round(((counts['Indonesia'] || 0) / maxVal) * 190) },
+    { name: 'Other', count: otherCount, height: Math.round((otherCount / maxVal) * 190) }
   ];
 })
 
@@ -308,7 +321,7 @@ const sourceData = computed(() => {
             <div class="relative w-40 h-40 flex items-center justify-center flex-shrink-0">
               <div class="absolute flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
                 <span class="text-2xl font-bold text-[#0F172A] tracking-tight">
-                  {{ hoveredSource ? hoveredSource.count : '12.4k' }}
+                  {{ hoveredSource ? hoveredSource.count : dashboardData.total_leads.toLocaleString() }}
                 </span>
                 <span class="text-[10px] text-[#64748B] font-semibold mt-0.5">
                   {{ hoveredSource ? hoveredSource.label : 'Total' }}
