@@ -45,7 +45,7 @@ import { RouterLink } from 'vue-router'
       </div>  
     </div>
   </main>
-<!-- Contoh di bagian footer HomeView.vue -->
+
 <footer class="mt-12 text-center text-xs text-gray-400">
   <p>(c) 2026 Atlas AI.</p>
   <a href="/admin" class="hover:text-gray-600 transition-colors inline-block mt-2">

@@ -64,35 +64,57 @@ const router = createRouter({
     {
       path: '/admin/dashboard',
       name: 'dashboard',
-      component: DashboardView
+      component: DashboardView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/admin/leads',
       name: 'leads',
-      component: LeadsView
+      component: LeadsView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/admin/leads/:id',
       name: 'lead-detail',
       component: LeadDetailView,
-      meta: {requiresAuth: true, activeMenu: 'leads'}
+      meta: { requiresAuth: true, activeMenu: 'leads' }
     },
     {
       path: '/admin/pipeline',
       name: 'pipeline',
-      component: PipelineView
+      component: PipelineView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/admin/tasks',
       name: 'tasks',
-      component: TasksView
+      component: TasksView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/admin/settings',
       name: 'settings',
-      component: SettingsView
+      component: SettingsView,
+      meta: { requiresAuth: true }
     }
   ]
+})
+
+// Navigation Guard: protect admin routes
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('auth_token')
+
+  // If route requires auth and no token → redirect to login
+  if (to.meta.requiresAuth && !token) {
+    return next({ name: 'login' })
+  }
+
+  // If already logged in and trying to access login page → redirect to dashboard
+  if (to.name === 'login' && token) {
+    return next({ name: 'dashboard' })
+  }
+
+  next()
 })
 
 export default router

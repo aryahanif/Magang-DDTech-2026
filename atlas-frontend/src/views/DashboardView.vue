@@ -69,23 +69,46 @@ const dashboardData = ref<any>({
     'New Lead': 0,
     Qualified: 0,
     Contacted: 0,
-    'Demo Booked': 0,
-    Proposal: 0,
-    'Won / Lost': 0
+    'Meeting Requested': 0,
+    'Demo Scheduled': 0,
+    'Proposal Sent': 0,
+    Negotiation: 0,
+    Won: 0,
+    Lost: 0,
+    Disqualified: 0
   }
 })
 
 const fetchDashboardData = async () => {
   try {
     const response = await api.get('/api/admin/dashboard');
-    if (response.data && response.data.success) {
-      // Expecting backend to provide exactly what the PDF defines
-      dashboardData.value = response.data.data;
+    if (response.data) {
+      // Merge backend data with default structure to prevent missing field errors
+      dashboardData.value = {
+        total_leads: response.data.total_leads || 0,
+        new_leads_this_week: response.data.new_leads_this_week || 0,
+        tier_a_leads: response.data.tier_a_leads || 0,
+        demo_requests: response.data.demo_requests || 0,
+        conversion_rate: response.data.conversion_rate || 0,
+        leads_by_country: response.data.leads_by_country || { Australia: 0, 'New Zealand': 0, Indonesia: 0 },
+        leads_by_source: response.data.leads_by_source || { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 },
+        pipeline_summary: response.data.pipeline_summary || {
+          'New Lead': 0,
+          Qualified: 0,
+          Contacted: 0,
+          'Meeting Requested': 0,
+          'Demo Scheduled': 0,
+          'Proposal Sent': 0,
+          Negotiation: 0,
+          Won: 0,
+          Lost: 0,
+          Disqualified: 0
+        }
+      };
       updatePipelineSteps();
     }
   } catch (error) {
     console.warn("Failed to fetch dashboard data.", error);
-    // showToast("Failed to load dashboard data.", "error"); // Use toast if available
   }
 }
 
@@ -100,39 +123,82 @@ const kpiCards = computed(() => {
   ]
 })
 
+const maxChartValue = computed(() => {
+  const counts = dashboardData.value.leads_by_country || {};
+  const max = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, 1);
+  
+  if (max <= 4) return 4;
+  if (max <= 10) return 10;
+  if (max <= 40) return 40;
+  if (max <= 100) return 100;
+  
+  const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
+  const normalized = max / magnitude; 
+  
+  let niceMax;
+  if (normalized <= 1) niceMax = 1;
+  else if (normalized <= 2) niceMax = 2;
+  else if (normalized <= 4) niceMax = 4;
+  else if (normalized <= 5) niceMax = 5;
+  else niceMax = 10;
+  
+  return niceMax * magnitude;
+});
+
+const yAxisLabels = computed(() => {
+  const max = maxChartValue.value;
+  const formatFn = (val: number) => val >= 1000 ? (val / 1000).toFixed(val % 1000 === 0 ? 0 : 1).replace('.0', '') + 'k' : Math.round(val).toString();
+  
+  return [
+    formatFn(max),
+    formatFn(max * 0.75),
+    formatFn(max * 0.5),
+    formatFn(max * 0.25),
+    '0'
+  ];
+});
+
 const countryData = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
-  const maxCount = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, 1);
+  const maxVal = maxChartValue.value;
 
   return [
-    { name: 'Australia', count: counts['Australia'] || 0, height: `h-[${Math.round(((counts['Australia'] || 0) / maxCount) * 190)}px]` },
-    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: `h-[${Math.round(((counts['New Zealand'] || 0) / maxCount) * 190)}px]` },
-    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: `h-[${Math.round(((counts['Indonesia'] || 0) / maxCount) * 190)}px]` }
+    { name: 'Australia', count: counts['Australia'] || 0, height: Math.round(((counts['Australia'] || 0) / maxVal) * 190) },
+    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: Math.round(((counts['New Zealand'] || 0) / maxVal) * 190) },
+    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: Math.round(((counts['Indonesia'] || 0) / maxVal) * 190) }
   ];
 })
 
 const pipelineSteps = ref<any[]>([
-  { step: '1', title: 'New Lead', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
-  { step: '2', title: 'Qualified', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
-  { step: '3', title: 'Contacted', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
-  { step: '4', title: 'Demo Booked', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
-  { step: '5', title: 'Proposal', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' },
-  { step: '6', title: 'Won / Lost', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 'w-[0%]' }
+  { step: '1', title: 'New Lead', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '2', title: 'Qualified', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '3', title: 'Contacted', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '4', title: 'Meeting Requested', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '5', title: 'Demo Scheduled', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '6', title: 'Proposal Sent', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '7', title: 'Negotiation', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '8', title: 'Won', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '9', title: 'Lost', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 },
+  { step: '10', title: 'Disqualified', targetCount: 0, displayCount: '0', percentage: '0% of total', progress: 0 }
 ])
 
 const updatePipelineSteps = () => {
   const total = dashboardData.value.total_leads || 1; 
   const stepCounts = dashboardData.value.pipeline_summary || {
-    'New Lead': 0, 'Qualified': 0, 'Contacted': 0, 'Demo Booked': 0, 'Proposal': 0, 'Won / Lost': 0
+    'New Lead': 0, 'Qualified': 0, 'Contacted': 0, 'Meeting Requested': 0, 'Demo Scheduled': 0, 'Proposal Sent': 0, 'Negotiation': 0, 'Won': 0, 'Lost': 0, 'Disqualified': 0
   }
 
   pipelineSteps.value = [
-    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}%]` },
-    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}%]` },
-    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}%]` },
-    { step: '4', title: 'Demo Booked', targetCount: stepCounts['Demo Booked'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Demo Booked'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Demo Booked'] || 0)/total)*100)}%]` },
-    { step: '5', title: 'Proposal', targetCount: stepCounts['Proposal'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Proposal'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Proposal'] || 0)/total)*100)}%]` },
-    { step: '6', title: 'Won / Lost', targetCount: stepCounts['Won / Lost'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Won / Lost'] || 0)/total)*100)}% of total`, progress: `w-[${Math.round(((stepCounts['Won / Lost'] || 0)/total)*100)}%]` }
+    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['New Lead'] || 0)/total)*100) },
+    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Qualified'] || 0)/total)*100) },
+    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Contacted'] || 0)/total)*100) },
+    { step: '4', title: 'Meeting Requested', targetCount: stepCounts['Meeting Requested'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Meeting Requested'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Meeting Requested'] || 0)/total)*100) },
+    { step: '5', title: 'Demo Scheduled', targetCount: stepCounts['Demo Scheduled'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Demo Scheduled'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Demo Scheduled'] || 0)/total)*100) },
+    { step: '6', title: 'Proposal Sent', targetCount: stepCounts['Proposal Sent'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Proposal Sent'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Proposal Sent'] || 0)/total)*100) },
+    { step: '7', title: 'Negotiation', targetCount: stepCounts['Negotiation'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Negotiation'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Negotiation'] || 0)/total)*100) },
+    { step: '8', title: 'Won', targetCount: stepCounts['Won'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Won'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Won'] || 0)/total)*100) },
+    { step: '9', title: 'Lost', targetCount: stepCounts['Lost'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Lost'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Lost'] || 0)/total)*100) },
+    { step: '10', title: 'Disqualified', targetCount: stepCounts['Disqualified'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Disqualified'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Disqualified'] || 0)/total)*100) }
   ]
 }
 
@@ -166,15 +232,11 @@ const sourceData = computed(() => {
 <template>
   <MainLayout active-menu="dashboard">
     <main class="flex-1 p-8 space-y-8 overflow-y-auto">
-      
-      <!-- Menambahkan animate-fade-in -->
       <div class="animate-fade-in">
         <h1 class="text-[32px] font-bold text-[#0F172A]">Overview</h1>
         <p class="text-[16px] text-[#64748B] mt-0.5">Your AI Workforce performance for the last 7 days</p>
       </div>
-
-      <!-- KPI Cards Grid (Menambahkan animate-fade-in) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in">
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 animate-fade-in">
         <div 
           v-for="(card, index) in kpiCards" 
           :key="index" 
@@ -202,10 +264,9 @@ const sourceData = computed(() => {
         </div>
       </div>
 
-      <!-- Grid Container: Berdampingan di Desktop (Menambahkan animate-fade-in) -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
         
-        <!-- 1. Leads by Country (Bar Chart) -->
+        <!--Leads by Country (Bar Chart)-->
         <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
           <div class="mb-4">
             <h2 class="text-[18px] font-bold text-[#0F172A]">Leads by Country</h2>
@@ -214,11 +275,7 @@ const sourceData = computed(() => {
 
           <div class="flex-1 flex mt-2 h-[220px]">
             <div class="flex flex-col justify-between text-[10px] text-[#94A3B8] font-medium pr-3 text-right">
-              <span>6k</span>
-              <span>4.5k</span>
-              <span>3k</span>
-              <span>1.5k</span>
-              <span>0</span>
+              <span v-for="(label, i) in yAxisLabels" :key="i">{{ label }}</span>
             </div>
 
             <div class="flex-1 border-b border-[#E2E8F0] flex items-end justify-around pb-0 relative">
@@ -229,7 +286,7 @@ const sourceData = computed(() => {
                 
                 <div 
                   class="w-full max-w-[32px] bg-[#2563EB] rounded-t-md transition-all duration-1000 ease-out origin-bottom hover:bg-blue-600" 
-                  :class="showBars ? item.height : 'h-0'"
+                  :style="{ height: showBars ? item.height + 'px' : '0px' }"
                 ></div>
                 <span class="absolute -bottom-6 text-[11px] text-[#64748B] font-medium whitespace-nowrap text-center">
                   {{ item.name }}
@@ -239,18 +296,15 @@ const sourceData = computed(() => {
           </div>
         </div>
 
-        <!-- 2. Leads by Source (Donut Chart) -->
+        <!--Leads by Source (Donut Chart)-->
         <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
           <div class="mb-4">
             <h2 class="text-[18px] font-bold text-[#0F172A]">Leads by Source</h2>
             <p class="text-[12px] text-[#64748B]">Where qualified leads originate</p>
           </div>
-
           <div class="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 py-2">
-            
             <!-- Donut Chart -->
             <div class="relative w-40 h-40 flex items-center justify-center flex-shrink-0">
-              
               <div class="absolute flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
                 <span class="text-2xl font-bold text-[#0F172A] tracking-tight">
                   {{ hoveredSource ? hoveredSource.count : '12.4k' }}
@@ -259,7 +313,6 @@ const sourceData = computed(() => {
                   {{ hoveredSource ? hoveredSource.label : 'Total' }}
                 </span>
               </div>
-              
               <svg viewBox="0 0 42 42" class="w-full h-full -rotate-90">
                 <defs>
                   <mask id="circular-wipe">
@@ -267,7 +320,6 @@ const sourceData = computed(() => {
                       :stroke-dasharray="`${maskProgress} 100`" stroke-dashoffset="0"></circle>
                   </mask>
                 </defs>
-
                 <g mask="url(#circular-wipe)">
                   <circle 
                     v-for="(item, index) in sourceData" 
@@ -285,7 +337,6 @@ const sourceData = computed(() => {
                 </g>
               </svg>
             </div>
-
             <!-- Legend -->
             <div class="space-y-2.5 w-full max-w-[180px]">
               <div 
@@ -307,17 +358,15 @@ const sourceData = computed(() => {
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- Pipeline Status Summary (Menambahkan animate-fade-in) -->
+      <!--Pipeline Status Summary-->
       <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm animate-fade-in">
         <div class="mb-6">
           <h2 class="text-[20px] font-bold text-[#0F172A]">Pipeline Status Summary</h2>
           <p class="text-[12px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           <div 
             v-for="step in pipelineSteps" 
             :key="step.step" 
@@ -330,17 +379,15 @@ const sourceData = computed(() => {
               </div>
               <div class="text-xl font-bold text-[#0F172A] mb-3">{{ step.displayCount }}</div>
             </div>
-
             <div>
               <div class="w-full bg-[#E2E8F0] h-1 rounded-full overflow-hidden mb-1.5">
-                <div class="bg-[#2563EB] h-full rounded-full" :class="step.progress"></div>
+                <div class="bg-[#2563EB] h-full rounded-full transition-all duration-1000 ease-out" :style="{ width: step.progress + '%' }"></div>
               </div>
               <span class="text-[10px] text-[#94A3B8]">{{ step.percentage }}</span>
             </div>
           </div>
         </div>
       </div>
-
       <div class="text-center text-[11px] text-[#94A3B8] pt-4 pb-6">
         © 2026 DDTech. All rights reserved.
       </div>
@@ -350,11 +397,9 @@ const sourceData = computed(() => {
 </template>
 
 <style scoped>
-/* CSS Animasi Fade In Seragam */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
-
 @keyframes fadeIn {
   from {
     opacity: 0;

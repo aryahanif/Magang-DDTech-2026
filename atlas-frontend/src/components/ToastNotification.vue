@@ -5,7 +5,6 @@ const { toasts, removeToast } = useToast()
 </script>
 
 <template>
-  <!-- Area melayang di pojok kanan atas -->
   <div class="fixed top-20 right-4 sm:right-6 z-[100] flex flex-col gap-3 pointer-events-none">
     
     <TransitionGroup name="toast">
@@ -14,7 +13,6 @@ const { toasts, removeToast } = useToast()
         :key="toast.id" 
         class="pointer-events-auto flex items-start gap-3 p-4 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-[#E2E8F0] w-[320px] max-w-[calc(100vw-32px)]"
       >
-        <!-- Ikon berdasarkan tipe (Success / Error) -->
         <div class="mt-0.5 flex-shrink-0">
           <svg v-if="toast.type === 'success'" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <svg v-else-if="toast.type === 'error'" class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
