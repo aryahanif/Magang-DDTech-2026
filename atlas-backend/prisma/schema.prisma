@@ -83,3 +83,13 @@ model User {
 
   @@map("users")
 }
+
+model SystemSetting {
+  id                         String   @id @default(uuid()) @db.Uuid
+  is_ai_tiering_enabled      Boolean  @default(true)
+  is_spam_detection_enabled  Boolean  @default(true)
+  is_data_enrichment_enabled Boolean  @default(false)
+  updated_at                 DateTime @updatedAt
+
+  @@map("system_settings")
+}

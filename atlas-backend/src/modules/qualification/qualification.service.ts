@@ -84,6 +84,12 @@ export class QualificationService {
    */
   async analyzeLeadWithAI(leadId: string, leadData: any, ruleBasedScore?: number): Promise<void> {
     try {
+      const settings = await this.prisma.systemSetting.findFirst();
+      if (settings && !settings.is_ai_tiering_enabled) {
+        this.logger.log('AI Tiering is disabled in System Settings. Skipping Gemini AI qualification.');
+        return;
+      }
+
       if (!process.env.GEMINI_API_KEY) {
         this.logger.warn('GEMINI_API_KEY is not set. Skipping AI qualification.');
         return;
