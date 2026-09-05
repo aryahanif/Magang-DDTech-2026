@@ -5,7 +5,6 @@ import { LeadsService } from './leads.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
-import { EmailService } from '../email/email.service';
 
 describe('LeadsService', () => {
   let service: LeadsService;
@@ -19,8 +18,6 @@ describe('LeadsService', () => {
     calculateRuleBasedScore: jest.Mock;
     analyzeLeadWithAI: jest.Mock;
   };
-  let emailService: { sendProspectAutoReply: jest.Mock };
-
   const dto: CreateLeadDto = {
     full_name: 'John Smith',
     email: 'john@example.com',
@@ -42,14 +39,11 @@ describe('LeadsService', () => {
       calculateRuleBasedScore: jest.fn().mockReturnValue(55),
       analyzeLeadWithAI: jest.fn().mockResolvedValue(undefined),
     };
-    emailService = { sendProspectAutoReply: jest.fn().mockResolvedValue(undefined) };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LeadsService,
         { provide: PrismaService, useValue: prisma },
         { provide: QualificationService, useValue: qualificationService },
-        { provide: EmailService, useValue: emailService },
       ],
     }).compile();
 
@@ -80,23 +74,6 @@ describe('LeadsService', () => {
     const created = { id: 'uuid-1', lead_score: 55, ...dto };
     prisma.lead.create.mockResolvedValue(created);
     qualificationService.analyzeLeadWithAI.mockRejectedValue(new Error('Gemini is down'));
-
-    await expect(service.createLead(dto)).resolves.toBe(created);
-  });
-
-  it('sends the prospect auto-reply unconditionally after creating the lead', async () => {
-    const created = { id: 'uuid-1', lead_score: 55, ...dto };
-    prisma.lead.create.mockResolvedValue(created);
-
-    await service.createLead(dto);
-
-    expect(emailService.sendProspectAutoReply).toHaveBeenCalledWith(created);
-  });
-
-  it('does not let a failed auto-reply email reject createLead', async () => {
-    const created = { id: 'uuid-1', lead_score: 55, ...dto };
-    prisma.lead.create.mockResolvedValue(created);
-    emailService.sendProspectAutoReply.mockRejectedValue(new Error('Resend is down'));
 
     await expect(service.createLead(dto)).resolves.toBe(created);
   });
@@ -138,6 +115,42 @@ describe('LeadsService', () => {
         },
         orderBy: { created_at: 'desc' },
       });
+    });
+  });
+
+  describe('exportLeadsToCsv', () => {
+    it('applies the same filters as findAll and returns CSV with the required columns', async () => {
+      prisma.lead.findMany.mockResolvedValue([
+        {
+          full_name: 'John Smith',
+          email: 'john@example.com',
+          company_name: 'ABC Mortgage Brokers',
+          country: 'Australia',
+          business_type: 'Mortgage Broker',
+          lead_tier: 'Tier A',
+          lead_score: 90,
+          status: 'New Lead',
+        },
+      ]);
+
+      const csv = await service.exportLeadsToCsv({ tier: 'Tier A' });
+
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        where: { lead_tier: 'Tier A' },
+        orderBy: { created_at: 'desc' },
+      });
+      expect(csv.split('\r\n')[0]).toBe(
+        'full_name,email,company_name,country,business_type,lead_tier,lead_score,status',
+      );
+      expect(csv).toContain('John Smith,john@example.com,ABC Mortgage Brokers,Australia,Mortgage Broker,Tier A,90,New Lead');
+    });
+
+    it('returns just the header row when there are no matching leads', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+
+      const csv = await service.exportLeadsToCsv();
+
+      expect(csv).toBe('full_name,email,company_name,country,business_type,lead_tier,lead_score,status');
     });
   });
 

@@ -1,20 +1,42 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Resend } from 'resend';
 import type { Lead } from '@prisma/client';
+
+const MAILTRAP_SEND_URL = 'https://send.api.mailtrap.io/api/send';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private readonly resend: Resend;
+  private readonly mailtrapToken: string;
   private readonly salesTeamEmail: string;
   private readonly emailFrom: string;
   private readonly dashboardUrl: string;
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+    this.mailtrapToken = process.env.MAILTRAP_API_TOKEN || '';
     this.salesTeamEmail = process.env.SALES_TEAM_EMAIL || '';
-    this.emailFrom = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+    this.emailFrom = process.env.EMAIL_FROM || 'onboarding@atlas.dev';
     this.dashboardUrl = process.env.ADMIN_DASHBOARD_URL || 'http://localhost:3000';
+  }
+
+  private async send(to: string, subject: string, html: string) {
+    const response = await fetch(MAILTRAP_SEND_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.mailtrapToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: { email: this.emailFrom },
+        to: [{ email: to }],
+        subject,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Mailtrap request failed (${response.status}): ${body}`);
+    }
   }
 
   async sendNewLeadAlert(lead: Lead) {
@@ -37,15 +59,10 @@ export class EmailService {
       <p><a href="${leadUrl}">View in Dashboard</a></p>
     `;
 
-    const { error } = await this.resend.emails.send({
-      from: this.emailFrom,
-      to: this.salesTeamEmail,
-      subject,
-      html,
-    });
-
-    if (error) {
-      throw new Error(`Failed to send new lead alert email: ${error.message}`);
+    try {
+      await this.send(this.salesTeamEmail, subject, html);
+    } catch (error) {
+      throw new Error(`Failed to send new lead alert email: ${(error as Error).message}`);
     }
   }
 
@@ -57,15 +74,10 @@ export class EmailService {
       <p>Best regards,<br>The Atlas Team</p>
     `;
 
-    const { error } = await this.resend.emails.send({
-      from: this.emailFrom,
-      to: lead.email,
-      subject: "We've Received Your Request - Atlas AI Platform",
-      html,
-    });
-
-    if (error) {
-      throw new Error(`Failed to send prospect auto-reply email: ${error.message}`);
+    try {
+      await this.send(lead.email, "We've Received Your Request - Atlas AI Platform", html);
+    } catch (error) {
+      throw new Error(`Failed to send prospect auto-reply email: ${(error as Error).message}`);
     }
   }
 }

@@ -1,12 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { parse } from 'json2csv';
 import { PrismaService } from '../../database/prisma.service';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
-import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class LeadsService {
@@ -15,8 +15,7 @@ export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qualificationService: QualificationService,
-    private readonly emailService: EmailService,
-  ) { }
+  ) {}
 
   async createLead(data: CreateLeadDto) {
     const initialScore = this.qualificationService.calculateRuleBasedScore(data);
@@ -28,28 +27,53 @@ export class LeadsService {
       },
     });
 
-    // Asynchronous AI Processing (Non-blocking). The Tier A email alert is
-    // sent from QualificationService once the AI determines the lead_tier,
-    // since it isn't known yet at creation time.
+    // Asynchronous AI Processing (Non-blocking). The sales alert and the
+    // prospect confirmation email are both sent from QualificationService
+    // once the AI determines the lead_tier, since it isn't known yet here.
     this.qualificationService.analyzeLeadWithAI(lead.id, data, initialScore).catch((error) => {
       this.logger.error('Failed to analyze lead with AI asynchronously', error);
-    });
-
-    // Prospect auto-reply is sent unconditionally, regardless of tier.
-    this.emailService.sendProspectAutoReply(lead).catch((error) => {
-      this.logger.error('Failed to send auto-reply to prospect', error);
     });
 
     return lead;
   }
 
-  async findAll(query?: GetLeadsQueryDto) {
-    if (!query || Object.keys(query).length === 0) {
-      return this.prisma.lead.findMany({
-        orderBy: { created_at: 'desc' },
-      });
-    }
+  async findAll(query: GetLeadsQueryDto = {}) {
+    const where = this.buildLeadsWhere(query);
+    return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+  }
 
+  async exportLeadsToCsv(query: GetLeadsQueryDto = {}) {
+    const where = this.buildLeadsWhere(query);
+    const leads = await this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+
+    const rows = leads.map((lead) => ({
+      full_name: lead.full_name,
+      email: lead.email,
+      company_name: lead.company_name,
+      country: lead.country,
+      business_type: lead.business_type,
+      lead_tier: lead.lead_tier,
+      lead_score: lead.lead_score,
+      status: lead.status,
+    }));
+
+    const fields = [
+      'full_name',
+      'email',
+      'company_name',
+      'country',
+      'business_type',
+      'lead_tier',
+      'lead_score',
+      'status',
+    ];
+
+    if (rows.length === 0) return fields.join(',');
+
+    return parse(rows, { fields, quote: '' });
+  }
+
+  private buildLeadsWhere(query: GetLeadsQueryDto): Prisma.LeadWhereInput {
     const where: Prisma.LeadWhereInput = {};
 
     if (query.status) where.status = query.status;
@@ -62,7 +86,7 @@ export class LeadsService {
       ];
     }
 
-    return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+    return where;
   }
 
   async findOne(id: string) {
@@ -72,23 +96,6 @@ export class LeadsService {
         notes: { orderBy: { created_at: 'desc' } },
         activity_logs: { orderBy: { created_at: 'desc' } },
       },
-    });
-  }
-
-  async addNote(leadId: string, note: string, createdBy: string = 'Admin') {
-    return this.prisma.leadNote.create({
-      data: {
-        lead_id: leadId,
-        note,
-        created_by: createdBy,
-      },
-    });
-  }
-
-  async update(id: string, data: any) {
-    return this.prisma.lead.update({
-      where: { id },
-      data,
     });
   }
 

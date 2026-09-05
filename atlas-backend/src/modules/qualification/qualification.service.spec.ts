@@ -12,12 +12,15 @@ jest.mock('@google/genai', () => ({
 describe('QualificationService', () => {
   let service: QualificationService;
   let prisma: { lead: { update: jest.Mock } };
-  let emailService: { sendNewLeadAlert: jest.Mock };
+  let emailService: { sendNewLeadAlert: jest.Mock; sendProspectAutoReply: jest.Mock };
 
   beforeEach(async () => {
     process.env.GEMINI_API_KEY = 'test-key';
     prisma = { lead: { update: jest.fn() } };
-    emailService = { sendNewLeadAlert: jest.fn().mockResolvedValue(undefined) };
+    emailService = {
+      sendNewLeadAlert: jest.fn().mockResolvedValue(undefined),
+      sendProspectAutoReply: jest.fn().mockResolvedValue(undefined),
+    };
     generateContent.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -96,6 +99,38 @@ describe('QualificationService', () => {
       await service.analyzeLeadWithAI('lead-1', {});
 
       expect(emailService.sendNewLeadAlert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('analyzeLeadWithAI prospect confirmation email', () => {
+    const mockAiReply = (lead_tier: string) => {
+      generateContent.mockResolvedValue({
+        text: JSON.stringify({
+          lead_tier,
+          fit_status: 'Potential',
+          qualification_summary: 'summary',
+          recommended_next_action: 'follow up',
+          urgency_level: 'Medium',
+          risk_flags: [],
+        }),
+      });
+      prisma.lead.update.mockResolvedValue({ id: 'lead-1', lead_tier });
+    };
+
+    it.each(['Tier A', 'Tier B', 'Tier C'])('sends the confirmation email for %s', async (tier) => {
+      mockAiReply(tier);
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(emailService.sendProspectAutoReply).toHaveBeenCalledWith({ id: 'lead-1', lead_tier: tier });
+    });
+
+    it.each(['Spam', 'Disqualified'])('does not send the confirmation email for %s', async (tier) => {
+      mockAiReply(tier);
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(emailService.sendProspectAutoReply).not.toHaveBeenCalled();
     });
   });
 });

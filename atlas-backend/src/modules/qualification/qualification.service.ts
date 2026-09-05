@@ -145,6 +145,13 @@ ${JSON.stringify(leadData, null, 2)}`;
           .sendNewLeadAlert(updatedLead)
           .catch((error) => this.logger.error('Failed to send new lead alert email', error));
       }
+
+      // Confirmation email only goes to genuine prospects (Tier A/B/C), not Spam/Disqualified.
+      if (updatedLead.lead_tier && ['Tier A', 'Tier B', 'Tier C'].includes(updatedLead.lead_tier)) {
+        this.emailService
+          .sendProspectAutoReply(updatedLead)
+          .catch((error) => this.logger.error('Failed to send auto-reply to prospect', error));
+      }
     } catch (error) {
       this.logger.error(`Error menganalisis lead ${leadId} dengan AI`, error);
     }
