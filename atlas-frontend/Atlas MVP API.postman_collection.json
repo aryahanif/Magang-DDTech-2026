@@ -1,0 +1,484 @@
+{
+  "info": {
+    "_postman_id": "0fb79f9a-1f7e-46d7-aa0b-4fa67b84cf1e",
+    "name": "Atlas MVP API",
+    "description": "StartFragmentDokumentasi API untuk Backend Atlas AI WorkforceEndFragment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "31275445"
+  },
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Lead Intake",
+          "item": [
+            {
+              "name": "Submit New Lead",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"full_name\": \"John Smith\",\r\n  \"email\": \"john@example.com\",\r\n  \"phone\": \"+61 412 345 678\",\r\n  \"company_name\": \"ABC Mortgage Brokers\",\r\n  \"country\": \"Australia\",\r\n  \"business_type\": \"Mortgage Broker\",\r\n  \"automation_interest\": \"AI assistant for broker workflow\",\r\n  \"preferred_contact_method\": \"Email\",\r\n  \"current_problem\": \"Manual client onboarding and document collection\",\r\n  \"message\": \"We want to explore automation\",\r\n  \"consent_status\": true,\r\n  \"source_page\": \"/atlas\",\r\n  \"utm_source\": \"linkedin\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/leads",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "leads"
+                  ]
+                },
+                "description": "Endpoint publik ini berfungsi sebagai pintu masuk utama dari formulir di _landing page_ Atlas. Saat calon pelanggan menekan tombol 'Submit', _frontend_ akan menembak endpoint ini dengan membawa data profil mereka. Endpoint ini dilengkapi dengan perlindungan anti-spam (Rate Limiting & DTO Validation) untuk memastikan bahwa email memiliki format yang valid dan _field_ penting (seperti nama dan nomor telepon) tidak dibiarkan kosong. Setelah berhasil disimpan ke _database_, sistem _backend_ akan secara otomatis memicu proses kualifikasi AI di latar belakang.EndFragment"
+              },
+              "response": [
+                {
+                  "name": "Submit New Lead",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n  \"full_name\": \"John Smith\",\r\n  \"email\": \"john@example.com\",\r\n  \"phone\": \"+61 412 345 678\",\r\n  \"company_name\": \"ABC Mortgage Brokers\",\r\n  \"country\": \"Australia\",\r\n  \"business_type\": \"Mortgage Broker\",\r\n  \"automation_interest\": \"AI assistant for broker workflow\",\r\n  \"preferred_contact_method\": \"Email\",\r\n  \"current_problem\": \"Manual client onboarding and document collection\",\r\n  \"message\": \"We want to explore automation\",\r\n  \"consent_status\": true,\r\n  \"source_page\": \"/atlas\",\r\n  \"utm_source\": \"linkedin\"\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/leads",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "leads"
+                      ]
+                    }
+                  },
+                  "_postman_previewlanguage": "",
+                  "header": [],
+                  "cookie": [
+                    {
+                      "expires": "Invalid Date",
+                      "domain": "",
+                      "path": ""
+                    }
+                  ],
+                  "body": "{\r\n  \"success\": true,\r\n  \"lead_id\": \"uuid-1234\",\r\n  \"message\": \"Lead submitted successfully\"\r\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Auth",
+          "item": []
+        },
+        {
+          "name": "CRM",
+          "item": [
+            {
+              "name": "Get All Leads",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/leads?status =New Lead&tier=Tier A&country=Australia&search_keyword=John",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "leads"
+                  ],
+                  "query": [
+                    {
+                      "key": "status ",
+                      "value": "New Lead"
+                    },
+                    {
+                      "key": "tier",
+                      "value": "Tier A"
+                    },
+                    {
+                      "key": "country",
+                      "value": "Australia"
+                    },
+                    {
+                      "key": "search_keyword",
+                      "value": "John"
+                    }
+                  ]
+                },
+                "description": "StartFragmentEndpoint ini dipanggil oleh halaman Dasbor Admin (CRM) saat pertama kali dimuat. Endpoint ini akan mengembalikan daftar seluruh _leads_ (prospek) dalam bentuk _array_ (tabel). Mendukung fitur _Query Parameters_ untuk melakukan filter tingkat lanjut, sehingga admin dapat memfilter prospek berdasarkan negara, prioritas (_Tier A/B/C_), atau melakukan pencarian nama _(search keyword)_. Sangat penting bagi Frontend untuk mengirimkan JWT Token di _header_ untuk bisa mengakses data ini.EndFragment"
+              },
+              "response": [
+                {
+                  "name": "Get All Leads",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/admin/leads?status =New Lead&tier=Tier A&country=Australia&search_keyword=John",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "admin",
+                        "leads"
+                      ],
+                      "query": [
+                        {
+                          "key": "status ",
+                          "value": "New Lead"
+                        },
+                        {
+                          "key": "tier",
+                          "value": "Tier A"
+                        },
+                        {
+                          "key": "country",
+                          "value": "Australia"
+                        },
+                        {
+                          "key": "search_keyword",
+                          "value": "John"
+                        }
+                      ]
+                    }
+                  },
+                  "_postman_previewlanguage": "",
+                  "header": [],
+                  "cookie": [
+                    {
+                      "expires": "Invalid Date",
+                      "domain": "",
+                      "path": ""
+                    }
+                  ],
+                  "body": "{\r\n  \"success\": true,\r\n  \"data\": [\r\n    {\r\n      \"id\": \"uuid-1234-5678\",\r\n      \"full_name\": \"John Smith\",\r\n      \"company_name\": \"ABC Mortgage Brokers\",\r\n      \"lead_tier\": \"Tier A\",\r\n      \"status\": \"New Lead\",\r\n      \"created_at\": \"2026-08-10T10:00:00.000Z\"\r\n    }\r\n  ]\r\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Lead Detail",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"full_name\": \"John Smith\",\r\n  \"email\": \"john@example.com\",\r\n  \"phone\": \"+61 412 345 678\",\r\n  \"company_name\": \"ABC Mortgage Brokers\",\r\n  \"country\": \"Australia\",\r\n  \"business_type\": \"Mortgage Broker\",\r\n  \"current_problem\": \"Manual client onboarding and document collection\",\r\n  \"automation_interest\": \"AI assistant for broker workflow\",\r\n  \"message\": \"We want to explore automation\",\r\n  \"source_page\": \"/atlas\",\r\n  \"utm_source\": \"linkedin\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/leads/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "leads",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                },
+                "description": "StartFragmentKetika admin mengklik salah satu nama prospek di tabel CRM, Frontend harus menembak endpoint ini dengan memasukkan `id` prospek tersebut di URL. Endpoint ini akan mengembalikan data detail profil yang sangat lengkap, termasuk hasil analisis kualifikasi yang dihasilkan oleh mesin OpenAI (poin skor, ringkasan masalah, dan peringatan risiko).EndFragment"
+              },
+              "response": [
+                {
+                  "name": "Get Lead Detail",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n  \"full_name\": \"John Smith\",\r\n  \"email\": \"john@example.com\",\r\n  \"phone\": \"+61 412 345 678\",\r\n  \"company_name\": \"ABC Mortgage Brokers\",\r\n  \"country\": \"Australia\",\r\n  \"business_type\": \"Mortgage Broker\",\r\n  \"current_problem\": \"Manual client onboarding and document collection\",\r\n  \"automation_interest\": \"AI assistant for broker workflow\",\r\n  \"message\": \"We want to explore automation\",\r\n  \"source_page\": \"/atlas\",\r\n  \"utm_source\": \"linkedin\"\r\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/admin/leads/:id",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "admin",
+                        "leads",
+                        ":id"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": ""
+                        }
+                      ]
+                    }
+                  },
+                  "_postman_previewlanguage": "",
+                  "header": [],
+                  "cookie": [
+                    {
+                      "expires": "Invalid Date",
+                      "domain": "",
+                      "path": ""
+                    }
+                  ],
+                  "body": "{\r\n  \"success\": true,\r\n  \"data\": {\r\n    \"id\": \"uuid-1234-5678\",\r\n    \"full_name\": \"John Smith\",\r\n    \"email\": \"john@example.com\",\r\n    \"lead_score\": 86,\r\n    \"lead_tier\": \"Tier A\",\r\n    \"fit_status\": \"Strong fit\",\r\n    \"qualification_summary\": \"Australian mortgage broker firm seeking automation...\",\r\n    \"status\": \"New Lead\",\r\n    \"assigned_owner\": null\r\n  }\r\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Lead Status",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"status\": \"Demo Scheduled\",\r\n  \"assigned_owner\": \"Hikmal\",\r\n  \"next_follow_up_at\": \"2026-08-15T09:00:00.000Z\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/leads/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "leads",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                },
+                "description": "StartFragmentEndpoint operasional CRM yang memungkinkan tim _Sales_ untuk mengubah status prospek dalam _pipeline_. Misalnya, setelah mereka berhasil menelepon klien, mereka dapat menggunakan endpoint ini untuk mengubah `status` menjadi 'Contacted' atau 'Demo Scheduled'. Endpoint ini menggunakan metode PATCH karena hanya meng-_update_ sebagian data kolom pada _database_ (bukan keseluruhan profil).EndFragment"
+              },
+              "response": [
+                {
+                  "name": "Update Lead Status",
+                  "originalRequest": {
+                    "method": "PATCH",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n  \"status\": \"Demo Scheduled\",\r\n  \"assigned_owner\": \"Hikmal\",\r\n  \"next_follow_up_at\": \"2026-08-15T09:00:00.000Z\"\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/admin/leads/:id",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "admin",
+                        "leads",
+                        ":id"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": ""
+                        }
+                      ]
+                    }
+                  },
+                  "_postman_previewlanguage": "",
+                  "header": [],
+                  "cookie": [
+                    {
+                      "expires": "Invalid Date",
+                      "domain": "",
+                      "path": ""
+                    }
+                  ],
+                  "body": "{\r\n  \"success\": true,\r\n  \"message\": \"Lead updated successfully\"\r\n}"
+                }
+              ]
+            },
+            {
+              "name": "Add Internal Note",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"note\": \"Telah menelepon klien, mereka sangat tertarik dengan otomasi kpr.\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/leads/:id/notes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "leads",
+                    ":id",
+                    "notes"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                },
+                "description": "StartFragmentEndpoint ini digunakan sebagai log catatan harian untuk tim _Sales_. Setelah melakukan pertemuan (_meeting_) atau panggilan dengan prospek, admin bisa mengetikkan hasil pertemuannya ke dalam sebuah _form notes_. Sistem kemudian akan menembak endpoint ini untuk menyimpannya ke dalam tabel `lead_notes` yang terhubung secara relasional (foreign key) dengan profil prospek tersebut.EndFragment"
+              },
+              "response": [
+                {
+                  "name": "Add Internal Note",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/admin/leads/:id/notes",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "admin",
+                        "leads",
+                        ":id",
+                        "notes"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": ""
+                        }
+                      ]
+                    }
+                  },
+                  "_postman_previewlanguage": "",
+                  "header": [],
+                  "cookie": [
+                    {
+                      "expires": "Invalid Date",
+                      "domain": "",
+                      "path": ""
+                    }
+                  ],
+                  "body": "{\r\n  \"success\": true,\r\n  \"message\": \"Note added successfully\"\r\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Dashboard Metrics",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "dashboard"
+                  ]
+                },
+                "description": "StartFragmentEndpoint ini berfungsi sebagai penyuplai angka statistik untuk halaman beranda (_homepage_) admin. Alih-alih menarik seluruh data dan menghitungnya di _frontend_, endpoint _backend_ ini telah secara cerdas melakukan kalkulasi _query aggregate_ di sisi _database_ (seperti menghitung total baris, rasio persentase konversi, dan pengelompokan prospek per negara), sehingga angka bisa langsung dirender oleh _frontend_ menjadi bentuk diagram atau kartu widget metrik.EndFragment"
+              },
+              "response": [
+                {
+                  "name": "Get Dashboard Metrics",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/admin/dashboard",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "admin",
+                        "dashboard"
+                      ]
+                    }
+                  },
+                  "_postman_previewlanguage": "",
+                  "header": [],
+                  "cookie": [
+                    {
+                      "expires": "Invalid Date",
+                      "domain": "",
+                      "path": ""
+                    }
+                  ],
+                  "body": "{\r\n  \"total_leads\": 120,\r\n  \"new_leads_this_week\": 14,\r\n  \"tier_a_leads\": 6,\r\n  \"demo_requests\": 4,\r\n  \"conversion_rate\": 12.5,\r\n  \"leads_by_country\": {\r\n    \"Australia\": 80,\r\n    \"New Zealand\": 22,\r\n    \"Indonesia\": 18\r\n  }\r\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

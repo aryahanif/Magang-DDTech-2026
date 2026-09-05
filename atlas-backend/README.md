@@ -1,64 +1,66 @@
 # Atlas Backend MVP
 
-Sistem backend untuk platform **Atlas (AI Workforce Platform)** dari DDTech. Backend ini dibangun menggunakan **NestJS**, **Prisma ORM**, dan **PostgreSQL** dengan dukungan Docker untuk local development.
+Atlas is DDTech's AI Workforce Platform. This backend system is designed to capture website visitors and ANZ mortgage broker prospects, transforming them into highly qualified sales conversations.
 
-## 🚀 Persiapan Awal (Setup)
+## 📌 Project Overview
+This repository contains the Node.js (NestJS) backend for the Atlas CRM MVP. 
 
-Pastikan Anda telah menginstal aplikasi berikut di laptop/PC Anda:
-- **Node.js** (versi 18 atau ke atas disarankan)
-- **Docker Desktop** (untuk database lokal)
+**Key Features:**
+- **Lead Capture:** API to receive submissions from the Atlas website.
+- **AI-Assisted Qualification:** Hybrid rule-based & AI (Gemini) lead qualification engine.
+- **CRM Pipeline:** Lead management, status updates, and internal notes.
+- **Admin Dashboard:** Pipeline metrics and conversions.
+- **Email Notifications:** Instant alerts for the DDTech sales team via Resend.
 
-### 1. Clone & Install Dependencies
-Lakukan clone repository ini dan jalankan instalasi library:
+## 📂 Documentation Structure
+To keep this README clean, detailed documentation is split into separate files:
+- [API Documentation](docs/api.md) - Details on all public and protected API endpoints.
+- [Deployment & Setup Guide](docs/deployment.md) - Step-by-step instructions to run the server locally or in production.
+
+## 🔐 Environment Variables
+To run this project, you must configure a `.env` file in the root directory. 
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/atlas_db`) |
+| `JWT_SECRET` | Secret key used to sign and verify Admin authentication tokens |
+| `JWT_EXPIRES_IN` | Token validity duration (e.g., `1d` for 1 day) |
+| `GEMINI_API_KEY` | Google Gemini API key for the AI Qualification Engine |
+| `RESEND_API_KEY` | Resend API key for sending email notifications |
+| `EMAIL_FROM` | The sender address for notifications (e.g., `onboarding@resend.dev`) |
+| `SALES_EMAIL_TO` | The inbox address that receives new lead alerts |
+
+*(Note: Never commit your real `.env` file to the repository. Use `.env.example` as a template).*
+
+## 👨‍💻 Admin User Setup
+The MVP includes a secure login system. To generate the first Super Admin account, you must run the database seeder:
 ```bash
-git clone https://github.com/aryahanif/Magang-DDTech-2026.git
-cd Magang-DDTech-2026/atlas-backend
-npm install
+npx prisma db seed
+```
+**Default Credentials:**
+- **Email:** `admin@atlas.ddtech.com`
+- **Password:** `rahasia_negara_123`
+
+## 💾 Backup and Restore Procedure
+Since we are using PostgreSQL, standard `pg_dump` commands apply.
+**Backup:**
+```bash
+pg_dump -U postgres -h localhost -p 5433 -F c -d atlas_db -f atlas_backup.dump
+```
+**Restore:**
+```bash
+pg_restore -U postgres -h localhost -p 5433 -d atlas_db -1 atlas_backup.dump
 ```
 
-### 2. Konfigurasi Environment (File `.env`)
-Buat file `.env` baru dengan menyalin contoh yang sudah ada:
-```bash
-cp .env.example .env
-```
-Anda bisa mengubah isi rahasia di dalam file `.env` tersebut. File `.env` ini **tidak akan di-commit** ke Git demi keamanan.
+## ⚠️ Known Limitations (MVP Scope)
+- **Single-Tenant Only:** Currently built for DDTech internal use. Multi-tenant architecture for clients is not yet implemented.
+- **Manual Deletion:** Data privacy deletion requests must be handled manually via Prisma Studio or SQL queries.
+- **File Uploads:** The current intake API does not support file attachments (e.g., PDF uploads).
 
-### 3. Menjalankan Database Lokal (Docker)
-Proyek ini sudah dilengkapi dengan `docker-compose.yml` untuk menjalankan PostgreSQL versi 15 di port `5433`.
-Jalankan perintah ini untuk menyalakan database di background:
-```bash
-docker-compose up -d
-```
-*(Untuk mematikan database, gunakan perintah `docker-compose down`)*
-
-### 4. Setup Prisma Schema
-Setelah database berjalan, sinkronkan skema tabel ke dalam database tersebut menggunakan Prisma:
-```bash
-npx prisma db push
-```
-*(Anda bisa menggunakan `npx prisma studio` untuk melihat dan mengedit isi database langsung melalui browser)*.
-
----
-
-## 🏃‍♂️ Menjalankan Aplikasi Backend
-
-Setelah semua persiapan di atas selesai, jalankan server backend NestJS:
-
-```bash
-# Mode development (live reload)
-npm run start:dev
-
-# Mode production
-npm run build
-npm run start:prod
-```
-
-Server backend akan berjalan di `http://localhost:3000` (atau port lain sesuai isi `.env`).
-
-## 📁 Struktur Modul
-Sesuai spesifikasi proyek, backend ini disusun dengan konsep modular:
-- `leads`: Menangani penerimaan form leads dari website publik.
-- `qualification`: Mesin penilaian prospek & integrasi AI (OpenAI).
-- `email`: Notifikasi internal untuk tim DDTech.
-- `admin` & `dashboard`: Endpoint khusus manajemen leads dan statistik CRM.
-- `auth`: Otentikasi JWT untuk akses admin.
+## 🚀 Future Roadmap
+Once the MVP proves commercial traction, planned features include:
+1. Customer/Client workspaces
+2. Integration marketplace (HubSpot, Pipedrive, Salesforce)
+3. Advanced analytics per client
+4. Billing and subscriptions
+5. Broker-specific automation modules

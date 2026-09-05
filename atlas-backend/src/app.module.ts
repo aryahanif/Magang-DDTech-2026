@@ -15,7 +15,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 5,
+        limit: 100, // Diperbesar dari 5 menjadi 100 agar mudah dites
       },
     ]),
     PrismaModule,
