@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { parse } from 'json2csv';
 import { PrismaService } from '../../database/prisma.service';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -37,6 +38,42 @@ export class LeadsService {
   }
 
   async findAll(query: GetLeadsQueryDto) {
+    const where = this.buildLeadsWhere(query);
+    return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+  }
+
+  async exportLeadsToCsv(query: GetLeadsQueryDto = {}) {
+    const where = this.buildLeadsWhere(query);
+    const leads = await this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+
+    const rows = leads.map((lead) => ({
+      full_name: lead.full_name,
+      email: lead.email,
+      company_name: lead.company_name,
+      country: lead.country,
+      business_type: lead.business_type,
+      lead_tier: lead.lead_tier,
+      lead_score: lead.lead_score,
+      status: lead.status,
+    }));
+
+    const fields = [
+      'full_name',
+      'email',
+      'company_name',
+      'country',
+      'business_type',
+      'lead_tier',
+      'lead_score',
+      'status',
+    ];
+
+    if (rows.length === 0) return fields.join(',');
+
+    return parse(rows, { fields, quote: '' });
+  }
+
+  private buildLeadsWhere(query: GetLeadsQueryDto): Prisma.LeadWhereInput {
     const where: Prisma.LeadWhereInput = {};
 
     if (query.status) where.status = query.status;
@@ -49,7 +86,7 @@ export class LeadsService {
       ];
     }
 
-    return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
+    return where;
   }
 
   async updateLeadStatus(leadId: string, data: UpdateLeadDto, adminUserId: string) {

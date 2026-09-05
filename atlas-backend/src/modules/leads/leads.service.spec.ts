@@ -118,6 +118,42 @@ describe('LeadsService', () => {
     });
   });
 
+  describe('exportLeadsToCsv', () => {
+    it('applies the same filters as findAll and returns CSV with the required columns', async () => {
+      prisma.lead.findMany.mockResolvedValue([
+        {
+          full_name: 'John Smith',
+          email: 'john@example.com',
+          company_name: 'ABC Mortgage Brokers',
+          country: 'Australia',
+          business_type: 'Mortgage Broker',
+          lead_tier: 'Tier A',
+          lead_score: 90,
+          status: 'New Lead',
+        },
+      ]);
+
+      const csv = await service.exportLeadsToCsv({ tier: 'Tier A' });
+
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        where: { lead_tier: 'Tier A' },
+        orderBy: { created_at: 'desc' },
+      });
+      expect(csv.split('\r\n')[0]).toBe(
+        'full_name,email,company_name,country,business_type,lead_tier,lead_score,status',
+      );
+      expect(csv).toContain('John Smith,john@example.com,ABC Mortgage Brokers,Australia,Mortgage Broker,Tier A,90,New Lead');
+    });
+
+    it('returns just the header row when there are no matching leads', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+
+      const csv = await service.exportLeadsToCsv();
+
+      expect(csv).toBe('full_name,email,company_name,country,business_type,lead_tier,lead_score,status');
+    });
+  });
+
   describe('updateLeadStatus', () => {
     it('updates the lead and logs the activity atomically via $transaction', async () => {
       const updated = { id: 'lead-1', status: 'Demo Scheduled' };
