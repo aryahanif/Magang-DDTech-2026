@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards, Delete } from '@nestjs/common';
 import { Request } from 'express';
 import { LeadsService } from './leads.service';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
@@ -43,6 +43,28 @@ export class AdminLeadsController {
     return {
       success: true,
       message: 'Note added successfully',
+    };
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    try {
+      const lead = await this.leadsService.findOne(id);
+      return {
+        success: true,
+        data: lead,
+      };
+    } catch (error) {
+      return { success: false, message: 'Lead not found or invalid ID' };
+    }
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.leadsService.remove(id);
+    return {
+      success: true,
+      message: 'Lead deleted successfully',
     };
   }
 }
