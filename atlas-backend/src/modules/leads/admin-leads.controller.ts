@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards, Delete } from '@nestjs/common';
 import { Request } from 'express';
+import type { Response } from 'express';
 import { LeadsService } from './leads.service';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
@@ -18,6 +19,14 @@ export class AdminLeadsController {
       success: true,
       data: leads,
     };
+  }
+
+  @Get('export')
+  async exportCsv(@Query() query: GetLeadsQueryDto, @Res() res: Response) {
+    const csv = await this.leadsService.exportLeadsToCsv(query);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
+    res.send(csv);
   }
 
   @Patch(':id')
