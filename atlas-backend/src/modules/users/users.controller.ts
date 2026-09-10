@@ -5,6 +5,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('api/users')
 @UseGuards(JwtAuthGuard)
@@ -33,12 +35,16 @@ export class UsersController {
   }
 
   @Post('invite')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   async invite(@Body() inviteDto: InviteUserDto) {
     const data = await this.usersService.invite(inviteDto);
     return { success: true, message: 'User invited', data };
   }
 
   @Patch(':id/role')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   async updateRole(@Param('id') id: string, @Body() updateDto: UpdateRoleDto) {
     const data = await this.usersService.updateRole(id, updateDto);
     return { success: true, message: 'Role updated', data };

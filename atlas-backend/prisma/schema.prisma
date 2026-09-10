@@ -27,6 +27,7 @@ model Lead {
   utm_medium              String?
   utm_campaign            String?
   consent_status          Boolean?
+  consent_at              DateTime?
   
   lead_score              Int?
   lead_tier               String?

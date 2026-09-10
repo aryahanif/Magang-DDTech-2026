@@ -18,14 +18,30 @@ export class LeadsService {
   ) {}
 
   async createLead(data: CreateLeadDto) {
-    const initialScore = this.qualificationService.calculateRuleBasedScore(data);
+    const initialScore = await this.qualificationService.calculateRuleBasedScore(data);
 
     const lead = await this.prisma.lead.create({
       data: {
         ...data,
         lead_score: initialScore,
+        consent_at: data.consent_status ? new Date() : null,
       },
     });
+
+    const duplicate = await this.prisma.lead.findFirst({
+      where: { email: data.email, id: { not: lead.id } },
+      orderBy: { created_at: 'desc' },
+    });
+    if (duplicate) {
+      await this.prisma.leadActivityLog.create({
+        data: {
+          lead_id: lead.id,
+          activity_type: 'DUPLICATE_DETECTED',
+          description: `Possible duplicate of lead ${duplicate.id} (same email)`,
+          metadata: { duplicate_of: duplicate.id },
+        },
+      });
+    }
 
     // Asynchronous AI Processing (Non-blocking). The sales alert and the
     // prospect confirmation email are both sent from QualificationService
