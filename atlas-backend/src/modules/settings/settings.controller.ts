@@ -3,9 +3,12 @@ import { Request } from 'express';
 import { SettingsService } from './settings.service';
 import { UpdateAiRulesDto } from './dto/update-ai-rules.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('api/settings')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 

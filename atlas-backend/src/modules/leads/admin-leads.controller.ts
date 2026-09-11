@@ -6,9 +6,11 @@ import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('api/admin/leads')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminLeadsController {
   constructor(private readonly leadsService: LeadsService) {}
 
@@ -30,6 +32,7 @@ export class AdminLeadsController {
   }
 
   @Patch(':id')
+  @Roles('admin', 'sales')
   async updateStatus(
     @Param('id') id: string,
     @Body() updateData: UpdateLeadDto,
@@ -43,6 +46,7 @@ export class AdminLeadsController {
   }
 
   @Post(':id/notes')
+  @Roles('admin', 'sales')
   async addNote(
     @Param('id') id: string,
     @Body() body: AddLeadNoteDto,
@@ -69,6 +73,7 @@ export class AdminLeadsController {
   }
 
   @Delete(':id')
+  @Roles('admin')
   async remove(@Param('id') id: string) {
     await this.leadsService.remove(id);
     return {

@@ -95,14 +95,14 @@ export class QualificationService {
         return;
       }
 
-      const prompt = `Anda adalah analis penjualan B2B profesional untuk Atlas, DDTech's AI Workforce Platform.
-Analisis data klien berikut dan berikan wawasan mendalam mengenai potensi klien.
+      const prompt = `You are a professional B2B sales analyst for Atlas, DDTech's AI Workforce Platform.
+Analyze the following client data and provide deep insights regarding the client's potential.
 
-Informasi Sistem:
-- Klien ini mendapatkan Rule-Based Score: ${ruleBasedScore ?? 'N/A'} (skala 1.0 - 5.0).
-- Gunakan skor sistem tersebut sebagai salah satu acuan utama untuk menentukan lead_tier (Tier A/B/C). Skor tinggi (>4.0) mengindikasikan Tier A atau B.
+System Information:
+- This client received a Rule-Based Score: ${ruleBasedScore ?? 'N/A'} (scale 1.0 - 5.0).
+- Use this system score as one of the main references to determine the lead_tier (Tier A/B/C). A high score (>4.0) indicates Tier A or B.
 
-Data Klien:
+Client Data:
 ${JSON.stringify(leadData, null, 2)}`;
 
       const response = await this.ai.models.generateContent({
@@ -113,12 +113,12 @@ ${JSON.stringify(leadData, null, 2)}`;
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Disqualified", "Spam"], description: "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal, dan Disqualified untuk data sah yang tidak cocok dengan bisnis." },
-              fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
-              qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
-              recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },
-              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Tingkat urgensi" },
-              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Bendera risiko atau data mencurigakan" }
+              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Disqualified", "Spam"], description: "Client's tier category. Use Spam for fake/nonsense data, and Disqualified for legitimate data that does not fit the business." },
+              fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "The client's fit status with the product." },
+              qualification_summary: { type: Type.STRING, description: "Analysis summary, maximum 2 sentences." },
+              recommended_next_action: { type: Type.STRING, description: "The recommended next action to take." },
+              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Level of urgency." },
+              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Risk flags or suspicious data points." }
             },
             required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level", "risk_flags"]
           }
