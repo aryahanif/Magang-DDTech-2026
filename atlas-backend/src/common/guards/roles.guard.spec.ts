@@ -7,10 +7,11 @@ describe('RolesGuard', () => {
     ({
       switchToHttp: () => ({ getRequest: () => ({ user: role ? { role } : undefined }) }),
       getHandler: () => {},
+      getClass: () => {},
     }) as unknown as ExecutionContext;
 
   const buildGuard = (requiredRoles: string[] | undefined) => {
-    const reflector = { get: jest.fn().mockReturnValue(requiredRoles) } as unknown as Reflector;
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue(requiredRoles) } as unknown as Reflector;
     return new RolesGuard(reflector);
   };
 

@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
@@ -11,11 +11,16 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!requiredRoles) {
+    if (!requiredRoles || requiredRoles.length === 0) {
       return true; // If no roles are required, allow access
     }
+
     const { user } = context.switchToHttp().getRequest();
-    // Assuming the JwtStrategy populates req.user.role
-    return requiredRoles.includes(user?.role);
+    // Case-insensitive substring match, e.g. @Roles('admin') matches a seeded role of "Super Admin".
+    const hasRole = requiredRoles.some((role) => user?.role?.toLowerCase().includes(role.toLowerCase()));
+    if (!hasRole) {
+      throw new ForbiddenException('Insufficient role for this action');
+    }
+    return true;
   }
 }

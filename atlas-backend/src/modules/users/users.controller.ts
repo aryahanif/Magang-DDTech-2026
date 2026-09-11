@@ -5,8 +5,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('api/users')
 @UseGuards(JwtAuthGuard)
