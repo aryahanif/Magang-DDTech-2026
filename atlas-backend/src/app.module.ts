@@ -10,6 +10,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { UsersModule } from './modules/users/users.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 
 @Module({
@@ -28,6 +29,7 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
     AuthModule,
     DashboardModule,
     SettingsModule,
+    UsersModule,
     IntegrationsModule,
   ],
   controllers: [AppController],
