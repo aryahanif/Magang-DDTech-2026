@@ -74,6 +74,9 @@ model LeadActivityLog {
 }
 
 model User {
+  google_access_token String?
+  google_refresh_token String?
+  email_signature     String?
   id            String   @id @default(uuid()) @db.Uuid
   name          String?
   email         String?  @unique
