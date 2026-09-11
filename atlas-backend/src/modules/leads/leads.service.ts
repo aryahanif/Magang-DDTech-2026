@@ -17,7 +17,8 @@ export class LeadsService {
     private readonly qualificationService: QualificationService,
   ) {}
 
-  async createLead(data: CreateLeadDto) {
+  async createLead(dto: CreateLeadDto) {
+    const { cf_turnstile_token, ...data } = dto;
     const initialScore = await this.qualificationService.calculateRuleBasedScore(data);
 
     const lead = await this.prisma.lead.create({

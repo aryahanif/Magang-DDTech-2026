@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Patch, Delete, Param, UseGuards, Query } from '@nestjs/common';
+import { Body, Controller, Post, Get, Patch, Delete, Param, UseGuards, Query, ForbiddenException } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -13,11 +13,26 @@ export class LeadsController {
 
   @Post()
   async create(@Body() createLeadDto: CreateLeadDto) {
+    await this.verifyTurnstileToken(createLeadDto.cf_turnstile_token);
+
     const lead = await this.leadsService.createLead(createLeadDto);
     return {
       success: true,
       lead_id: lead.id,
       message: 'Lead submitted successfully',
     };
+  }
+
+  private async verifyTurnstileToken(token: string) {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret: process.env.TURNSTILE_SECRET_KEY || '', response: token }),
+    });
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new ForbiddenException('Bot verification failed');
+    }
   }
 }
