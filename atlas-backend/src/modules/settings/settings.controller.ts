@@ -5,10 +5,11 @@ import { UpdateAiRulesDto } from './dto/update-ai-rules.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('api/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
+@Roles(UserRole.SUPER_ADMIN)
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 

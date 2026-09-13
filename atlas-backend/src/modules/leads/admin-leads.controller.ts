@@ -8,6 +8,7 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('api/admin/leads')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,7 +33,7 @@ export class AdminLeadsController {
   }
 
   @Patch(':id')
-  @Roles('admin', 'sales')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.SALES)
   async updateStatus(
     @Param('id') id: string,
     @Body() updateData: UpdateLeadDto,
@@ -46,7 +47,7 @@ export class AdminLeadsController {
   }
 
   @Post(':id/notes')
-  @Roles('admin', 'sales')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.SALES)
   async addNote(
     @Param('id') id: string,
     @Body() body: AddLeadNoteDto,
@@ -73,7 +74,7 @@ export class AdminLeadsController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles(UserRole.SUPER_ADMIN)
   async remove(@Param('id') id: string) {
     await this.leadsService.remove(id);
     return {
