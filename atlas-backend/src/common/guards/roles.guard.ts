@@ -11,11 +11,18 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!requiredRoles) {
+    if (!requiredRoles || requiredRoles.length === 0) {
       return true; // If no roles are required, allow access
     }
     const { user } = context.switchToHttp().getRequest();
-    // Assuming the JwtStrategy populates req.user.role
-    return requiredRoles.includes(user?.role);
+    const userRole = (user?.role || '').toLowerCase();
+    
+    // Super Admin has universal access
+    if (userRole === 'super admin' || userRole === 'admin') {
+      return true;
+    }
+
+    const allowedRoles = requiredRoles.map((r: string) => r.toLowerCase());
+    return allowedRoles.includes(userRole);
   }
 }
