@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, Body, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { SettingsService } from './settings.service';
 import { UpdateAiRulesDto } from './dto/update-ai-rules.dto';
@@ -9,6 +10,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 @Controller('api/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
+@Throttle({ default: { limit: 100, ttl: 60000 } })
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 

@@ -1,5 +1,4 @@
-import { Body, Controller, Post, Get, Patch, Delete, Param, UseGuards, Query, ForbiddenException } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Body, Controller, Post, Get, Patch, Delete, Param, Query, ForbiddenException } from '@nestjs/common';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
@@ -7,7 +6,6 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 
 @Controller('api/leads')
-@UseGuards(ThrottlerGuard)
 export class LeadsController {
   constructor(private readonly leadsService: LeadsService) { }
 
