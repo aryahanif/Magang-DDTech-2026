@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards, Delete } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import type { Response } from 'express';
 import { LeadsService } from './leads.service';
@@ -12,6 +13,7 @@ import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('api/admin/leads')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Throttle({ default: { limit: 100, ttl: 60000 } })
 export class AdminLeadsController {
   constructor(private readonly leadsService: LeadsService) {}
 

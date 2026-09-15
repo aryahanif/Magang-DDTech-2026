@@ -40,7 +40,7 @@ export class QualificationService {
    * Calculates a rule-based score based on basic lead information.
    * Uses weighted criteria to generate a final score from 1.0 to 5.0.
    */
-  calculateRuleBasedScore(leadData: any): number {
+  async calculateRuleBasedScore(leadData: any): Promise<number> {
     // 1. Country Score (1-5)
     const country = (leadData.country || '').trim().toLowerCase();
     const countryScore = SCORING_CONFIG.COUNTRY_SCORES[country] || SCORING_CONFIG.COUNTRY_SCORES['default'];
@@ -61,11 +61,14 @@ export class QualificationService {
     const isFreeEmail = freeDomains.some(domain => email.includes(domain));
     if (email && !isFreeEmail) intentScore += 1;
 
-    // Spam / Missing Data Check
-    if (!leadData.email || !leadData.company_name) intentScore -= 2;
-    const spamWords = ['test', 'spam', 'asdf', '1234'];
-    const messageText = (leadData.message || '').toLowerCase() + ' ' + (leadData.full_name || '').toLowerCase();
-    if (spamWords.some(w => messageText.includes(w))) intentScore -= 3;
+    // Spam / Missing Data Check (toggleable via SystemSetting.is_spam_detection_enabled)
+    const settings = await this.prisma.systemSetting.findFirst();
+    if (settings?.is_spam_detection_enabled ?? true) {
+      if (!leadData.email || !leadData.company_name) intentScore -= 2;
+      const spamWords = ['test', 'spam', 'asdf', '1234'];
+      const messageText = (leadData.message || '').toLowerCase() + ' ' + (leadData.full_name || '').toLowerCase();
+      if (spamWords.some(w => messageText.includes(w))) intentScore -= 3;
+    }
 
     intentScore = Math.max(1, Math.min(5, intentScore)); // Clamp between 1 and 5
 

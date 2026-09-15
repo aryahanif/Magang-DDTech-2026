@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { parse } from 'json2csv';
 import { PrismaService } from '../../database/prisma.service';
@@ -17,8 +17,9 @@ export class LeadsService {
     private readonly qualificationService: QualificationService,
   ) {}
 
-  async createLead(data: CreateLeadDto) {
-    const initialScore = this.qualificationService.calculateRuleBasedScore(data);
+  async createLead(dto: CreateLeadDto) {
+    const { cf_turnstile_token, ...data } = dto;
+    const initialScore = await this.qualificationService.calculateRuleBasedScore(data);
 
     const existingLead = await this.prisma.lead.findFirst({
       where: {
@@ -33,6 +34,7 @@ export class LeadsService {
       data: {
         ...data,
         lead_score: initialScore,
+        consent_at: data.consent_status ? new Date() : null,
       },
     });
 
@@ -214,3 +216,4 @@ export class LeadsService {
     }
   }
 }
+

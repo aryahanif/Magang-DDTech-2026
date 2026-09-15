@@ -9,7 +9,7 @@ import { QualificationService } from '../qualification/qualification.service';
 describe('LeadsService', () => {
   let service: LeadsService;
   let prisma: {
-    lead: { create: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    lead: { create: jest.Mock; findMany: jest.Mock; findFirst: jest.Mock; update: jest.Mock };
     leadActivityLog: { create: jest.Mock };
     leadNote: { create: jest.Mock };
     $transaction: jest.Mock;
@@ -26,17 +26,19 @@ describe('LeadsService', () => {
     country: 'Australia',
     business_type: 'Mortgage Broker',
     consent_status: true,
+    cf_turnstile_token: 'test-turnstile-token',
   };
+  const { cf_turnstile_token: _token, ...data } = dto;
 
   beforeEach(async () => {
     prisma = {
-      lead: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      lead: { create: jest.fn(), findMany: jest.fn(), findFirst: jest.fn().mockResolvedValue(null), update: jest.fn() },
       leadActivityLog: { create: jest.fn() },
       leadNote: { create: jest.fn() },
       $transaction: jest.fn(async (ops: unknown[]) => Promise.all(ops)),
     };
     qualificationService = {
-      calculateRuleBasedScore: jest.fn().mockReturnValue(55),
+      calculateRuleBasedScore: jest.fn().mockResolvedValue(55),
       analyzeLeadWithAI: jest.fn().mockResolvedValue(undefined),
     };
     const module: TestingModule = await Test.createTestingModule({
@@ -56,8 +58,44 @@ describe('LeadsService', () => {
 
     const result = await service.createLead(dto);
 
-    expect(qualificationService.calculateRuleBasedScore).toHaveBeenCalledWith(dto);
-    expect(prisma.lead.create).toHaveBeenCalledWith({ data: { ...dto, lead_score: 55 } });
+    expect(qualificationService.calculateRuleBasedScore).toHaveBeenCalledWith(data);
+    expect(prisma.lead.create).toHaveBeenCalledWith({
+      data: { ...data, lead_score: 55, consent_at: expect.any(Date) },
+    });
+    expect(result).toBe(created);
+  });
+
+  it('leaves consent_at unset when consent was not given', async () => {
+    const noConsentDto = { ...dto, consent_status: false };
+    const { cf_turnstile_token: _t, ...noConsentData } = noConsentDto;
+    prisma.lead.create.mockResolvedValue({ id: 'uuid-2', ...noConsentData });
+
+    await service.createLead(noConsentDto);
+
+    expect(prisma.lead.create).toHaveBeenCalledWith({
+      data: { ...noConsentData, lead_score: 55, consent_at: null },
+    });
+  });
+
+  it('flags a duplicate lead by email in the activity log without blocking creation', async () => {
+    const created = { id: 'uuid-1', lead_score: 55, ...dto };
+    prisma.lead.create.mockResolvedValue(created);
+    prisma.lead.findFirst.mockResolvedValue({ id: 'uuid-0' });
+
+    const result = await service.createLead(dto);
+
+    expect(prisma.lead.findFirst).toHaveBeenCalledWith({
+      where: { email: dto.email, id: { not: 'uuid-1' } },
+      orderBy: { created_at: 'desc' },
+    });
+    expect(prisma.leadActivityLog.create).toHaveBeenCalledWith({
+      data: {
+        lead_id: 'uuid-1',
+        activity_type: 'DUPLICATE_DETECTED',
+        description: expect.stringContaining('uuid-0'),
+        metadata: { duplicate_of: 'uuid-0' },
+      },
+    });
     expect(result).toBe(created);
   });
 
@@ -67,7 +105,7 @@ describe('LeadsService', () => {
 
     await service.createLead(dto);
 
-    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, dto, 55);
+    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, data, 55);
   });
 
   it('does not let a failed AI analysis reject createLead', async () => {

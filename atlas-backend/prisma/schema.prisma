@@ -27,6 +27,7 @@ model Lead {
   utm_medium              String?
   utm_campaign            String?
   consent_status          Boolean?
+  consent_at              DateTime?
   
   lead_score              Int?
   lead_tier               String?
@@ -81,6 +82,7 @@ model User {
   name          String?
   email         String?  @unique
   role          String?
+  job_title     String?
   password_hash String?
   created_at    DateTime @default(now())
 

@@ -1,9 +1,11 @@
 import { Controller, Get, Post, Query, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { GoogleService } from './google.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('api/integrations/google')
+@Throttle({ default: { limit: 100, ttl: 60000 } })
 export class GoogleController {
   constructor(private readonly googleService: GoogleService) {}
 
