@@ -13,6 +13,16 @@ const isLoading = ref(false)
 const isSuccess = ref(false)
 const router = useRouter()
 
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  const savedEmail = localStorage.getItem('remembered_email')
+  if (savedEmail) {
+    email.value = savedEmail
+    rememberMe.value = true
+  }
+})
+
 import api from '../services/api'
 import { Vue3Lottie } from 'vue3-lottie'
 import loginAnimationJSON from '../assets/login-lottie.json'
@@ -31,6 +41,12 @@ const handleLogin = async () => {
       // Simpan token dan data user ke localStorage
       localStorage.setItem('auth_token', response.data.token)
       localStorage.setItem('user', JSON.stringify(response.data.user))
+      
+      if (rememberMe.value) {
+        localStorage.setItem('remembered_email', email.value)
+      } else {
+        localStorage.removeItem('remembered_email')
+      }
       
       isSuccess.value = true
       setTimeout(() => {
@@ -187,7 +203,7 @@ const handleLogin = async () => {
         </form>
 
         <p class="text-center text-sm text-gray-600 mt-6">
-          Don't have an account? <a href="#" class="font-semibold text-[#1a4bca] hover:text-blue-800">Contact Sales</a>
+          Don't have an account? <router-link to="/contact-sales" class="font-semibold text-[#1a4bca] hover:text-blue-800">Contact Sales</router-link>
         </p>
       </div>
     </div>

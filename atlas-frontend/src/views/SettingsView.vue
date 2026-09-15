@@ -2,18 +2,19 @@
 import { ref, onMounted } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
 import api from '../services/api'
-import { User, Users, Sparkles, Mail, X } from '@lucide/vue'
+import { User, Users, Sparkles, Mail, X, ShieldUser, Briefcase, Eye } from '@lucide/vue'
 
 // ==========================================
 // STATE MANAGEMENT
 // ==========================================
 const activeTab = ref('profile')
+const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 
 // Data: Profile
 const profileForm = ref({
-  fullName: '',
-  workEmail: '',
-  jobTitle: ''
+  name: '',
+  email: '',
+  job_title: ''
 })
 
 // Data: Team Management
@@ -49,7 +50,7 @@ const fetchSettingsData = async () => {
     } catch (e) {
       console.warn('Backend API Not Ready: /api/admin/users/profile')
       // Fallback
-      profileForm.value = { fullName: 'Fallback User', workEmail: 'waiting@backend', jobTitle: 'Developer' }
+      profileForm.value = { name: 'Fallback User', email: 'waiting@backend.com', job_title: 'Developer' }
     }
 
     // 2. Fetch Team
@@ -103,7 +104,23 @@ const { showToast } = useToast()
 const saveProfile = async () => {
   try {
     await api.patch('/api/users/profile', profileForm.value)
+    
+    // Perbarui localStorage agar nama di sidebar berubah
+    const updatedUser = {
+      ...currentUser.value,
+      name: profileForm.value.name,
+      email: profileForm.value.email,
+      job_title: profileForm.value.job_title
+    }
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+    
     showToast('Profile Settings Saved Successfully!', 'success')
+    
+    // Refresh halaman agar MainLayout me-render ulang nama baru
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+    
   } catch (error) {
     console.error('Save profile error:', error)
     showToast('Backend API Error: Failed to save profile.', 'error')
@@ -115,21 +132,22 @@ const saveProfile = async () => {
 // ==========================================
 const isInviteModalOpen = ref(false)
 const inviteForm = ref({
+  name: '',
   email: '',
-  role: 'Sales Rep'
+  role: 'sales'
 })
 const editingRoleId = ref<string | null>(null)
 
 const openInviteModal = () => {
-  inviteForm.value = { email: '', role: 'Sales Rep' }
+  inviteForm.value = { name: '', email: '', role: 'sales' }
   isInviteModalOpen.value = true
 }
 
 const sendInvite = async () => {
-  if (!inviteForm.value.email) return
+  if (!inviteForm.value.email || !inviteForm.value.name) return
   
   try {
-    await api.post('/api/users/invite', { email: inviteForm.value.email, role: inviteForm.value.role })
+    await api.post('/api/users/invite', { name: inviteForm.value.name, email: inviteForm.value.email, role: inviteForm.value.role })
     showToast('Invitation sent successfully!', 'success')
     isInviteModalOpen.value = false
     await fetchSettingsData()
@@ -138,7 +156,7 @@ const sendInvite = async () => {
     // Optimistic fallback for demonstration
     teamMembers.value.push({
       id: Date.now().toString(),
-      name: 'Pending Invite',
+      name: inviteForm.value.name,
       email: inviteForm.value.email,
       role: inviteForm.value.role,
       status: 'Pending'
@@ -214,7 +232,7 @@ const saveEmailSettings = () => {
       <div class="flex flex-col lg:flex-row gap-6 max-w-6xl flex-1 pb-10">
         
         <!-- SIDEBAR MENU -->
-        <div class="w-full lg:w-72 bg-white border border-slate-200 rounded-xl p-3 h-fit shadow-sm flex-shrink-0">
+        <div class="w-full lg:w-72 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl p-3 h-fit shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] flex-shrink-0">
           <nav class="space-y-1">
             <button 
               @click="activeTab = 'profile'"
@@ -225,6 +243,7 @@ const saveEmailSettings = () => {
             </button>
             
             <button 
+              v-if="currentUser?.role === 'Super Admin'"
               @click="activeTab = 'team'"
               :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'team' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
             >
@@ -233,6 +252,7 @@ const saveEmailSettings = () => {
             </button>
 
             <button 
+              v-if="currentUser?.role === 'Super Admin'"
               @click="activeTab = 'ai-rules'"
               :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'ai-rules' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
             >
@@ -241,6 +261,7 @@ const saveEmailSettings = () => {
             </button>
 
             <button 
+              v-if="currentUser?.role === 'Super Admin'"
               @click="activeTab = 'email'"
               :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'email' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
             >
@@ -255,27 +276,27 @@ const saveEmailSettings = () => {
           
           <!-- ================= TAB: MY PROFILE ================= -->
           <div v-if="activeTab === 'profile'" class="animate-fade-in">
-            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">Profile Settings</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 mb-6 md:mb-8">Update your personal information and how others see you on Atlas.</p>
+            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">Personal Information</h2>
+            <p class="text-[13px] md:text-[14px] text-slate-500 mb-6 md:mb-8">Ubah detail profil dan informasi dasar Anda.</p>
             
-            <form @submit.prevent="saveProfile">
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-                <div>
-                  <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Full Name</label>
-                  <input v-model="profileForm.fullName" type="text" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
-                </div>
-                <div>
-                  <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Work Email</label>
-                  <input v-model="profileForm.workEmail" type="email" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
-                </div>
-                <div>
-                  <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Job Title</label>
-                  <input v-model="profileForm.jobTitle" type="text" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
-                </div>
+            <form @submit.prevent="saveProfile" class="border border-slate-200/60 rounded-2xl p-6 md:p-8 bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] max-w-2xl space-y-5 md:space-y-6">
+              <div>
+                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Full Name</label>
+                <input v-model="profileForm.name" type="text" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
               </div>
-              <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white text-[13px] md:text-[14px] font-semibold py-2 md:py-2.5 px-4 md:px-6 rounded-lg hover:bg-blue-700 transition shadow-sm">
-                Save Profile
-              </button>
+              <div>
+                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Work Email</label>
+                <input v-model="profileForm.email" type="email" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+              </div>
+              <div>
+                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Job Title</label>
+                <input v-model="profileForm.job_title" type="text" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+              </div>
+              <div>
+                <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white text-[13px] md:text-[14px] font-semibold py-2 md:py-2.5 px-4 md:px-6 rounded-lg hover:bg-blue-700 transition shadow-sm">
+                  Save Profile
+                </button>
+              </div>
             </form>
           </div>
 
@@ -292,7 +313,7 @@ const saveEmailSettings = () => {
             </div>
 
             <!-- RESPONSIVE TABLE CONTAINER -->
-            <div class="border border-slate-200 rounded-xl overflow-hidden bg-white w-full">
+            <div class="border border-slate-200/60 rounded-2xl overflow-hidden bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] w-full">
               
               <!-- DESKTOP VIEW (Dengan min-width agar tidak acak-acakan di tablet) -->
               <div class="hidden md:block w-full overflow-x-auto custom-scrollbar">
@@ -301,7 +322,6 @@ const saveEmailSettings = () => {
                     <tr>
                       <th class="px-4 py-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">User</th>
                       <th class="px-4 py-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Role</th>
-                      <th class="px-4 py-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Status</th>
                       <th class="px-4 py-3"></th>
                     </tr>
                   </thead>
@@ -312,16 +332,18 @@ const saveEmailSettings = () => {
                         <p class="text-[12px] text-slate-500 whitespace-nowrap">{{ member.email }}</p>
                       </td>
                       <td class="px-4 py-3">
-                        <!-- Tambahkan whitespace-nowrap agar text role tidak turun -->
-                        <span class="text-[13px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 whitespace-nowrap inline-block">
-                          {{ member.role }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-3">
                         <span 
-                          :class="['text-[11px] font-bold px-2 py-0.5 rounded border whitespace-nowrap inline-block', member.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200']"
+                          :class="[
+                            'text-[12px] font-semibold rounded-full px-2.5 py-1 whitespace-nowrap inline-flex items-center gap-1.5',
+                            member.role === 'Super Admin' ? 'bg-indigo-50/80 text-indigo-700' :
+                            member.role === 'sales' ? 'bg-emerald-50/80 text-emerald-700' :
+                            'bg-slate-100/80 text-slate-600'
+                          ]"
                         >
-                          {{ member.status }}
+                          <ShieldUser v-if="member.role === 'Super Admin'" class="w-3.5 h-3.5 text-indigo-600" />
+                          <Briefcase v-else-if="member.role === 'sales'" class="w-3.5 h-3.5 text-emerald-600" />
+                          <Eye v-else class="w-3.5 h-3.5 text-slate-500" />
+                          {{ member.role === 'sales' ? 'Sales' : member.role === 'viewer' ? 'Viewer' : member.role }}
                         </span>
                       </td>
                       <td class="px-4 py-3 text-right relative">
@@ -329,9 +351,9 @@ const saveEmailSettings = () => {
                         <div v-if="editingRoleId === member.id" class="absolute right-8 top-10 bg-white border border-slate-200 shadow-xl rounded-lg p-3 z-30 w-48 text-left">
                           <p class="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Change Role</p>
                           <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-200 rounded-md p-1.5 focus:outline-none focus:border-blue-600 mb-2">
-                            <option value="Admin">Admin</option>
-                            <option value="Sales Manager">Sales Manager</option>
-                            <option value="Sales Rep">Sales Rep</option>
+                            <option value="Super Admin">Super Admin</option>
+                            <option value="sales">Sales</option>
+                            <option value="viewer">Viewer</option>
                           </select>
                         </div>
                       </td>
@@ -353,13 +375,18 @@ const saveEmailSettings = () => {
                     </button>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                      {{ member.role }}
-                    </span>
                     <span 
-                      :class="['text-[10px] font-bold px-2 py-0.5 rounded border', member.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200']"
+                      :class="[
+                        'text-[11px] font-semibold rounded-full px-2 py-0.5 inline-flex items-center gap-1.5',
+                        member.role === 'Super Admin' ? 'bg-indigo-50/80 text-indigo-700' :
+                        member.role === 'sales' ? 'bg-emerald-50/80 text-emerald-700' :
+                        'bg-slate-100/80 text-slate-600'
+                      ]"
                     >
-                      {{ member.status }}
+                      <ShieldUser v-if="member.role === 'Super Admin'" class="w-3 h-3 text-indigo-600" />
+                      <Briefcase v-else-if="member.role === 'sales'" class="w-3 h-3 text-emerald-600" />
+                      <Eye v-else class="w-3 h-3 text-slate-500" />
+                      {{ member.role === 'sales' ? 'Sales' : member.role === 'viewer' ? 'Viewer' : member.role }}
                     </span>
                   </div>
                 </div>
@@ -374,7 +401,7 @@ const saveEmailSettings = () => {
 
             <div class="space-y-3 md:space-y-4 max-w-3xl">
               <!-- Toggle 1 -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
                   <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900">Automated Lead Tiering</h3>
                   <p class="text-[12px] md:text-[13px] text-slate-500 mt-1 leading-relaxed">Izinkan AI untuk otomatis mengkategorikan lead ke dalam Tier A, B, atau C berdasarkan skor kualifikasi dari form.</p>
@@ -388,7 +415,7 @@ const saveEmailSettings = () => {
               </div>
 
               <!-- Toggle 2 -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
                   <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900">AI Spam Detection</h3>
                   <p class="text-[12px] md:text-[13px] text-slate-500 mt-1 leading-relaxed">Otomatis pindahkan submission dengan bahasa tidak masuk akal atau domain mencurigakan ke tab Invalid/Spam.</p>
@@ -402,7 +429,7 @@ const saveEmailSettings = () => {
               </div>
 
               <!-- Toggle 3 -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
                   <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 flex items-center flex-wrap gap-2">
                     Data Enrichment 
@@ -426,7 +453,7 @@ const saveEmailSettings = () => {
             <p class="text-[13px] md:text-[14px] text-slate-500 mb-6 md:mb-8">Hubungkan akun email Anda untuk mengirim dan melacak pesan langsung dari Atlas.</p>
 
             <!-- Connected Account Card yang Diperbaiki (Menggunakan min-w-0 dan truncate) -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200 rounded-xl max-w-2xl bg-slate-50 shadow-sm mb-6 md:mb-8 gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl max-w-2xl bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4">
               
               <!-- Bagian Kiri (Icon + Text) -->
               <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
@@ -456,9 +483,9 @@ const saveEmailSettings = () => {
             </div>
 
             <!-- Calendly Webhook Integration -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200 rounded-xl max-w-2xl bg-white shadow-sm mb-6 md:mb-8 gap-4 hover:border-blue-300 transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl max-w-2xl bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4 hover:border-blue-300 transition-all">
               <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                     <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -472,7 +499,7 @@ const saveEmailSettings = () => {
                 </div>
               </div>
               <div class="w-full sm:w-auto flex items-center gap-2">
-                <input type="text" readonly value="https://api.atlas.com/api/webhooks/calendly" class="flex-1 sm:w-64 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-[12px] text-slate-500 font-mono focus:outline-none focus:ring-1 focus:ring-blue-600">
+                <input type="text" readonly value="https://api.atlas.com/api/webhooks/calendly" class="flex-1 sm:w-64 border border-slate-200 bg-white/50 rounded-lg px-3 py-2 text-[12px] text-slate-500 font-mono focus:outline-none focus:ring-1 focus:ring-blue-600">
                 <button @click="copyToClipboard('https://api.atlas.com/api/webhooks/calendly')" class="px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition text-slate-600 shadow-sm flex items-center justify-center" title="Copy to clipboard">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
@@ -487,7 +514,7 @@ const saveEmailSettings = () => {
               <textarea 
                 v-model="emailSettings.signature" 
                 rows="4" 
-                class="w-full border border-slate-300 bg-white rounded-xl p-3 md:p-4 text-[12.5px] md:text-[13.5px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all mb-4 leading-relaxed"
+                class="w-full border border-slate-200/60 bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] rounded-2xl p-3 md:p-4 text-[12.5px] md:text-[13.5px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all mb-4 leading-relaxed"
               ></textarea>
               
               <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white text-[13px] md:text-[14px] font-semibold py-2 md:py-2.5 px-4 md:px-6 rounded-lg hover:bg-blue-700 transition shadow-sm">
@@ -517,6 +544,11 @@ const saveEmailSettings = () => {
       
       <form @submit.prevent="sendInvite" class="space-y-4">
         <div>
+          <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Full Name</label>
+          <input v-model="inviteForm.name" type="text" required placeholder="John Doe" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+        </div>
+        
+        <div>
           <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Email Address</label>
           <input v-model="inviteForm.email" type="email" required placeholder="name@company.com" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
         </div>
@@ -524,9 +556,9 @@ const saveEmailSettings = () => {
         <div>
           <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Role</label>
           <select v-model="inviteForm.role" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white cursor-pointer">
-            <option value="Admin">Admin</option>
-            <option value="Sales Manager">Sales Manager</option>
-            <option value="Sales Rep">Sales Rep</option>
+            <option value="Super Admin">Super Admin</option>
+            <option value="sales">Sales</option>
+            <option value="viewer">Viewer</option>
           </select>
         </div>
         

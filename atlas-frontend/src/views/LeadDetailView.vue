@@ -12,6 +12,7 @@ const { showToast } = useToast();
 const leadId = route.params.id as string;
 
 //STATE MANAGEMENT
+const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 
 const lead = ref<any>({
   notes: [],
@@ -274,8 +275,9 @@ const exportDetailToCSV = () => {
           </button>
           <select
             v-model="lead.status"
+            :disabled="currentUser?.role === 'viewer'"
             @change="updateStatus(($event.target as HTMLSelectElement).value)"
-            class="flex-1 sm:flex-none text-[13px] sm:text-[14px] font-semibold border border-slate-200 rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
+            class="flex-1 sm:flex-none text-[13px] sm:text-[14px] font-semibold border border-slate-200 rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer disabled:opacity-60"
           >
             <option value="New Lead">New Lead</option>
             <option value="Qualified">Qualified</option>
@@ -571,8 +573,9 @@ const exportDetailToCSV = () => {
                   >
                   <select
                     v-model="lead.assigned_owner"
+                    :disabled="currentUser?.role === 'viewer'"
                     @change="updateOwner"
-                    class="w-full text-[13px] sm:text-[14px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    class="w-full text-[13px] sm:text-[14px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 disabled:opacity-60"
                   >
                     <option value="">Unassigned</option>
                     <option value="AC (Aldean)">AC (Aldean)</option>
@@ -592,10 +595,11 @@ const exportDetailToCSV = () => {
                       <input
                         type="datetime-local"
                         v-model="tempFollowUpDate"
-                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] border border-[#E2E8F0] rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer"
+                        :disabled="currentUser?.role === 'viewer'"
+                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] border border-[#E2E8F0] rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60"
                       />
                     </div>
-                    <button @click="updateFollowUpDate" class="w-full py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm">
+                    <button @click="updateFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="w-full py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
                       Save Schedule
                     </button>
                   </div>
@@ -625,12 +629,13 @@ const exportDetailToCSV = () => {
               <textarea
                 v-model="newNote"
                 rows="3"
+                :disabled="currentUser?.role === 'viewer'"
                 placeholder="Tulis catatan internal tentang lead ini..."
-                class="w-full text-[13px] sm:text-[14px] border border-blue-600 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-blue-600 resize-none mb-3"
+                class="w-full text-[13px] sm:text-[14px] border border-blue-600 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-blue-600 resize-none mb-3 disabled:opacity-60"
               ></textarea>
               <button
                 @click="submitNote"
-                :disabled="!newNote.trim()"
+                :disabled="!newNote.trim() || currentUser?.role === 'viewer'"
                 class="w-full bg-blue-600 text-white text-[13px] font-semibold py-2.5 rounded-lg hover:bg-slate-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Simpan Catatan

@@ -12,15 +12,15 @@ import { Rocket, FileSearch, Users, PhoneCall, Clock, ArrowRight, CheckCircle2 }
 
     <div class="flex flex-col items-center justify-center flex-1 px-6 sm:px-12 pt-32 pb-16 text-center relative z-10">
       
-      <h1 class="text-5xl font-extrabold text-slate-900 sm:text-6xl lg:text-7xl mb-6 animate-mask-in tracking-tight">
+      <h1 class="text-5xl font-extrabold text-slate-900 sm:text-6xl lg:text-7xl mb-6 animate-fade-blur tracking-tight">
         Welcome to Atlas
       </h1>
-      <p class="mt-4 max-w-2xl text-lg leading-relaxed text-slate-500 sm:text-xl mb-12 animate-mask-in delay-100">
+      <p class="mt-4 max-w-2xl text-lg leading-relaxed text-slate-500 sm:text-xl mb-12 animate-fade-blur delay-100">
         Empower your business with AI-driven insights. Streamline workflows, boost productivity, and unlock new possibilities with our autonomous workforce.
       </p>
 
       <!-- Advanced Card Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-mask-in delay-200 w-full max-w-5xl text-left">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-blur delay-200 w-full max-w-5xl text-left">
         
         <!-- Get Assessment (Primary/Highlighted) - Spans 2 columns -->
         <router-link to="/assessment" class="group lg:col-span-2 bg-white/60 backdrop-blur-xl border border-white/60 hover:bg-blue-600 hover:border-blue-500 hover:shadow-[0_8px_30px_rgb(37,99,235,0.4)] transition-all duration-300 rounded-3xl p-8 flex flex-col md:flex-row items-start md:items-center gap-8 relative overflow-hidden hover:-translate-y-1">
@@ -153,20 +153,20 @@ import { Rocket, FileSearch, Users, PhoneCall, Clock, ArrowRight, CheckCircle2 }
 </template>
 
 <style scoped>
-.animate-mask-in {
+.animate-fade-blur {
   opacity: 0;
-  animation: mask-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-blur-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes mask-in {
+@keyframes fade-blur-in {
   0% {
-    clip-path: inset(100% 0 0 0);
     opacity: 0;
-    transform: translateY(20px);
+    filter: blur(12px);
+    transform: translateY(30px);
   }
   100% {
-    clip-path: inset(0 0 0 0);
     opacity: 1;
+    filter: blur(0px);
     transform: translateY(0);
   }
 }

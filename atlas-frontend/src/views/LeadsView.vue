@@ -13,6 +13,7 @@ import {
 
 const { showToast } = useToast();
 const isLoading = ref(true);
+const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'));
 
 interface Lead {
   id: string;
@@ -525,7 +526,7 @@ const getStatusClass = (status: string) => {
           </div>
           <div class="flex items-center gap-4">
             <button @click="selectedLeads = []" class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition">Cancel</button>
-            <button @click="deleteSelectedLeads" class="text-[13px] rounded-lg px-4 py-1.5 bg-red-500 text-white font-medium flex items-center gap-1.5 hover:bg-red-600 transition shadow-sm">
+            <button v-if="currentUser?.role === 'Super Admin'" @click="deleteSelectedLeads" class="text-[13px] rounded-lg px-4 py-1.5 bg-red-500 text-white font-medium flex items-center gap-1.5 hover:bg-red-600 transition shadow-sm">
               <Trash2 class="w-4 h-4" />
               Delete Selected
             </button>
@@ -599,7 +600,7 @@ const getStatusClass = (status: string) => {
                   </button>
                   <div v-if="activeDropdownId === lead.id" class="absolute right-8 top-10 w-32 bg-white rounded-lg shadow-xl border border-slate-100 z-30 py-1 text-left overflow-hidden">
                     <button @click.stop="openEditModal(lead)" class="w-full px-4 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 text-left transition">Edit</button>
-                    <button @click.stop="deleteLead(lead.id)" class="w-full px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 text-left transition">Delete</button>
+                    <button v-if="currentUser?.role === 'Super Admin'" @click.stop="deleteLead(lead.id)" class="w-full px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 text-left transition">Delete</button>
                   </div>
                 </td>
               </tr>
