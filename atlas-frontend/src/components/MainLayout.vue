@@ -22,7 +22,22 @@ const isNotificationDrawerOpen = ref(false) // State untuk panel laci (drawer) k
 // TODO: API Fetch Notifikasi
 
 const notifications = ref<any[]>([
-  // Array kosong, siap menampung data dari API backend
+  {
+    id: 1,
+    title: 'New Lead: Jhon Smith',
+    message: 'Jhon Smith dari TechCorp baru saja mengisi form Assessment.',
+    time: '2 mins ago',
+    icon: 'user',
+    unread: true
+  },
+  {
+    id: 2,
+    title: 'AI Scoring Complete',
+    message: 'Data Jhon Smith telah dikualifikasi AI dengan skor 4/5.',
+    time: '1 min ago',
+    icon: 'sparkles',
+    unread: true
+  }
 ])
 
 const unreadCount = computed(() => notifications.value.filter(n => n.unread).length)
@@ -65,6 +80,9 @@ const handleClickOutside = (event: MouseEvent) => {
 }
 
 const isLogoutModalOpen = ref(false)
+
+const isSidebarCollapsed = ref(false) 
+const isSidebarHovered = ref(false)   
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
@@ -123,20 +141,7 @@ const toggleMobileMenu = () => isMobileMenuOpen.value = !isMobileMenuOpen.value
 const closeMobileMenu = () => isMobileMenuOpen.value = false
 
 
-const isSidebarCollapsed = ref(false) 
-const isSidebarHovered = ref(false)   
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-  const savedState = localStorage.getItem('atlas_sidebar_collapsed')
-  if (savedState === 'true') {
-    isSidebarCollapsed.value = true
-  }
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value

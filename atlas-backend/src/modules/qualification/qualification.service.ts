@@ -95,6 +95,14 @@ export class QualificationService {
         return;
       }
 
+      const tierEnums = ["Tier A", "Tier B", "Tier C", "Disqualified"];
+      let tierDescription = "Kategori tier klien. Gunakan Disqualified untuk data sah yang tidak cocok dengan bisnis. Jangan gunakan kategori Spam karena deteksi spam sedang dinonaktifkan.";
+      
+      if (!settings || settings.is_spam_detection_enabled) {
+        tierEnums.push("Spam");
+        tierDescription = "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal, dan Disqualified untuk data sah yang tidak cocok dengan bisnis.";
+      }
+
       const prompt = `Anda adalah analis penjualan B2B profesional untuk Atlas, DDTech's AI Workforce Platform.
 Analisis data klien berikut dan berikan wawasan mendalam mengenai potensi klien.
 
@@ -113,7 +121,7 @@ ${JSON.stringify(leadData, null, 2)}`;
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Disqualified", "Spam"], description: "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal, dan Disqualified untuk data sah yang tidak cocok dengan bisnis." },
+              lead_tier: { type: Type.STRING, enum: tierEnums, description: tierDescription },
               fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
               qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
               recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },

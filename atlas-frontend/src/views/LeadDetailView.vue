@@ -28,7 +28,7 @@ const fetchLeadDetail = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await api.get(`/api/leads/${leadId}`)
+    const response = await api.get(`/api/admin/leads/${leadId}`)
     if (response.data && response.data.success) {
       const data = response.data.data
       
@@ -90,7 +90,7 @@ const updateStatus = async (newStatus: string) => {
   let backendStatus = newStatus
 
   try {
-    await api.patch(`/api/leads/${leadId}`, { status: backendStatus })
+    await api.patch(`/api/admin/leads/${leadId}`, { status: backendStatus })
     // Refresh to get new activity logs
     await fetchLeadDetail()
     showToast('Status berhasil diubah.', 'success')
@@ -118,7 +118,7 @@ const submitNote = async () => {
   lead.value.notes.unshift(newMockNote);
 
   try {
-    await api.post(`/api/leads/${leadId}/notes`, { note: noteText })
+    await api.post(`/api/admin/leads/${leadId}/notes`, { note: noteText })
     // We do NOT fetchLeadDetail() here because the backend might not return notes yet.
     showToast('Catatan berhasil ditambahkan.', 'success')
   } catch (error) {
@@ -137,7 +137,7 @@ const toggleEditSummary = () => {
 const updateOwner = async (event: Event) => {
   const newOwner = (event.target as HTMLSelectElement).value;
   try {
-    await api.patch(`/api/leads/${leadId}`, { assigned_owner: newOwner });
+    await api.patch(`/api/admin/leads/${leadId}`, { assigned_owner: newOwner });
     showToast('Owner berhasil diubah.', 'success');
   } catch (error) {
     console.error('Failed to update owner:', error);
@@ -149,7 +149,7 @@ const updateFollowUpDate = async () => {
   if (!tempFollowUpDate.value) return;
   const isoDate = new Date(tempFollowUpDate.value).toISOString();
   try {
-    await api.patch(`/api/leads/${leadId}`, { next_follow_up_at: isoDate });
+    await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: isoDate });
     lead.value.next_follow_up_at = isoDate;
     showToast('Tanggal follow-up berhasil disimpan.', 'success');
   } catch (error) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
+import api from '../services/api'
 
 // State untuk animasi dan interaksi
 const showBars = ref(false)
@@ -53,8 +54,6 @@ const updateTooltip = (event: MouseEvent) => {
   tooltipY.value = event.clientY;
 }
 
-import { computed } from 'vue'
-import api from '../services/api'
 
 // Data state holding backend response
 const dashboardData = ref<any>({
@@ -126,13 +125,20 @@ const kpiCards = computed(() => {
 
 const maxChartValue = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
+  let australia = 0;
+  let newZealand = 0;
+  let indonesia = 0;
   let otherCount = 0;
+
   for (const key in counts) {
-    if (key !== 'Australia' && key !== 'New Zealand' && key !== 'Indonesia') {
-      otherCount += counts[key];
-    }
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'australia') australia += counts[key];
+    else if (lowerKey === 'new zealand' || lowerKey === 'newzealand') newZealand += counts[key];
+    else if (lowerKey === 'indonesia') indonesia += counts[key];
+    else otherCount += counts[key];
   }
-  const max = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, otherCount, 1);
+
+  const max = Math.max(australia, newZealand, indonesia, otherCount, 1);
   
   if (max <= 4) return 4;
   if (max <= 10) return 10;
@@ -167,18 +173,25 @@ const yAxisLabels = computed(() => {
 
 const countryData = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
+  let australia = 0;
+  let newZealand = 0;
+  let indonesia = 0;
   let otherCount = 0;
+
   for (const key in counts) {
-    if (key !== 'Australia' && key !== 'New Zealand' && key !== 'Indonesia') {
-      otherCount += counts[key];
-    }
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'australia') australia += counts[key];
+    else if (lowerKey === 'new zealand' || lowerKey === 'newzealand') newZealand += counts[key];
+    else if (lowerKey === 'indonesia') indonesia += counts[key];
+    else otherCount += counts[key];
   }
+  
   const maxVal = maxChartValue.value;
 
   return [
-    { name: 'Australia', count: counts['Australia'] || 0, height: Math.round(((counts['Australia'] || 0) / maxVal) * 190) },
-    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: Math.round(((counts['New Zealand'] || 0) / maxVal) * 190) },
-    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: Math.round(((counts['Indonesia'] || 0) / maxVal) * 190) },
+    { name: 'Australia', count: australia, height: Math.round((australia / maxVal) * 190) },
+    { name: 'New Zealand', count: newZealand, height: Math.round((newZealand / maxVal) * 190) },
+    { name: 'Indonesia', count: indonesia, height: Math.round((indonesia / maxVal) * 190) },
     { name: 'Other', count: otherCount, height: Math.round((otherCount / maxVal) * 190) }
   ];
 })

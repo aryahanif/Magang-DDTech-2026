@@ -38,7 +38,7 @@ const saveTasks = () => {
 
 const fetchLeadsForTasks = async () => {
   try {
-    const response = await api.get('/api/leads');
+    const response = await api.get('/api/admin/leads');
     if (response.data && response.data.success) {
       const leads = response.data.data;
       apiTasks.value = leads

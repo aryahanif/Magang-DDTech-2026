@@ -19,11 +19,10 @@ const profileForm = ref({
 // Data: Team Management
 const teamMembers = ref<any[]>([])
 
-// Data: AI Scoring Rules (Stubbed)
+// Data: AI Scoring Rules
 const aiRules = ref({
   autoTiering: true,
   spamDetection: true,
-  sentimentAnalysis: false,
   dataEnrichment: true
 })
 
@@ -43,7 +42,7 @@ const fetchSettingsData = async () => {
   try {
     // 1. Fetch Profile
     try {
-      const profileRes = await api.get('/api/admin/users/profile')
+      const profileRes = await api.get('/api/users/profile')
       if (profileRes.data && profileRes.data.success) {
         profileForm.value = profileRes.data.data
       }
@@ -55,14 +54,35 @@ const fetchSettingsData = async () => {
 
     // 2. Fetch Team
     try {
-      const teamRes = await api.get('/api/admin/users')
+      const teamRes = await api.get('/api/users')
       if (teamRes.data && teamRes.data.success) {
         teamMembers.value = teamRes.data.data
+      } else {
+        // Fallback dummy data while backend is not ready
+        teamMembers.value = [
+          { id: '1', name: 'You (Admin)', email: 'admin@atlas.ai', role: 'Admin', status: 'Active' },
+          { id: '2', name: 'Jordan Miles', email: 'jordan.miles@atlas.ai', role: 'Sales Manager', status: 'Active' },
+          { id: '3', name: 'Sarah Jenkins', email: 'sarah.j@atlas.ai', role: 'Sales Rep', status: 'Pending' },
+        ]
       }
     } catch (e) {
       console.warn('Backend API Not Ready: /api/admin/users')
-      // Fallback
       teamMembers.value = [{ id: 1, name: 'Fallback User', email: 'waiting@backend', role: 'Admin', status: 'Active' }]
+    }
+
+    // 3. Fetch AI Rules
+    try {
+      const aiRes = await api.get('/api/settings/ai-rules')
+      if (aiRes.data && aiRes.data.success) {
+        // Map backend to frontend camelCase
+        aiRules.value = {
+          autoTiering: aiRes.data.data.is_ai_tiering_enabled,
+          spamDetection: aiRes.data.data.is_spam_detection_enabled,
+          dataEnrichment: aiRes.data.data.is_data_enrichment_enabled
+        }
+      }
+    } catch (e) {
+      console.warn('Backend API Not Ready: /api/settings/ai-rules')
     }
   } finally {
     isLoading.value = false
@@ -74,8 +94,7 @@ onMounted(() => {
 })
 
 // ==========================================
-/// ==========================================
-// ACTIONS (Ubah Bagian Ini)
+// ACTIONS
 // ==========================================
 import { useToast } from '../composables/UseToast'
 
@@ -83,7 +102,7 @@ const { showToast } = useToast()
 
 const saveProfile = async () => {
   try {
-    await api.put('/api/admin/users/profile', profileForm.value)
+    await api.patch('/api/users/profile', profileForm.value)
     showToast('Profile Settings Saved Successfully!', 'success')
   } catch (error) {
     console.error('Save profile error:', error)
@@ -91,19 +110,87 @@ const saveProfile = async () => {
   }
 }
 
-const inviteEmail = ref('')
-const inviteMember = async () => {
-  // Simulating an email prompt for simplicity
-  const email = prompt("Enter the email of the new member:")
-  if (!email) return
+// ==========================================
+// LOGIKA TEAM MANAGEMENT
+// ==========================================
+const isInviteModalOpen = ref(false)
+const inviteForm = ref({
+  email: '',
+  role: 'Sales Rep'
+})
+const editingRoleId = ref<string | null>(null)
+
+const openInviteModal = () => {
+  inviteForm.value = { email: '', role: 'Sales Rep' }
+  isInviteModalOpen.value = true
+}
+
+const sendInvite = async () => {
+  if (!inviteForm.value.email) return
   
   try {
-    await api.post('/api/admin/users/invite', { email })
+    await api.post('/api/users/invite', { email: inviteForm.value.email, role: inviteForm.value.role })
     showToast('Invitation sent successfully!', 'success')
+    isInviteModalOpen.value = false
     await fetchSettingsData()
   } catch (error) {
-    console.error('Invite member error:', error)
-    showToast('Backend API Error: Failed to send invitation.', 'error')
+    console.error('Invite error:', error)
+    // Optimistic fallback for demonstration
+    teamMembers.value.push({
+      id: Date.now().toString(),
+      name: 'Pending Invite',
+      email: inviteForm.value.email,
+      role: inviteForm.value.role,
+      status: 'Pending'
+    })
+    showToast('API Error: User added locally for demonstration.', 'info')
+    isInviteModalOpen.value = false
+  }
+}
+
+const updateRole = async (userId: string, event: Event) => {
+  const newRole = (event.target as HTMLSelectElement).value
+  try {
+    await api.patch(`/api/users/${userId}/role`, { role: newRole })
+    const userIndex = teamMembers.value.findIndex(u => u.id === userId)
+    if (userIndex !== -1) teamMembers.value[userIndex].role = newRole
+    showToast('User role updated successfully!', 'success')
+  } catch (error) {
+    console.error('Failed to update role:', error)
+    // Optimistic fallback for demonstration
+    const userIndex = teamMembers.value.findIndex(u => u.id === userId)
+    if (userIndex !== -1) teamMembers.value[userIndex].role = newRole
+    showToast('API Error: Role updated locally for demonstration.', 'info')
+  } finally {
+    editingRoleId.value = null
+  }
+}
+
+// ==========================================
+// LOGIKA INTEGRATIONS
+// ==========================================
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    showToast('Webhook URL copied to clipboard!', 'success')
+  } catch (err) {
+    console.error('Failed to copy', err)
+    showToast('Failed to copy to clipboard', 'error')
+  }
+}
+
+const saveAiRules = async () => {
+  try {
+    const payload = {
+      is_ai_tiering_enabled: aiRules.value.autoTiering,
+      is_spam_detection_enabled: aiRules.value.spamDetection,
+      is_data_enrichment_enabled: aiRules.value.dataEnrichment
+    };
+    await api.patch('/api/settings/ai-rules', payload)
+    showToast('AI Rules updated successfully!', 'success')
+  } catch (error) {
+    console.error('Save AI rules error:', error)
+    showToast('Failed to update AI rules', 'error')
   }
 }
 
@@ -199,7 +286,7 @@ const saveEmailSettings = () => {
                 <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">Team Management</h2>
                 <p class="text-[13px] md:text-[14px] text-slate-500">Kelola akses anggota tim dan peran (role) di dalam workspace ini.</p>
               </div>
-              <button @click="inviteMember" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 shadow-sm transition">
+              <button @click="openInviteModal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 shadow-sm transition">
                 + Invite Member
               </button>
             </div>
@@ -237,8 +324,16 @@ const saveEmailSettings = () => {
                           {{ member.status }}
                         </span>
                       </td>
-                      <td class="px-4 py-3 text-right">
-                        <button class="text-[13px] font-medium text-slate-500 hover:text-blue-600">Edit</button>
+                      <td class="px-4 py-3 text-right relative">
+                        <button @click="editingRoleId = editingRoleId === member.id ? null : member.id" class="text-[13px] font-medium text-slate-500 hover:text-blue-600">Edit</button>
+                        <div v-if="editingRoleId === member.id" class="absolute right-8 top-10 bg-white border border-slate-200 shadow-xl rounded-lg p-3 z-30 w-48 text-left">
+                          <p class="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Change Role</p>
+                          <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-200 rounded-md p-1.5 focus:outline-none focus:border-blue-600 mb-2">
+                            <option value="Admin">Admin</option>
+                            <option value="Sales Manager">Sales Manager</option>
+                            <option value="Sales Rep">Sales Rep</option>
+                          </select>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -286,7 +381,7 @@ const saveEmailSettings = () => {
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
-                    <input type="checkbox" v-model="aiRules.autoTiering" class="sr-only peer">
+                    <input type="checkbox" v-model="aiRules.autoTiering" @change="saveAiRules" class="sr-only peer">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -300,7 +395,7 @@ const saveEmailSettings = () => {
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
-                    <input type="checkbox" v-model="aiRules.spamDetection" class="sr-only peer">
+                    <input type="checkbox" v-model="aiRules.spamDetection" @change="saveAiRules" class="sr-only peer">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -317,7 +412,7 @@ const saveEmailSettings = () => {
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
-                    <input type="checkbox" v-model="aiRules.dataEnrichment" class="sr-only peer">
+                    <input type="checkbox" v-model="aiRules.dataEnrichment" @change="saveAiRules" class="sr-only peer">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -360,6 +455,30 @@ const saveEmailSettings = () => {
               </button>
             </div>
 
+            <!-- Calendly Webhook Integration -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200 rounded-xl max-w-2xl bg-white shadow-sm mb-6 md:mb-8 gap-4 hover:border-blue-300 transition-all">
+              <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 truncate">Calendly Webhook</p>
+                  <p class="text-[11px] md:text-[13px] text-slate-500 mt-0.5 md:mt-1 truncate leading-relaxed">Paste this URL in your Calendly Integrations.</p>
+                </div>
+              </div>
+              <div class="w-full sm:w-auto flex items-center gap-2">
+                <input type="text" readonly value="https://api.atlas.com/api/webhooks/calendly" class="flex-1 sm:w-64 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-[12px] text-slate-500 font-mono focus:outline-none focus:ring-1 focus:ring-blue-600">
+                <button @click="copyToClipboard('https://api.atlas.com/api/webhooks/calendly')" class="px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition text-slate-600 shadow-sm flex items-center justify-center" title="Copy to clipboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            </div>
+
             <!-- Email Signature -->
             <form @submit.prevent="saveEmailSettings" class="max-w-2xl">
               <label class="block text-[13px] md:text-[14px] font-bold text-slate-900 mb-1.5 md:mb-2">Email Signature</label>
@@ -381,6 +500,43 @@ const saveEmailSettings = () => {
       </div>
     </main>
   </MainLayout>
+
+  <!-- INVITE MEMBER MODAL -->
+  <div v-if="isInviteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="isInviteModalOpen = false"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 animate-fade-in">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h2 class="text-[20px] font-bold text-slate-900 tracking-tight mb-1">Invite Team Member</h2>
+          <p class="text-[13px] text-slate-500">Kirim undangan untuk bergabung ke workspace ini.</p>
+        </div>
+        <button @click="isInviteModalOpen = false" class="text-slate-400 hover:text-slate-900 transition">
+          <X class="w-5 h-5" />
+        </button>
+      </div>
+      
+      <form @submit.prevent="sendInvite" class="space-y-4">
+        <div>
+          <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Email Address</label>
+          <input v-model="inviteForm.email" type="email" required placeholder="name@company.com" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+        </div>
+        
+        <div>
+          <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Role</label>
+          <select v-model="inviteForm.role" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white cursor-pointer">
+            <option value="Admin">Admin</option>
+            <option value="Sales Manager">Sales Manager</option>
+            <option value="Sales Rep">Sales Rep</option>
+          </select>
+        </div>
+        
+        <div class="pt-4 flex items-center gap-3 justify-end border-t border-slate-100 mt-6">
+          <button type="button" @click="isInviteModalOpen = false" class="px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 border border-slate-300 rounded-lg transition shadow-sm">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm">Send Invitation</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </template>
 
 <style scoped>

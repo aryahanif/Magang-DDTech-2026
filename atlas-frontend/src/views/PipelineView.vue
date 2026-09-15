@@ -28,10 +28,19 @@ const allDeals = ref<Deal[]>([])
 
 const fetchDeals = async () => {
   try {
-    const response = await api.get('/api/leads')
+    const response = await api.get('/api/admin/leads')
     if (response.data.success) {
       allDeals.value = response.data.data.map((lead: any) => {
         let stageStr = lead.status || 'New Lead';
+        
+        // Map backend specific statuses to frontend StageKey
+        if (stageStr === 'Demo' || stageStr === 'Demo Booked') stageStr = 'Demo Scheduled';
+        if (stageStr === 'Proposal') stageStr = 'Proposal Sent';
+        
+        const validKeys = ['New Lead', 'Qualified', 'Contacted', 'Meeting Requested', 'Demo Scheduled', 'Proposal Sent', 'Negotiation', 'Won', 'Lost', 'Disqualified'];
+        if (!validKeys.includes(stageStr)) {
+          stageStr = 'New Lead'; // Fallback to prevent app crash
+        }
 
         return {
           id: lead.id,
@@ -251,7 +260,7 @@ const onDrop = async (targetStageKey: StageKey, event: DragEvent) => {
 
   // Persist ke backend
   try {
-    await api.patch(`/api/leads/${deal.id}`, { status: backendStatus })
+    await api.patch(`/api/admin/leads/${deal.id}`, { status: backendStatus })
     showToast('Status deal berhasil diperbarui', 'success')
   } catch (error) {
     console.error('Failed to update status in DB', error)
@@ -479,17 +488,17 @@ onMounted(() => {
       <!-- ==========================================
            TAMPILAN TABLE (CLEAN & SCANNABLE)
       ========================================== -->
-      <div v-else class="flex-1 overflow-auto p-4 sm:p-6 bg-slate-50 custom-scrollbar animate-fade-in">
-        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          <table class="w-full text-left border-collapse min-w-[700px]">
+      <div v-else class="flex-1 p-4 sm:p-6 bg-slate-50 animate-fade-in">
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr class="bg-slate-100 border-b border-slate-200 text-[12px] font-bold text-slate-600 uppercase tracking-wider">
-                <th class="p-4 pl-6">Company & Contact</th>
-                <th class="p-4">Stage</th>
-                <th class="p-4">Tier</th>
-                <th class="p-4">Owner</th>
-                <th class="p-4 text-right">Score</th>
-                <th class="p-4 pr-6 text-right">Last Updated</th>
+                <th class="p-4 pl-6 whitespace-nowrap">Company & Contact</th>
+                <th class="p-4 whitespace-nowrap">Stage</th>
+                <th class="p-4 whitespace-nowrap">Tier</th>
+                <th class="p-4 whitespace-nowrap">Owner</th>
+                <th class="p-4 text-right whitespace-nowrap">Score</th>
+                <th class="p-4 pr-6 text-right whitespace-nowrap">Last Updated</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200">
@@ -513,21 +522,21 @@ onMounted(() => {
               <template v-else>
                 <tr v-for="deal in filteredDeals" :key="deal.id" class="hover:bg-slate-50 transition">
                   <td class="p-4 pl-6">
-                    <div class="font-bold text-slate-900 text-[14px]">{{ deal.company }}</div>
-                    <div class="text-[13px] text-slate-500">{{ deal.name }}</div>
+                    <div class="font-bold text-slate-900 text-[14px] whitespace-nowrap">{{ deal.company }}</div>
+                    <div class="text-[13px] text-slate-500 whitespace-nowrap">{{ deal.name }}</div>
                   </td>
                   
                   <td class="p-4">
                     <div class="flex items-center gap-2">
-                      <div class="w-2.5 h-2.5 rounded-full shadow-sm" :style="{ backgroundColor: getStageColor(deal.stage) }"></div>
-                      <span class="text-[13px] font-semibold text-slate-900">{{ deal.stage }}</span>
+                      <div class="w-2.5 h-2.5 rounded-full shadow-sm flex-shrink-0" :style="{ backgroundColor: getStageColor(deal.stage) }"></div>
+                      <span class="text-[13px] font-semibold text-slate-900 whitespace-nowrap">{{ deal.stage }}</span>
                     </div>
                   </td>
 
                   <td class="p-4">
                     <span 
                       :class="[
-                        'text-[11px] font-bold px-2.5 py-1 rounded-md border',
+                        'text-[11px] font-bold px-2.5 py-1 rounded-md border whitespace-nowrap',
                         deal.tier === 'Tier A' ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]' :
                         deal.tier === 'Tier B' ? 'bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE]' :
                         deal.tier === 'Tier C' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
@@ -540,7 +549,7 @@ onMounted(() => {
                   </td>
 
                   <td class="p-4">
-                    <span class="text-[13px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                    <span class="text-[13px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 whitespace-nowrap">
                       {{ deal.owner }}
                     </span>
                   </td>

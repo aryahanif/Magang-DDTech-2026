@@ -153,13 +153,13 @@ const submitForm = async (values, { resetForm }) => {
     <!-- Form State -->
     <Form v-else :validation-schema="schema" :initial-values="initialValues" @submit="submitForm" class="grid grid-cols-1 lg:grid-cols-2 gap-4" novalidate v-slot="{ meta }">
       <div class="flex flex-col">
-        <label for="full_name" class="text-sm font-medium text-ff">Full Name</label>
+        <label for="full_name" class="text-sm font-medium text-slate-700">Full Name</label>
         <Field
           type="text"
           id="full_name"
           name="full_name"
           placeholder="Jhon Smith"
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
         />
@@ -167,13 +167,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col">
-        <label for="company_name" class="text-sm font-medium text-ff">Company Name</label>
+        <label for="company_name" class="text-sm font-medium text-slate-700">Company Name</label>
         <Field
           type="text"
           id="company_name"
           name="company_name"
           placeholder="Your company name"
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
         />
@@ -181,13 +181,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="type !== 'waitlist'">
-        <label for="phone" class="text-sm font-medium text-ff">Phone Number</label>
+        <label for="phone" class="text-sm font-medium text-slate-700">Phone Number</label>
         <Field
           type="tel"
           id="phone"
           name="phone"
           placeholder="+61 xxx xxx xxx"
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="15"
           oninput="this.value = this.value.replace(/[^0-9+]/g, '')"
           required
@@ -196,13 +196,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col">
-        <label for="email" class="text-sm font-medium text-ff">Email</label>
+        <label for="email" class="text-sm font-medium text-slate-700">Email</label>
         <Field
           type="email"
           id="email"
           name="email"
           placeholder="Email"
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
         />
@@ -210,12 +210,12 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="type !== ''">
-        <label for="country" class="text-sm font-medium text-ff">Country</label>
+        <label for="country" class="text-sm font-medium text-slate-700">Country</label>
         <Field
           as="select"
           id="country"
           name="country"
-          class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
           <option value="" disabled selected>Select country</option>
@@ -228,12 +228,12 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="['demo', 'assessment'].includes(type)">
-        <label for="business_type" class="text-sm font-medium text-ff">Business Type</label>
+        <label for="business_type" class="text-sm font-medium text-slate-700">Business Type</label>
         <Field
           as="select"
           id="business_type"
           name="business_type"
-          class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
           <option value="" disabled selected>Select business type</option>
@@ -245,13 +245,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="type !== 'partner'">
-        <label for="industry" class="text-sm font-medium text-ff">Industry</label>
+        <label for="industry" class="text-sm font-medium text-slate-700">Industry</label>
         <Field
           type="text"
           id="industry"
           name="industry"
           placeholder="Finance, IT, dll."
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
         />
@@ -259,13 +259,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col">
-        <label for="role" class="text-sm font-medium text-ff">Role</label>
+        <label for="role" class="text-sm font-medium text-slate-700">Role</label>
         <Field
           type="text"
           id="role"
           name="role"
           placeholder="CEO, Manager, dll."
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
         />
@@ -273,13 +273,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="type !== 'waitlist'">
-        <label for="website_url" class="text-sm font-medium text-ff">Website URL</label>
+        <label for="website_url" class="text-sm font-medium text-slate-700">Website URL</label>
         <Field
           type="url"
           id="website_url"
           name="website_url"
           placeholder="https://example.com"
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="500"
           required
         />
@@ -287,12 +287,12 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="['demo', 'assessment', 'contact'].includes(type)">
-        <label for="company_size" class="text-sm font-medium text-ff">Company Size</label>
+        <label for="company_size" class="text-sm font-medium text-slate-700">Company Size</label>
         <Field
           as="select"
           id="company_size"
           name="company_size"
-          class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
           <option value="" disabled selected>Select company size</option>
@@ -306,12 +306,12 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="['demo', 'assessment'].includes(type)">
-        <label for="automation_interest" class="text-sm font-medium text-ff">Automation Interest</label>
+        <label for="automation_interest" class="text-sm font-medium text-slate-700">Automation Interest</label>
         <Field
           as="select"
           id="automation_interest"
           name="automation_interest"
-          class="w-full border border-gray-300 text-ff rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
           <option value="" disabled selected>Select level</option>
@@ -325,12 +325,12 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="flex flex-col" v-if="type !== 'waitlist'">
-        <label for="preferred_contact_method" class="text-sm font-medium text-ff">Preferred Contact Method</label>
+        <label for="preferred_contact_method" class="text-sm font-medium text-slate-700">Preferred Contact Method</label>
         <Field
           as="select"
           id="preferred_contact_method"
           name="preferred_contact_method"
-          class="w-full border border-gray-300 text-ff rounded-md p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 text-slate-700 rounded-md p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
           <option value="" disabled selected>Select method</option>
@@ -342,13 +342,13 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="lg:col-span-2" v-if="['demo', 'assessment'].includes(type)">
-        <label for="current_problem" class="text-sm font-medium text-ff">What is your current biggest challenge in running your business?</label>
+        <label for="current_problem" class="text-sm font-medium text-slate-700">What is your current biggest challenge in running your business?</label>
         <Field
           as="textarea"
           id="current_problem"
           name="current_problem"
           placeholder="Enter your current biggest challenge in running your business"
-          class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="500"
           required
         />
@@ -356,20 +356,20 @@ const submitForm = async (values, { resetForm }) => {
       </div>
 
       <div class="lg:col-span-2" v-if="['demo', 'contact', 'partner'].includes(type)">
-        <label for="message" class="text-sm font-medium text-ff">Message</label>
+        <label for="message" class="text-sm font-medium text-slate-700">Message</label>
         <Field
           as="textarea"
           id="message"
           name="message"
           placeholder="Enter your message"
-          class="w-full border border-gray-300 rounded-md text-ff placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
+          class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="500"
         />
         <ErrorMessage name="message" class="text-red-500 text-sm mt-1" />
       </div>
 
       <div class="lg:col-span-2">
-        <div class="flex items-center gap-2 bg-[#D5D5D5] px-2 py-3 rounded-md">
+        <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-3 rounded-md">
           <Field
             id="policy"
             name="consent_status"
@@ -379,7 +379,7 @@ const submitForm = async (values, { resetForm }) => {
             class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
             required
           />
-          <label for="policy" class="select-none ms-2 text-sm font-medium text-ff"
+          <label for="policy" class="select-none ms-2 text-sm font-medium text-slate-700"
             >I agree to the <RouterLink to="/policy" class="text-blue-600 hover:underline">Privacy Policy</RouterLink>
             and consent to being contacted by DDTech regarding this request.</label
           >
@@ -395,7 +395,7 @@ const submitForm = async (values, { resetForm }) => {
         <button
           type="submit"
           :disabled="isSubmitting || !meta.valid || !turnstileToken"
-          class="bg-ff text-white py-3 w-full rounded-md hover:bg-blue-600 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          class="bg-blue-600 text-white font-semibold py-3 w-full rounded-lg hover:bg-blue-700 transition duration-300 disabled:bg-slate-300 disabled:cursor-not-allowed shadow-sm"
         >
           {{ isSubmitting ? 'Submitting...' : 'Submit' }}
         </button>

@@ -8,7 +8,7 @@ import { Form, Field, ErrorMessage } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 import { 
-  Users, Calendar, DollarSign, List, Search, Download, Plus, Trash2, MoreVertical, SearchX, X
+  Users, Calendar, DollarSign, List, Search, Download, Plus, Trash2, MoreVertical, SearchX, X, Filter
 } from '@lucide/vue';
 
 const { showToast } = useToast();
@@ -77,7 +77,13 @@ const leadsData = ref<Lead[]>([]);
 const fetchLeads = async () => {
   isLoading.value = true;
   try {
-    const response = await api.get('/api/admin/leads');
+    const params = new URLSearchParams();
+    if (searchQuery.value) params.append('search_keyword', searchQuery.value);
+    if (filterStatus.value) params.append('status', filterStatus.value);
+    if (filterCountry.value) params.append('country', filterCountry.value);
+    if (filterTier.value) params.append('tier', filterTier.value);
+
+    const response = await api.get(`/api/admin/leads?${params.toString()}`);
     if (response.data.success) {
       leadsData.value = response.data.data.map((lead: any) => {
         return {
@@ -119,25 +125,29 @@ const filterCountry = ref("");
 const filterTier = ref("");
 const filterSource = ref("");
 
+// Setup watcher for server-side filters
+let searchTimeout: ReturnType<typeof setTimeout>;
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => { fetchLeads(); }, 500);
+});
+watch([filterStatus, filterCountry, filterTier], () => {
+  fetchLeads();
+});
+
 const invalidCount = computed(() => leadsData.value.filter(l => !l.isValid).length);
 
 const filteredLeads = computed(() => {
   return leadsData.value.filter((lead) => {
+    // Tab and Source are filtered locally because Backend API doesn't support them yet
     const matchTab = 
       activeTab.value === 'all' ? true : 
       activeTab.value === 'valid' ? lead.isValid === true : 
       lead.isValid === false;
 
-    const matchSearch =
-      lead.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (lead.email && lead.email.toLowerCase().includes(searchQuery.value.toLowerCase()));
-    const matchStatus = filterStatus.value ? lead.status === filterStatus.value : true;
-    const matchCountry = filterCountry.value ? lead.country === filterCountry.value : true;
-    const matchTier = filterTier.value ? lead.tier === filterTier.value : true;
     const matchSource = filterSource.value ? lead.source === filterSource.value : true;
     
-    return matchTab && matchSearch && matchStatus && matchCountry && matchTier && matchSource;
+    return matchTab && matchSource;
   });
 });
 
@@ -179,6 +189,7 @@ const paginationText = computed(() => {
 // LOGIKA SELECT ALL & BULK ACTIONS
 // ==========================================
 const selectedLeads = ref<string[]>([]);
+const isMobileFiltersOpen = ref(false);
 
 const isAllSelected = computed(
   () => filteredLeads.value.length > 0 && selectedLeads.value.length === filteredLeads.value.length
@@ -274,10 +285,10 @@ const deleteLead = (id: string) => {
 const confirmDelete = async () => {
   try {
     if (deleteTargetId.value) {
-      await api.delete(`/api/leads/${deleteTargetId.value}`);
+      await api.delete(`/api/admin/leads/${deleteTargetId.value}`);
       showToast("Lead successfully deleted!", "success");
     } else {
-      await Promise.all(selectedLeads.value.map(id => api.delete(`/api/leads/${id}`)));
+      await Promise.all(selectedLeads.value.map(id => api.delete(`/api/admin/leads/${id}`)));
       showToast(`${selectedLeads.value.length} leads successfully deleted!`, "success");
       selectedLeads.value = [];
       if (paginatedLeads.value.length === 0 && currentPage.value > 1) currentPage.value--;
@@ -307,7 +318,7 @@ const submitForm = async (values: any) => {
         status: values.status,
         assigned_owner: values.assigned_owner
       };
-      await api.patch(`/api/leads/${editingId.value}`, updatePayload);
+      await api.patch(`/api/admin/leads/${editingId.value}`, updatePayload);
       showToast("Lead successfully updated!", "success");
     } else {
       const payload = {
@@ -329,41 +340,30 @@ const submitForm = async (values: any) => {
   }
 };
 
-const exportToCSV = () => {
-  if (filteredLeads.value.length === 0) {
-    showToast("No leads to export.", "error");
-    return;
+const exportToCSV = async () => {
+  try {
+    const params = new URLSearchParams();
+    if (searchQuery.value) params.append('search_keyword', searchQuery.value);
+    if (filterStatus.value) params.append('status', filterStatus.value);
+    if (filterCountry.value) params.append('country', filterCountry.value);
+    if (filterTier.value) params.append('tier', filterTier.value);
+
+    const response = await api.get(`/api/admin/leads/export?${params.toString()}`, { responseType: 'blob' });
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "atlas_leads_export.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast("Export successful!", "success");
+  } catch (error) {
+    console.error("Export error:", error);
+    showToast("Failed to export leads.", "error");
   }
-  
-  const headers = ["Name", "Company", "Email", "Phone", "Country", "Source", "Tier", "Status", "Value", "Updated"];
-  const rows = filteredLeads.value.map(lead => [
-    lead.name,
-    lead.company,
-    lead.email,
-    lead.phone,
-    lead.country,
-    lead.source,
-    lead.tier,
-    lead.status,
-    lead.value,
-    lead.updated
-  ]);
-
-  const csvContent = [
-    headers.join(","),
-    ...rows.map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(","))
-  ].join("\n");
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", "leads_export.csv");
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  showToast("Export successful!", "success");
 };
 
 const closeModal = () => {
@@ -446,57 +446,72 @@ const getStatusClass = (status: string) => {
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col relative z-20 animate-fade-in">
         
         <!-- Filter Bar Standar -->
-        <div v-if="selectedLeads.length === 0" class="p-4 border-b border-slate-200 flex items-center justify-between gap-4 flex-wrap">
-          <div class="relative w-64">
-            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input v-model="searchQuery" type="text" placeholder="Search leads, companies..." class="w-full pl-9 pr-3 py-1.5 text-[13px] bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600" />
+        <div v-if="selectedLeads.length === 0" class="p-4 border-b border-slate-200 flex flex-col gap-4">
+          
+          <!-- Row 1: Search & Mobile Toggle -->
+          <div class="flex items-center justify-between gap-3 w-full">
+            <div class="relative w-full md:w-64">
+              <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input v-model="searchQuery" type="text" placeholder="Search leads..." class="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600" />
+            </div>
+            <button @click="isMobileFiltersOpen = !isMobileFiltersOpen" class="md:hidden flex items-center justify-center p-2 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm flex-shrink-0">
+              <Filter class="w-5 h-5" />
+            </button>
           </div>
 
-          <div class="flex items-center gap-3">
-            <select v-model="filterStatus" class="text-[13px] border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
-              <option value="">All status</option>
-              <option value="New Lead">New Lead</option>
-              <option value="Qualified">Qualified</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Meeting Requested">Meeting Requested</option>
-              <option value="Demo Scheduled">Demo Scheduled</option>
-              <option value="Proposal Sent">Proposal Sent</option>
-              <option value="Negotiation">Negotiation</option>
-              <option value="Won">Won</option>
-              <option value="Lost">Lost</option>
-              <option value="Disqualified">Disqualified</option>
-            </select>
+          <!-- Row 2: Filters (Left) & Actions (Right) -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <!-- Filters Container -->
+            <div :class="['md:flex items-center gap-3 w-full md:w-auto', isMobileFiltersOpen ? 'grid grid-cols-2 gap-3 mb-1 md:mb-0' : 'hidden md:flex']">
+              <select v-model="filterStatus" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+                <option value="">All status</option>
+                <option value="New Lead">New Lead</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Meeting Requested">Meeting Requested</option>
+                <option value="Demo Scheduled">Demo Scheduled</option>
+                <option value="Proposal Sent">Proposal Sent</option>
+                <option value="Negotiation">Negotiation</option>
+                <option value="Won">Won</option>
+                <option value="Lost">Lost</option>
+                <option value="Disqualified">Disqualified</option>
+              </select>
 
-            <select v-model="filterCountry" class="text-[13px] border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
-              <option value="">All countries</option>
-              <option value="Australia">Australia</option>
-              <option value="Indonesia">Indonesia</option>
-              <option value="New Zealand">New Zealand</option>
-            </select>
+              <select v-model="filterCountry" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+                <option value="">All countries</option>
+                <option value="Australia">Australia</option>
+                <option value="Indonesia">Indonesia</option>
+                <option value="New Zealand">New Zealand</option>
+              </select>
 
-            <select v-model="filterSource" class="text-[13px] border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
-              <option value="">All sources</option>
-              <option value="/requestdemo">Request Demo</option>
-              <option value="/assessment">Assessment</option>
-              <option value="/contact-sales">Contact Sales</option>
-              <option value="/waitlist">Waitlist</option>
-              <option value="/partner-inquiry">Partner Inquiry</option>
-            </select>
+              <select v-model="filterSource" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+                <option value="">All sources</option>
+                <option value="/requestdemo">Request Demo</option>
+                <option value="/assessment">Assessment</option>
+                <option value="/contact-sales">Contact Sales</option>
+                <option value="/waitlist">Waitlist</option>
+                <option value="/partner-inquiry">Partner Inquiry</option>
+              </select>
 
-            <select v-model="filterTier" class="text-[13px] border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
-              <option value="">All Tiers</option>
-              <option value="Tier A">Tier A</option>
-              <option value="Tier B">Tier B</option>
-              <option value="Tier C">Tier C</option>
-            </select>
+              <select v-model="filterTier" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+                <option value="">All Tiers</option>
+                <option value="Tier A">Tier A</option>
+                <option value="Tier B">Tier B</option>
+                <option value="Tier C">Tier C</option>
+              </select>
+            </div>
 
-            <button @click="exportToCSV" class="text-[13px] rounded-lg px-4 py-1.5 border border-slate-200 bg-white text-slate-700 font-medium flex items-center gap-1.5 hover:bg-slate-50 transition shadow-sm">
-              <Download class="w-4 h-4" />
-              Export CSV
-            </button>
-            <button @click="openAddModal" class="text-[13px] rounded-lg px-4 py-1.5 bg-blue-600 text-white font-medium flex items-center gap-1 hover:bg-blue-700 transition shadow-sm">
-              <Plus class="w-4 h-4" /> Add lead
-            </button>
+            <!-- Action Buttons (Always visible) -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+              <button @click="exportToCSV" class="flex-1 md:flex-none justify-center text-[13px] rounded-lg px-4 py-2 border border-slate-200 bg-white text-slate-700 font-medium flex items-center gap-1.5 hover:bg-slate-50 transition shadow-sm">
+                <Download class="w-4 h-4" />
+                Export CSV
+              </button>
+              <button @click="openAddModal" class="flex-1 md:flex-none justify-center text-[13px] rounded-lg px-4 py-2 bg-blue-600 text-white font-medium flex items-center gap-1 hover:bg-blue-700 transition shadow-sm">
+                <Plus class="w-4 h-4" /> Add lead
+              </button>
+            </div>
           </div>
         </div>
 
@@ -773,5 +788,15 @@ const getStatusClass = (status: string) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+</style>
+<style>
+/* CSS Scrollbar Hide (Dipisah agar global di komponen ini) */
+.custom-scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.custom-scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
