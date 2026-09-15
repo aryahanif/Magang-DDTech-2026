@@ -23,4 +23,11 @@ export class SettingsService {
       data,
     });
   }
+
+  async updateEmailSignature(userId: string, signature: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { email_signature: signature },
+    });
+  }
 }

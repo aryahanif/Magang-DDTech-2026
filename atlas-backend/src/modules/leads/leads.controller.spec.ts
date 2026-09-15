@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { LeadsController } from './leads.controller';
 import { LeadsService } from './leads.service';
@@ -16,10 +17,12 @@ describe('LeadsController', () => {
     country: 'Australia',
     business_type: 'Mortgage Broker',
     consent_status: true,
+    cf_turnstile_token: 'test-turnstile-token',
   };
 
   beforeEach(async () => {
     service = { createLead: jest.fn() };
+    global.fetch = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ success: true }) }) as jest.Mock;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LeadsController],
@@ -30,6 +33,10 @@ describe('LeadsController', () => {
       .compile();
 
     controller = module.get<LeadsController>(LeadsController);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('returns success payload with the created lead id', async () => {
@@ -43,5 +50,12 @@ describe('LeadsController', () => {
       lead_id: 'uuid-1',
       message: 'Lead submitted successfully',
     });
+  });
+
+  it('rejects the submission when Turnstile verification fails', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ json: () => Promise.resolve({ success: false }) });
+
+    await expect(controller.create(dto)).rejects.toThrow(ForbiddenException);
+    expect(service.createLead).not.toHaveBeenCalled();
   });
 });

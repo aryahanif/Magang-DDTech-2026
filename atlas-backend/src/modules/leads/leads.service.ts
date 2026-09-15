@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { parse } from 'json2csv';
 import { PrismaService } from '../../database/prisma.service';
@@ -17,15 +17,47 @@ export class LeadsService {
     private readonly qualificationService: QualificationService,
   ) {}
 
-  async createLead(data: CreateLeadDto) {
-    const initialScore = this.qualificationService.calculateRuleBasedScore(data);
+  async createLead(dto: CreateLeadDto) {
+    const { cf_turnstile_token, ...data } = dto;
+    const initialScore = await this.qualificationService.calculateRuleBasedScore(data);
+
+    const existingLead = await this.prisma.lead.findFirst({
+      where: {
+        OR: [
+          { email: { equals: data.email, mode: Prisma.QueryMode.insensitive } },
+          ...(data.company_name ? [{ company_name: { equals: data.company_name, mode: Prisma.QueryMode.insensitive } }] : []),
+        ],
+      },
+    });
 
     const lead = await this.prisma.lead.create({
       data: {
         ...data,
         lead_score: initialScore,
+        consent_at: data.consent_status ? new Date() : null,
       },
     });
+
+    if (existingLead) {
+      await this.prisma.$transaction([
+        this.prisma.leadNote.create({
+          data: {
+            lead_id: lead.id,
+            created_by: 'System',
+            note: '⚠️ System Alert: Duplicate entry detected matching an existing lead in the database.',
+          },
+        }),
+        this.prisma.leadActivityLog.create({
+          data: {
+            lead_id: lead.id,
+            activity_type: 'DUPLICATE_FLAGGED',
+            description: `Duplicate entry detected matching lead ${existingLead.id}`,
+            metadata: { duplicate_of: existingLead.id },
+          },
+        }),
+      ]);
+      this.logger.warn(`Lead ${lead.id} flagged as duplicate of ${existingLead.id}`);
+    }
 
     // Asynchronous AI Processing (Non-blocking). The sales alert and the
     // prospect confirmation email are both sent from QualificationService
@@ -184,3 +216,4 @@ export class LeadsService {
     }
   }
 }
+

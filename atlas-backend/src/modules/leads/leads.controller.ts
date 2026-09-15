@@ -1,5 +1,4 @@
-import { Body, Controller, Post, Get, Patch, Delete, Param, UseGuards, Query } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Body, Controller, Post, Get, Patch, Delete, Param, Query, ForbiddenException } from '@nestjs/common';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
@@ -7,12 +6,13 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
 
 @Controller('api/leads')
-@UseGuards(ThrottlerGuard)
 export class LeadsController {
   constructor(private readonly leadsService: LeadsService) { }
 
   @Post()
   async create(@Body() createLeadDto: CreateLeadDto) {
+    await this.verifyTurnstileToken(createLeadDto.cf_turnstile_token);
+
     const lead = await this.leadsService.createLead(createLeadDto);
     return {
       success: true,
@@ -21,58 +21,16 @@ export class LeadsController {
     };
   }
 
-  @Get()
-  async findAll(@Query() query: GetLeadsQueryDto) {
-    const leads = await this.leadsService.findAll(query || {});
-    return {
-      success: true,
-      data: leads,
-    };
-  }
+  private async verifyTurnstileToken(token: string) {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret: process.env.TURNSTILE_SECRET_KEY || '', response: token }),
+    });
+    const result = await response.json();
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    try {
-      const lead = await this.leadsService.findOne(id);
-      return {
-        success: true,
-        data: lead,
-      };
-    } catch (error) {
-      return { success: false, message: 'Lead not found or invalid ID' };
+    if (!result.success) {
+      throw new ForbiddenException('Bot verification failed');
     }
-  }
-
-  @Post(':id/notes')
-  async addNote(@Param('id') id: string, @Body() body: AddLeadNoteDto) {
-    try {
-      const note = await this.leadsService.addNoteToLead(id, 'Admin', body);
-      return {
-        success: true,
-        data: note,
-        message: 'Note added successfully',
-      };
-    } catch (error) {
-      return { success: false, message: 'Failed to add note' };
-    }
-  }
-
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateData: UpdateLeadDto) {
-    const lead = await this.leadsService.updateLeadStatus(id, updateData, 'Admin');
-    return {
-      success: true,
-      data: lead,
-      message: 'Lead updated successfully',
-    };
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.leadsService.remove(id);
-    return {
-      success: true,
-      message: 'Lead deleted successfully',
-    };
   }
 }
