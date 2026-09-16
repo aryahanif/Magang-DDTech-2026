@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -10,6 +11,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('api/users')
 @UseGuards(JwtAuthGuard)
+@Throttle({ default: { limit: 100, ttl: 60000 } })
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

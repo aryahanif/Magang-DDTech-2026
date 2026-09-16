@@ -26,7 +26,9 @@ describe('LeadsService', () => {
     country: 'Australia',
     business_type: 'Mortgage Broker',
     consent_status: true,
+    cf_turnstile_token: 'test-turnstile-token',
   };
+  const { cf_turnstile_token: _token, ...data } = dto;
 
   beforeEach(async () => {
     prisma = {
@@ -56,21 +58,22 @@ describe('LeadsService', () => {
 
     const result = await service.createLead(dto);
 
-    expect(qualificationService.calculateRuleBasedScore).toHaveBeenCalledWith(dto);
+    expect(qualificationService.calculateRuleBasedScore).toHaveBeenCalledWith(data);
     expect(prisma.lead.create).toHaveBeenCalledWith({
-      data: { ...dto, lead_score: 55, consent_at: expect.any(Date) },
+      data: { ...data, lead_score: 55, consent_at: expect.any(Date) },
     });
     expect(result).toBe(created);
   });
 
   it('leaves consent_at unset when consent was not given', async () => {
     const noConsentDto = { ...dto, consent_status: false };
-    prisma.lead.create.mockResolvedValue({ id: 'uuid-2', ...noConsentDto });
+    const { cf_turnstile_token: _t, ...noConsentData } = noConsentDto;
+    prisma.lead.create.mockResolvedValue({ id: 'uuid-2', ...noConsentData });
 
     await service.createLead(noConsentDto);
 
     expect(prisma.lead.create).toHaveBeenCalledWith({
-      data: { ...noConsentDto, lead_score: 55, consent_at: null },
+      data: { ...noConsentData, lead_score: 55, consent_at: null },
     });
   });
 
@@ -102,7 +105,7 @@ describe('LeadsService', () => {
 
     await service.createLead(dto);
 
-    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, dto, 55);
+    expect(qualificationService.analyzeLeadWithAI).toHaveBeenCalledWith(created.id, data, 55);
   });
 
   it('does not let a failed AI analysis reject createLead', async () => {
