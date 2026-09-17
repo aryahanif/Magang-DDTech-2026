@@ -5,7 +5,7 @@ import Form from "../components/form.vue";
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen bg-slate-50">
     <!-- Left Section: Copywriting -->
-    <section class="flex flex-col justify-center gap-6 px-8 py-16 sm:px-16 lg:px-24 relative overflow-hidden">
+    <section class="flex flex-col justify-center gap-6 px-8 pt-32 pb-16 sm:py-16 lg:px-24 relative overflow-hidden">
       <!-- Premium Back Button -->
       <RouterLink to="/welcome" class="absolute top-8 left-8 sm:top-10 sm:left-10 z-50 group flex items-center gap-3 px-2 py-2 pr-5 bg-white/70 backdrop-blur-xl border border-white/60 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:bg-white transition-all duration-300 cursor-pointer">
         <div class="bg-white border border-slate-200 text-slate-500 rounded-full w-9 h-9 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all duration-300 shadow-sm">

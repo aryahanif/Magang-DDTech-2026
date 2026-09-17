@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { Rocket, FileSearch, Users, PhoneCall, Clock, ArrowRight, CheckCircle2 } from '@lucide/vue'
+import { Rocket, FileSearch, Users, PhoneCall, Clock, ArrowRight, CheckCircle2, ShieldUser } from '@lucide/vue'
 </script>
 
 <template>
@@ -143,11 +143,26 @@ import { Rocket, FileSearch, Users, PhoneCall, Clock, ArrowRight, CheckCircle2 }
     </div>
 
     <!-- Footer -->
-    <footer class="py-6 text-center text-xs text-slate-400 relative z-10 border-t border-slate-200/60 bg-white/50 backdrop-blur-sm mt-auto">
-      <p>(c) 2026 Atlas AI.</p>
-      <a href="/admin" class="hover:text-blue-600 font-medium transition-colors inline-block mt-2">
-        Staff Login &rarr;
-      </a>
+    <footer class="w-full py-6 px-6 md:px-12 relative z-10 border-t border-slate-200/60 bg-white/50 backdrop-blur-sm mt-auto">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-[13px] font-medium text-slate-500">
+          &copy; 2026 Atlas AI. All rights reserved.
+        </p>
+        
+        <div class="flex items-center gap-6">
+          <a href="#" class="text-[13px] font-medium text-slate-500 hover:text-slate-900 transition-colors">Privacy</a>
+          <a href="#" class="text-[13px] font-medium text-slate-500 hover:text-slate-900 transition-colors">Terms</a>
+          <div class="w-px h-4 bg-slate-300"></div>
+          <router-link 
+            to="/admin" 
+            class="group flex items-center gap-1.5 text-[13px] font-bold text-slate-600 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:shadow-sm px-3 py-1.5 rounded-full transition-all"
+          >
+            <ShieldUser class="w-3.5 h-3.5" />
+            <span>Staff Login</span>
+            <ArrowRight class="w-3.5 h-3.5 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+          </router-link>
+        </div>
+      </div>
     </footer>
   </main>
 </template>

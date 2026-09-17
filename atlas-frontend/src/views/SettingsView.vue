@@ -220,7 +220,7 @@ const saveEmailSettings = () => {
 <template>
   <MainLayout active-menu="settings">
     
-    <main class="flex-1 p-4 md:p-6 lg:p-8 flex flex-col h-screen overflow-y-auto bg-slate-50 custom-scrollbar">
+    <main class="flex-1 p-4 md:p-6 lg:p-8 flex flex-col h-full overflow-y-auto bg-slate-50 custom-scrollbar">
       
       <!-- HEADER -->
       <div class="mb-6 md:mb-8 flex-shrink-0">
@@ -370,11 +370,8 @@ const saveEmailSettings = () => {
                       <p class="text-[14px] font-bold text-slate-900 truncate">{{ member.name }}</p>
                       <p class="text-[12px] text-slate-500 truncate">{{ member.email }}</p>
                     </div>
-                    <button class="p-1 text-slate-400 hover:text-slate-700 flex-shrink-0">
-                      <X class="w-4 h-4" />
-                    </button>
                   </div>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 mt-1">
                     <span 
                       :class="[
                         'text-[11px] font-semibold rounded-full px-2 py-0.5 inline-flex items-center gap-1.5',
@@ -388,6 +385,18 @@ const saveEmailSettings = () => {
                       <Eye v-else class="w-3 h-3 text-slate-500" />
                       {{ member.role === 'sales' ? 'Sales' : member.role === 'viewer' ? 'Viewer' : member.role }}
                     </span>
+                    <button @click="editingRoleId = editingRoleId === member.id ? null : member.id" class="text-[11px] font-medium text-slate-500 hover:text-blue-600 ml-auto border border-slate-200 bg-slate-50 px-3 py-1 rounded-full shadow-sm">
+                      Edit
+                    </button>
+                  </div>
+                  
+                  <div v-if="editingRoleId === member.id" class="mt-2 bg-white border border-slate-200 shadow-md rounded-xl p-3 animate-fade-in relative z-20">
+                    <p class="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Change Role</p>
+                    <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-300 bg-slate-50 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 mb-1 transition-all">
+                      <option value="Super Admin">Super Admin</option>
+                      <option value="sales">Sales</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
                   </div>
                 </div>
               </div>
