@@ -98,6 +98,14 @@ export class QualificationService {
         return;
       }
 
+      const tierEnums = ["Tier A", "Tier B", "Tier C", "Disqualified"];
+      let tierDescription = "Client tier category. Use Disqualified for valid data that doesn't fit the business. Do not use Spam because spam detection is disabled.";
+      
+      if (!settings || settings.is_spam_detection_enabled) {
+        tierEnums.push("Spam");
+        tierDescription = "Client tier category. Use Spam for fake/nonsense data, and Disqualified for valid data that doesn't fit the business.";
+      }
+
       const prompt = `You are a professional B2B sales analyst for Atlas, DDTech's AI Workforce Platform.
 Analyze the following client data and provide deep insights regarding the client's potential.
 
@@ -109,19 +117,19 @@ Client Data:
 ${JSON.stringify(leadData, null, 2)}`;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-1.5-flash',
         contents: prompt,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Disqualified", "Spam"], description: "Client's tier category. Use Spam for fake/nonsense data, and Disqualified for legitimate data that does not fit the business." },
-              fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "The client's fit status with the product." },
-              qualification_summary: { type: Type.STRING, description: "Analysis summary, maximum 2 sentences." },
-              recommended_next_action: { type: Type.STRING, description: "The recommended next action to take." },
-              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Level of urgency." },
-              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Risk flags or suspicious data points." }
+              lead_tier: { type: Type.STRING, enum: tierEnums, description: tierDescription },
+              fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Client fit with the product" },
+              qualification_summary: { type: Type.STRING, description: "Analysis summary, max 2 sentences" },
+              recommended_next_action: { type: Type.STRING, description: "Recommended next action" },
+              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Urgency level" },
+              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Risk flags or suspicious data" }
             },
             required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level", "risk_flags"]
           }
@@ -130,7 +138,7 @@ ${JSON.stringify(leadData, null, 2)}`;
 
       const text = response.text;
       if (!text) {
-        throw new Error('Tidak ada teks yang dikembalikan oleh Gemini');
+        throw new Error('No text returned by Gemini');
       }
 
       const parsed = JSON.parse(text);
@@ -146,7 +154,7 @@ ${JSON.stringify(leadData, null, 2)}`;
         },
       });
 
-      this.logger.log(`Berhasil menganalisis lead ${leadId} dengan AI.`);
+      this.logger.log(`Successfully analyzed lead ${leadId} with AI.`);
 
       if (updatedLead.lead_tier !== 'Spam') {
         // Fire-and-forget so a slow/failing Resend call never blocks qualification.
@@ -162,7 +170,7 @@ ${JSON.stringify(leadData, null, 2)}`;
           .catch((error) => this.logger.error('Failed to send auto-reply to prospect', error));
       }
     } catch (error) {
-      this.logger.error(`Error menganalisis lead ${leadId} dengan AI`, error);
+      this.logger.error(`Error analyzing lead ${leadId} with AI`, error);
     }
   }
 }

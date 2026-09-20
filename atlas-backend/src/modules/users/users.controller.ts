@@ -8,6 +8,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('api/users')
 @UseGuards(JwtAuthGuard)
@@ -38,7 +39,7 @@ export class UsersController {
 
   @Post('invite')
   @UseGuards(RolesGuard)
-  @Roles('admin')
+  @Roles(UserRole.SUPER_ADMIN)
   async invite(@Body() inviteDto: InviteUserDto) {
     const data = await this.usersService.invite(inviteDto);
     return { success: true, message: 'User invited', data };
@@ -46,7 +47,7 @@ export class UsersController {
 
   @Patch(':id/role')
   @UseGuards(RolesGuard)
-  @Roles('admin')
+  @Roles(UserRole.SUPER_ADMIN)
   async updateRole(@Param('id') id: string, @Body() updateDto: UpdateRoleDto) {
     const data = await this.usersService.updateRole(id, updateDto);
     return { success: true, message: 'Role updated', data };

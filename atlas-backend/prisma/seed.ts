@@ -26,9 +26,27 @@ async function main() {
     },
   });
 
+  const sales = await prisma.user.upsert({
+    where: { email: 'sales@atlas.ddtech.com' },
+    update: { password_hash, role: 'sales', name: 'Tim Sales' },
+    create: { email: 'sales@atlas.ddtech.com', name: 'Tim Sales', role: 'sales', password_hash },
+  });
+
+  const viewer = await prisma.user.upsert({
+    where: { email: 'viewer@atlas.ddtech.com' },
+    update: { password_hash, role: 'viewer', name: 'Tim Viewer' },
+    create: { email: 'viewer@atlas.ddtech.com', name: 'Tim Viewer', role: 'viewer', password_hash },
+  });
+
   console.log('Seeding finished.');
   console.log('Admin account created:');
   console.log(`Email: ${admin.email}`);
+  console.log(`Password: ${password}`);
+  console.log('\nSales account created:');
+  console.log(`Email: ${sales.email}`);
+  console.log(`Password: ${password}`);
+  console.log('\nViewer account created:');
+  console.log(`Email: ${viewer.email}`);
   console.log(`Password: ${password}`);
 }
 
