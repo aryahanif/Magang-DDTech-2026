@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
 import api from '../services/api'
 
@@ -12,6 +12,8 @@ const hoveredSource = ref<any>(null)
 const tooltipX = ref(0)
 const tooltipY = ref(0)
 
+let refreshInterval: number | undefined;
+
 onMounted(() => {
   fetchDashboardData().then(() => {
     setTimeout(() => {
@@ -19,6 +21,17 @@ onMounted(() => {
       animateNumbers() 
     }, 150)
   })
+
+  // Auto refresh data every 10 seconds
+  refreshInterval = window.setInterval(() => {
+    fetchDashboardData()
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
 })
 
 const animateNumbers = () => {
