@@ -83,12 +83,12 @@ const isSuccess = ref(false);
 
 const successTitle = computed(() => {
   switch (props.type) {
-    case 'demo': return "Permintaan Demo Berhasil!";
-    case 'assessment': return "Assessment Berhasil Dikirim!";
-    case 'waitlist': return "Terdaftar di Waitlist!";
-    case 'contact': return "Pesan Berhasil Dikirim!";
-    case 'partner': return "Pengajuan Kemitraan Berhasil!";
-    default: return "Form Berhasil Dikirim!";
+    case 'demo': return "Demo Request Successful!";
+    case 'assessment': return "Assessment Sent Successfully!";
+    case 'waitlist': return "Joined Waitlist!";
+    case 'contact': return "Message Sent Successfully!";
+    case 'partner': return "Partnership Inquiry Successful!";
+    default: return "Form Submitted Successfully!";
   }
 });
 
@@ -250,7 +250,7 @@ const submitForm = async (values, { resetForm }) => {
           type="text"
           id="industry"
           name="industry"
-          placeholder="Finance, IT, dll."
+          placeholder="Finance, IT, etc."
           class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required
@@ -264,7 +264,7 @@ const submitForm = async (values, { resetForm }) => {
           type="text"
           id="role"
           name="role"
-          placeholder="CEO, Manager, dll."
+          placeholder="CEO, Manager, etc."
           class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           maxlength="50"
           required

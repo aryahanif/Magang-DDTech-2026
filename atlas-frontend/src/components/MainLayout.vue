@@ -25,7 +25,7 @@ const notifications = ref<any[]>([
   {
     id: 1,
     title: 'New Lead: Jhon Smith',
-    message: 'Jhon Smith dari TechCorp baru saja mengisi form Assessment.',
+    message: 'Jhon Smith from TechCorp just submitted the Assessment form.',
     time: '2 mins ago',
     icon: 'user',
     unread: true
@@ -33,7 +33,7 @@ const notifications = ref<any[]>([
   {
     id: 2,
     title: 'AI Scoring Complete',
-    message: 'Data Jhon Smith telah dikualifikasi AI dengan skor 4/5.',
+    message: 'Jhon Smith data has been qualified by AI with a score of 4/5.',
     time: '1 min ago',
     icon: 'sparkles',
     unread: true
@@ -394,8 +394,7 @@ const getIconColor = (menuName: string, currentMenu: string) => {
           <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-3 transition-colors">
             <Bell class="w-6 h-6" />
           </div>
-          <p class="text-[14px] font-bold text-slate-700 dark:text-slate-300 transition-colors">You're all caught up!</p>
-          <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1 transition-colors">Belum ada notifikasi baru untuk Anda.</p>
+          <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1 transition-colors">You have no new notifications.</p>
         </div>
         
         <div 

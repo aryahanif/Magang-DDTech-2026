@@ -644,41 +644,41 @@ const getStatusClass = (status: string) => {
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Full Name</label>
-            <Field name="full_name" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Full Name</label>
+            <Field name="full_name" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="full_name" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Email</label>
-            <Field name="email" type="email" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Email</label>
+            <Field name="email" type="email" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="email" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Phone</label>
-            <Field name="phone" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Phone</label>
+            <Field name="phone" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="phone" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Company Name</label>
-            <Field name="company_name" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Company Name</label>
+            <Field name="company_name" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="company_name" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Role</label>
-            <Field name="role" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Role</label>
+            <Field name="role" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="role" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Website URL</label>
-            <Field name="website_url" type="url" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Website URL</label>
+            <Field name="website_url" type="url" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="website_url" class="text-red-500 text-[11px] mt-1 block" />
           </div>
 
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Country</label>
-            <Field name="country" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Country</label>
+            <Field name="country" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="">Select country</option>
               <option value="australia">Australia</option>
               <option value="newzealand">New Zealand</option>
@@ -688,8 +688,8 @@ const getStatusClass = (status: string) => {
             <ErrorMessage name="country" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Business Type</label>
-            <Field name="business_type" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Business Type</label>
+            <Field name="business_type" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="">Select business type</option>
               <option value="B2B">B2B (Business to Business)</option>
               <option value="B2C">B2C (Business to Consumer)</option>
@@ -699,13 +699,13 @@ const getStatusClass = (status: string) => {
           </div>
 
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Industry</label>
-            <Field name="industry" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Industry</label>
+            <Field name="industry" type="text" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
             <ErrorMessage name="industry" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-black mb-1.5">Company Size</label>
-            <Field name="company_size" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Company Size</label>
+            <Field name="company_size" as="select" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="">Select size</option>
               <option value="1-10">1-10 employees</option>
               <option value="11-50">11-50 employees</option>
@@ -717,8 +717,8 @@ const getStatusClass = (status: string) => {
           </div>
 
           <div v-if="editingId">
-            <label class="block text-[13px] font-bold text-black mb-1.5">Assigned Owner (Internal)</label>
-            <Field name="assigned_owner" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Assigned Owner (Internal)</label>
+            <Field name="assigned_owner" as="select" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="">Unassigned</option>
               <option value="AC (Aldean)">AC (Aldean)</option>
               <option value="JM (Jordan)">JM (Jordan)</option>
@@ -726,8 +726,8 @@ const getStatusClass = (status: string) => {
             <ErrorMessage name="assigned_owner" class="text-red-500 text-[11px] mt-1 block" />
           </div>
           <div v-if="editingId">
-            <label class="block text-[13px] font-bold text-black mb-1.5">Status (Internal)</label>
-            <Field name="status" as="select" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]">
+            <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Status (Internal)</label>
+            <Field name="status" as="select" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="New Lead">New Lead</option><option value="Qualified">Qualified</option><option value="Contacted">Contacted</option><option value="Meeting Requested">Meeting Requested</option><option value="Demo Scheduled">Demo Scheduled</option><option value="Proposal Sent">Proposal Sent</option><option value="Negotiation">Negotiation</option><option value="Won">Won</option><option value="Lost">Lost</option><option value="Disqualified">Disqualified</option>
             </Field>
             <ErrorMessage name="status" class="text-red-500 text-[11px] mt-1 block" />
@@ -735,18 +735,18 @@ const getStatusClass = (status: string) => {
         </div>
 
         <div>
-          <label class="block text-[13px] font-bold text-black mb-1.5">Current Problem</label>
-          <Field name="current_problem" as="textarea" rows="2" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+          <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Current Problem</label>
+          <Field name="current_problem" as="textarea" rows="2" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 disabled:opacity-100' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
           <ErrorMessage name="current_problem" class="text-red-500 text-[11px] mt-1 block" />
         </div>
         <div>
-          <label class="block text-[13px] font-bold text-black mb-1.5">Message / Note</label>
-          <Field name="message" as="textarea" rows="2" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50' : 'bg-white'" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px]" />
+          <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Message / Note</label>
+          <Field name="message" as="textarea" rows="2" :disabled="!!editingId" :class="!!editingId ? 'bg-gray-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 disabled:opacity-100' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'" class="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors" />
           <ErrorMessage name="message" class="text-red-500 text-[11px] mt-1 block" />
         </div>
 
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
-          <button type="button" @click="closeModal" class="px-5 py-2 border border-slate-300 rounded-lg text-[14px] font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6 transition-colors">
+          <button type="button" @click="closeModal" class="px-5 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-[14px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">Cancel</button>
           <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">{{ editingId ? "Save changes" : "Add lead" }}</button>
         </div>
       </Form>
@@ -756,16 +756,16 @@ const getStatusClass = (status: string) => {
   <!-- DELETE CONFIRMATION MODAL -->
   <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-0">
     <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="isDeleteModalOpen = false"></div>
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center animate-fade-in">
-      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm p-6 text-center animate-fade-in transition-colors">
+      <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
+        <svg class="w-8 h-8 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
       </div>
-      <h3 class="text-xl font-bold text-gray-900 mb-2">Confirm Delete</h3>
-      <p class="text-gray-500 text-sm mb-6">
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">Confirm Delete</h3>
+      <p class="text-gray-500 dark:text-gray-400 text-sm mb-6 transition-colors">
         Are you sure you want to delete {{ deleteTargetId ? 'this lead' : selectedLeads.length + ' selected leads' }}? This action cannot be undone.
       </p>
       <div class="flex items-center gap-3">
-        <button @click="isDeleteModalOpen = false" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
+        <button @click="isDeleteModalOpen = false" class="flex-1 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition">
           Cancel
         </button>
         <button @click="confirmDelete" class="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">

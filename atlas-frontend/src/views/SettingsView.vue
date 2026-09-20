@@ -277,7 +277,7 @@ const saveEmailSettings = () => {
           <!-- ================= TAB: MY PROFILE ================= -->
           <div v-if="activeTab === 'profile'" class="animate-fade-in">
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Personal Information</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Ubah detail profil dan informasi dasar Anda.</p>
+            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Change your profile details and basic information.</p>
             
             <form @submit.prevent="saveProfile" class="border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 md:p-8 bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] max-w-2xl space-y-5 md:space-y-6">
               <div>
@@ -305,7 +305,7 @@ const saveEmailSettings = () => {
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
               <div>
                 <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Team Management</h2>
-                <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400">Kelola akses anggota tim dan peran (role) di dalam workspace ini.</p>
+                <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400">Manage team member access and roles within this workspace.</p>
               </div>
               <button @click="openInviteModal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 shadow-sm transition">
                 + Invite Member
@@ -406,14 +406,14 @@ const saveEmailSettings = () => {
           <!-- ================= TAB: AI SCORING RULES ================= -->
           <div v-else-if="activeTab === 'ai-rules'" class="animate-fade-in">
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">AI Scoring Rules</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Konfigurasi bagaimana AI mengevaluasi dan memberikan tiering pada Lead Anda.</p>
+            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Configure how AI evaluates and tiers your Leads.</p>
 
             <div class="space-y-3 md:space-y-4 max-w-3xl">
               <!-- Toggle 1 -->
               <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
                   <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white">Automated Lead Tiering</h3>
-                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Izinkan AI untuk otomatis mengkategorikan lead ke dalam Tier A, B, atau C berdasarkan skor kualifikasi dari form.</p>
+                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Allow AI to automatically categorize leads into Tier A, B, or C based on the qualification score from the form.</p>
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
@@ -427,7 +427,7 @@ const saveEmailSettings = () => {
               <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
                   <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white">AI Spam Detection</h3>
-                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Otomatis pindahkan submission dengan bahasa tidak masuk akal atau domain mencurigakan ke tab Invalid/Spam.</p>
+                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Automatically move submissions with nonsensical language or suspicious domains to the Invalid/Spam tab.</p>
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
@@ -444,7 +444,7 @@ const saveEmailSettings = () => {
                     Data Enrichment 
                     <span class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded">BETA</span>
                   </h3>
-                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Gunakan AI untuk melengkapi data perusahaan (seperti ukuran perusahaan & industri) hanya dari nama domain email.</p>
+                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Use AI to enrich company data (such as company size & industry) just from the email domain name.</p>
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
@@ -459,7 +459,7 @@ const saveEmailSettings = () => {
           <!-- ================= TAB: EMAIL INTEGRATIONS ================= -->
           <div v-else-if="activeTab === 'email'" class="animate-fade-in">
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Email Integrations</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Hubungkan akun email Anda untuk mengirim dan melacak pesan langsung dari Atlas.</p>
+            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Connect your email account to send and track messages directly from Atlas.</p>
 
             <!-- Connected Account Card yang Diperbaiki (Menggunakan min-w-0 dan truncate) -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl max-w-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4 transition-colors">
@@ -518,7 +518,7 @@ const saveEmailSettings = () => {
             <!-- Email Signature -->
             <form @submit.prevent="saveEmailSettings" class="max-w-2xl">
               <label class="block text-[13px] md:text-[14px] font-bold text-slate-900 dark:text-white mb-1.5 md:mb-2">Email Signature</label>
-              <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mb-2.5 md:mb-3 leading-relaxed">Tanda tangan ini akan otomatis disematkan di bagian bawah email keluar Anda.</p>
+              <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mb-2.5 md:mb-3 leading-relaxed">This signature will be automatically attached at the bottom of your outgoing emails.</p>
               
               <textarea 
                 v-model="emailSettings.signature" 
@@ -544,7 +544,7 @@ const saveEmailSettings = () => {
       <div class="flex items-start justify-between mb-6">
         <div>
           <h2 class="text-[20px] font-bold text-slate-900 dark:text-white tracking-tight mb-1">Invite Team Member</h2>
-          <p class="text-[13px] text-slate-500 dark:text-slate-400">Kirim undangan untuk bergabung ke workspace ini.</p>
+          <p class="text-[13px] text-slate-500 dark:text-slate-400">Send an invitation to join this workspace.</p>
         </div>
         <button @click="isInviteModalOpen = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
           <X class="w-5 h-5" />

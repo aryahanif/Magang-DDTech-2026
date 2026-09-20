@@ -142,7 +142,7 @@ const updateStatus = async (newStatus: string) => {
     await api.patch(`/api/admin/leads/${leadId}`, { status: backendStatus })
     // Refresh to get new activity logs
     await fetchLeadDetail()
-    showToast('Status berhasil diubah.', 'success')
+    showToast('Status successfully changed.', 'success')
   } catch (error) {
     console.error('Failed to update status:', error)
     lead.value.status = previousStatus // Revert on fail
@@ -169,17 +169,17 @@ const submitNote = async () => {
   try {
     await api.post(`/api/admin/leads/${leadId}/notes`, { note: noteText })
     // We do NOT fetchLeadDetail() here because the backend might not return notes yet.
-    showToast('Catatan berhasil ditambahkan.', 'success')
+    showToast('Note successfully added.', 'success')
   } catch (error) {
     console.error('Failed to submit note:', error)
-    showToast('Backend API Error: Mock catatan ditambahkan ke tampilan.', 'info')
+    showToast('Backend API Error: Mock note added to view.', 'info')
   }
 }
 
 const toggleEditSummary = () => {
   isEditingSummary.value = !isEditingSummary.value;
   if (!isEditingSummary.value) {
-    showToast("Perubahan rangkuman AI berhasil disimpan.", "success");
+    showToast("AI summary changes successfully saved.", "success");
   }
 };
 
@@ -187,7 +187,7 @@ const updateOwner = async (event: Event) => {
   const newOwner = (event.target as HTMLSelectElement).value;
   try {
     await api.patch(`/api/admin/leads/${leadId}`, { assigned_owner: newOwner });
-    showToast('Owner berhasil diubah.', 'success');
+    showToast('Owner successfully changed.', 'success');
   } catch (error) {
     console.error('Failed to update owner:', error);
     showToast('Backend API Error: Mock owner diterapkan ke tampilan.', 'info');
@@ -200,10 +200,10 @@ const updateFollowUpDate = async () => {
   try {
     await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: isoDate });
     lead.value.next_follow_up_at = isoDate;
-    showToast('Tanggal follow-up berhasil disimpan.', 'success');
+    showToast('Follow-up date successfully saved.', 'success');
   } catch (error) {
     console.error('Failed to update follow-up date:', error);
-    showToast('Backend API Error: Gagal menyimpan tanggal.', 'error');
+    showToast('Backend API Error: Failed to save date.', 'error');
   }
 };
 
@@ -256,7 +256,7 @@ const exportDetailToCSV = () => {
   link.click();
   document.body.removeChild(link);
 
-  showToast(`Detail data ${data.full_name} berhasil diekspor.`, "success");
+  showToast(`Data details for ${data.full_name} successfully exported.`, "success");
 };
 </script>
 
@@ -679,7 +679,7 @@ const exportDetailToCSV = () => {
                 v-model="newNote"
                 rows="3"
                 :disabled="currentUser?.role === 'viewer'"
-                placeholder="Tulis catatan internal tentang lead ini..."
+                placeholder="Write an internal note about this lead..."
                 class="w-full text-[13px] sm:text-[14px] bg-white dark:bg-[#0B1120] text-slate-900 dark:text-white border border-blue-600 dark:border-blue-500/50 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-blue-600 resize-none mb-3 disabled:opacity-60 transition-colors"
               ></textarea>
               <button
@@ -687,7 +687,7 @@ const exportDetailToCSV = () => {
                 :disabled="!newNote.trim() || currentUser?.role === 'viewer'"
                 class="w-full bg-blue-600 text-white text-[13px] font-semibold py-2.5 rounded-lg hover:bg-slate-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Simpan Catatan
+                Save Note
               </button>
             </div>
 
@@ -703,7 +703,7 @@ const exportDetailToCSV = () => {
               <div
                 class="space-y-4 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar-vertical"
               >
-                <div v-if="lead.notes.length === 0" class="text-sm text-slate-400 italic">Belum ada catatan.</div>
+                <div v-if="lead.notes.length === 0" class="text-sm text-slate-400 italic">No notes yet.</div>
                 <!-- Notes Loop -->
                 <div
                   v-for="note in lead.notes"
@@ -737,7 +737,7 @@ const exportDetailToCSV = () => {
               <div
                 class="flex-1 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar-vertical"
               >
-                <div v-if="lead.activity_logs.length === 0" class="text-sm text-slate-400 italic">Belum ada riwayat aktivitas.</div>
+                <div v-if="lead.activity_logs.length === 0" class="text-sm text-slate-400 italic">No activity history yet.</div>
                 <!-- Activity Loop -->
                 <div
                   class="relative border-l-2 border-slate-200 dark:border-slate-700 ml-2 mt-2 space-y-5 pl-5 pb-2"

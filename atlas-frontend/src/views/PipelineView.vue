@@ -261,10 +261,10 @@ const onDrop = async (targetStageKey: StageKey, event: DragEvent) => {
   // Persist ke backend
   try {
     await api.patch(`/api/admin/leads/${deal.id}`, { status: backendStatus })
-    showToast('Status deal berhasil diperbarui', 'success')
+    showToast('Deal status successfully updated', 'success')
   } catch (error) {
     console.error('Failed to update status in DB', error)
-    showToast('Gagal memperbarui status ke database', 'error')
+    showToast('Failed to update status to database', 'error')
     deal.stage = previousStage
     rebuildColumns()
   }
