@@ -220,23 +220,23 @@ const saveEmailSettings = () => {
 <template>
   <MainLayout active-menu="settings">
     
-    <main class="flex-1 p-4 md:p-6 lg:p-8 flex flex-col h-full overflow-y-auto bg-slate-50 custom-scrollbar">
+    <main class="flex-1 p-4 md:p-6 lg:p-8 flex flex-col h-full overflow-y-auto bg-slate-50 dark:bg-[#0B1120] custom-scrollbar transition-colors duration-300">
       
       <!-- HEADER -->
       <div class="mb-6 md:mb-8 flex-shrink-0">
-        <h1 class="text-[24px] md:text-[28px] font-bold text-slate-900 tracking-tight">Settings</h1>
-        <p class="text-[13px] md:text-[15px] text-slate-500 mt-1">Manage your account preferences and workspace configuration.</p>
+        <h1 class="text-[24px] md:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">Settings</h1>
+        <p class="text-[13px] md:text-[15px] text-slate-500 dark:text-slate-400 mt-1">Manage your account preferences and workspace configuration.</p>
       </div>
 
       <!-- LAYOUT GRID -->
       <div class="flex flex-col lg:flex-row gap-6 max-w-6xl flex-1 pb-10">
         
         <!-- SIDEBAR MENU -->
-        <div class="w-full lg:w-72 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl p-3 h-fit shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] flex-shrink-0">
+        <div class="w-full lg:w-72 bg-white/60 dark:bg-[#0F172A]/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-3 h-fit shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] flex-shrink-0 transition-colors duration-300">
           <nav class="space-y-1">
             <button 
               @click="activeTab = 'profile'"
-              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'profile' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
+              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'profile' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50']"
             >
               <User class="w-5 h-5" />
               My Profile
@@ -245,7 +245,7 @@ const saveEmailSettings = () => {
             <button 
               v-if="currentUser?.role === 'Super Admin'"
               @click="activeTab = 'team'"
-              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'team' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
+              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'team' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50']"
             >
               <Users class="w-5 h-5" />
               Team Management
@@ -254,7 +254,7 @@ const saveEmailSettings = () => {
             <button 
               v-if="currentUser?.role === 'Super Admin'"
               @click="activeTab = 'ai-rules'"
-              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'ai-rules' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
+              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'ai-rules' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50']"
             >
               <Sparkles class="w-5 h-5" />
               AI Scoring Rules
@@ -263,7 +263,7 @@ const saveEmailSettings = () => {
             <button 
               v-if="currentUser?.role === 'Super Admin'"
               @click="activeTab = 'email'"
-              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'email' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50']"
+              :class="['w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-[13px] md:text-[14px] transition-all', activeTab === 'email' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50']"
             >
               <Mail class="w-5 h-5" />
               Email Integrations
@@ -272,25 +272,25 @@ const saveEmailSettings = () => {
         </div>
 
         <!-- MAIN CONFIGURATION AREA -->
-        <div class="flex-1 bg-white border border-slate-200 rounded-xl p-4 md:p-6 lg:p-8 shadow-sm overflow-hidden">
+        <div class="flex-1 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-xl p-4 md:p-6 lg:p-8 shadow-sm overflow-hidden transition-colors duration-300">
           
           <!-- ================= TAB: MY PROFILE ================= -->
           <div v-if="activeTab === 'profile'" class="animate-fade-in">
-            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">Personal Information</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 mb-6 md:mb-8">Ubah detail profil dan informasi dasar Anda.</p>
+            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Personal Information</h2>
+            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Ubah detail profil dan informasi dasar Anda.</p>
             
-            <form @submit.prevent="saveProfile" class="border border-slate-200/60 rounded-2xl p-6 md:p-8 bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] max-w-2xl space-y-5 md:space-y-6">
+            <form @submit.prevent="saveProfile" class="border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 md:p-8 bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] max-w-2xl space-y-5 md:space-y-6">
               <div>
-                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Full Name</label>
-                <input v-model="profileForm.name" type="text" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 dark:text-slate-300 mb-1.5 md:mb-2">Full Name</label>
+                <input v-model="profileForm.name" type="text" class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
               </div>
               <div>
-                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Work Email</label>
-                <input v-model="profileForm.email" type="email" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 dark:text-slate-300 mb-1.5 md:mb-2">Work Email</label>
+                <input v-model="profileForm.email" type="email" class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
               </div>
               <div>
-                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 mb-1.5 md:mb-2">Job Title</label>
-                <input v-model="profileForm.job_title" type="text" class="w-full border border-slate-300 bg-slate-50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+                <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 dark:text-slate-300 mb-1.5 md:mb-2">Job Title</label>
+                <input v-model="profileForm.job_title" type="text" class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
               </div>
               <div>
                 <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white text-[13px] md:text-[14px] font-semibold py-2 md:py-2.5 px-4 md:px-6 rounded-lg hover:bg-blue-700 transition shadow-sm">
@@ -304,8 +304,8 @@ const saveEmailSettings = () => {
           <div v-else-if="activeTab === 'team'" class="animate-fade-in w-full">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
               <div>
-                <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">Team Management</h2>
-                <p class="text-[13px] md:text-[14px] text-slate-500">Kelola akses anggota tim dan peran (role) di dalam workspace ini.</p>
+                <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Team Management</h2>
+                <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400">Kelola akses anggota tim dan peran (role) di dalam workspace ini.</p>
               </div>
               <button @click="openInviteModal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 shadow-sm transition">
                 + Invite Member
@@ -313,23 +313,23 @@ const saveEmailSettings = () => {
             </div>
 
             <!-- RESPONSIVE TABLE CONTAINER -->
-            <div class="border border-slate-200/60 rounded-2xl overflow-hidden bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] w-full">
+            <div class="border border-slate-200/60 dark:border-slate-800/50 rounded-2xl overflow-hidden bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] w-full">
               
               <!-- DESKTOP VIEW (Dengan min-width agar tidak acak-acakan di tablet) -->
               <div class="hidden md:block w-full overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left min-w-[500px]">
-                  <thead class="bg-slate-50 border-b border-slate-200">
+                  <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700/50">
                     <tr>
-                      <th class="px-4 py-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">User</th>
-                      <th class="px-4 py-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Role</th>
+                      <th class="px-4 py-3 text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">User</th>
+                      <th class="px-4 py-3 text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Role</th>
                       <th class="px-4 py-3"></th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-200">
-                    <tr v-for="member in teamMembers" :key="'desk-' + member.id" class="hover:bg-slate-50 transition">
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50">
+                    <tr v-for="member in teamMembers" :key="'desk-' + member.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td class="px-4 py-3">
-                        <p class="text-[14px] font-bold text-slate-900 whitespace-nowrap">{{ member.name }}</p>
-                        <p class="text-[12px] text-slate-500 whitespace-nowrap">{{ member.email }}</p>
+                        <p class="text-[14px] font-bold text-slate-900 dark:text-white whitespace-nowrap">{{ member.name }}</p>
+                        <p class="text-[12px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ member.email }}</p>
                       </td>
                       <td class="px-4 py-3">
                         <span 
@@ -347,10 +347,10 @@ const saveEmailSettings = () => {
                         </span>
                       </td>
                       <td class="px-4 py-3 text-right relative">
-                        <button @click="editingRoleId = editingRoleId === member.id ? null : member.id" class="text-[13px] font-medium text-slate-500 hover:text-blue-600">Edit</button>
-                        <div v-if="editingRoleId === member.id" class="absolute right-8 top-10 bg-white border border-slate-200 shadow-xl rounded-lg p-3 z-30 w-48 text-left">
-                          <p class="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Change Role</p>
-                          <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-200 rounded-md p-1.5 focus:outline-none focus:border-blue-600 mb-2">
+                        <button @click="editingRoleId = editingRoleId === member.id ? null : member.id" class="text-[13px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">Edit</button>
+                        <div v-if="editingRoleId === member.id" class="absolute right-8 top-10 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 shadow-xl rounded-lg p-3 z-30 w-48 text-left">
+                          <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Change Role</p>
+                          <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-md p-1.5 focus:outline-none focus:border-blue-600 mb-2">
                             <option value="Super Admin">Super Admin</option>
                             <option value="sales">Sales</option>
                             <option value="viewer">Viewer</option>
@@ -363,12 +363,12 @@ const saveEmailSettings = () => {
               </div>
 
               <!-- MOBILE VIEW (CARD LIST) -->
-              <div class="block md:hidden divide-y divide-slate-200 w-full">
+              <div class="block md:hidden divide-y divide-slate-200 dark:divide-slate-700/50 w-full">
                 <div v-for="member in teamMembers" :key="'mob-' + member.id" class="p-4 flex flex-col gap-3">
                   <div class="flex items-start justify-between">
                     <div class="min-w-0 pr-2">
-                      <p class="text-[14px] font-bold text-slate-900 truncate">{{ member.name }}</p>
-                      <p class="text-[12px] text-slate-500 truncate">{{ member.email }}</p>
+                      <p class="text-[14px] font-bold text-slate-900 dark:text-white truncate">{{ member.name }}</p>
+                      <p class="text-[12px] text-slate-500 dark:text-slate-400 truncate">{{ member.email }}</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 mt-1">
@@ -385,14 +385,14 @@ const saveEmailSettings = () => {
                       <Eye v-else class="w-3 h-3 text-slate-500" />
                       {{ member.role === 'sales' ? 'Sales' : member.role === 'viewer' ? 'Viewer' : member.role }}
                     </span>
-                    <button @click="editingRoleId = editingRoleId === member.id ? null : member.id" class="text-[11px] font-medium text-slate-500 hover:text-blue-600 ml-auto border border-slate-200 bg-slate-50 px-3 py-1 rounded-full shadow-sm">
+                    <button @click="editingRoleId = editingRoleId === member.id ? null : member.id" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 ml-auto border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full shadow-sm">
                       Edit
                     </button>
                   </div>
                   
-                  <div v-if="editingRoleId === member.id" class="mt-2 bg-white border border-slate-200 shadow-md rounded-xl p-3 animate-fade-in relative z-20">
-                    <p class="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Change Role</p>
-                    <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-300 bg-slate-50 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 mb-1 transition-all">
+                  <div v-if="editingRoleId === member.id" class="mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 shadow-md rounded-xl p-3 animate-fade-in relative z-20">
+                    <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Change Role</p>
+                    <select :value="member.role" @change="updateRole(member.id, $event)" class="w-full text-[13px] border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 mb-1 transition-all">
                       <option value="Super Admin">Super Admin</option>
                       <option value="sales">Sales</option>
                       <option value="viewer">Viewer</option>
@@ -405,51 +405,51 @@ const saveEmailSettings = () => {
 
           <!-- ================= TAB: AI SCORING RULES ================= -->
           <div v-else-if="activeTab === 'ai-rules'" class="animate-fade-in">
-            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">AI Scoring Rules</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 mb-6 md:mb-8">Konfigurasi bagaimana AI mengevaluasi dan memberikan tiering pada Lead Anda.</p>
+            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">AI Scoring Rules</h2>
+            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Konfigurasi bagaimana AI mengevaluasi dan memberikan tiering pada Lead Anda.</p>
 
             <div class="space-y-3 md:space-y-4 max-w-3xl">
               <!-- Toggle 1 -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
-                  <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900">Automated Lead Tiering</h3>
-                  <p class="text-[12px] md:text-[13px] text-slate-500 mt-1 leading-relaxed">Izinkan AI untuk otomatis mengkategorikan lead ke dalam Tier A, B, atau C berdasarkan skor kualifikasi dari form.</p>
+                  <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white">Automated Lead Tiering</h3>
+                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Izinkan AI untuk otomatis mengkategorikan lead ke dalam Tier A, B, atau C berdasarkan skor kualifikasi dari form.</p>
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
                     <input type="checkbox" v-model="aiRules.autoTiering" @change="saveAiRules" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
 
               <!-- Toggle 2 -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
-                  <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900">AI Spam Detection</h3>
-                  <p class="text-[12px] md:text-[13px] text-slate-500 mt-1 leading-relaxed">Otomatis pindahkan submission dengan bahasa tidak masuk akal atau domain mencurigakan ke tab Invalid/Spam.</p>
+                  <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white">AI Spam Detection</h3>
+                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Otomatis pindahkan submission dengan bahasa tidak masuk akal atau domain mencurigakan ke tab Invalid/Spam.</p>
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
                     <input type="checkbox" v-model="aiRules.spamDetection" @change="saveAiRules" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
 
               <!-- Toggle 3 -->
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.01)] gap-3">
                 <div class="pr-0 sm:pr-6 flex-1">
-                  <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 flex items-center flex-wrap gap-2">
+                  <h3 class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white flex items-center flex-wrap gap-2">
                     Data Enrichment 
-                    <span class="bg-blue-50 text-blue-700 text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded">BETA</span>
+                    <span class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded">BETA</span>
                   </h3>
-                  <p class="text-[12px] md:text-[13px] text-slate-500 mt-1 leading-relaxed">Gunakan AI untuk melengkapi data perusahaan (seperti ukuran perusahaan & industri) hanya dari nama domain email.</p>
+                  <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Gunakan AI untuk melengkapi data perusahaan (seperti ukuran perusahaan & industri) hanya dari nama domain email.</p>
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
                     <input type="checkbox" v-model="aiRules.dataEnrichment" @change="saveAiRules" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
@@ -458,15 +458,15 @@ const saveEmailSettings = () => {
 
           <!-- ================= TAB: EMAIL INTEGRATIONS ================= -->
           <div v-else-if="activeTab === 'email'" class="animate-fade-in">
-            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-1">Email Integrations</h2>
-            <p class="text-[13px] md:text-[14px] text-slate-500 mb-6 md:mb-8">Hubungkan akun email Anda untuk mengirim dan melacak pesan langsung dari Atlas.</p>
+            <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Email Integrations</h2>
+            <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Hubungkan akun email Anda untuk mengirim dan melacak pesan langsung dari Atlas.</p>
 
             <!-- Connected Account Card yang Diperbaiki (Menggunakan min-w-0 dan truncate) -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl max-w-2xl bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl max-w-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4 transition-colors">
               
               <!-- Bagian Kiri (Icon + Text) -->
               <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0 transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 48 48">
                     <path d="M0 0h48v48H0z" fill="none" />
                     <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917" />
@@ -477,24 +477,24 @@ const saveEmailSettings = () => {
                 </div>
                 
                 <div class="flex-1 min-w-0">
-                  <p class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 truncate">Google Workspace</p>
+                  <p class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white truncate">Google Workspace</p>
                   <div class="flex items-center gap-1.5 md:gap-2 mt-0.5 md:mt-1">
                     <span class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 flex-shrink-0"></span>
-                    <p class="text-[11px] md:text-[13px] text-slate-500 truncate">Connected as jordan.miles@atlas.ai</p>
+                    <p class="text-[11px] md:text-[13px] text-slate-500 dark:text-slate-400 truncate">Connected as jordan.miles@atlas.ai</p>
                   </div>
                 </div>
               </div>
 
               <!-- Tombol Disconnect -->
-              <button class="w-full sm:w-auto px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-bold text-red-600 hover:bg-red-50 shadow-sm transition flex-shrink-0">
+              <button class="w-full sm:w-auto px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-[13px] font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 shadow-sm transition-colors flex-shrink-0">
                 Disconnect
               </button>
             </div>
 
             <!-- Calendly Webhook Integration -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 rounded-2xl max-w-2xl bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4 hover:border-blue-300 transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-slate-200/60 dark:border-slate-800/50 rounded-2xl max-w-2xl bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] mb-6 md:mb-8 gap-4 hover:border-blue-300 dark:hover:border-slate-700 transition-all">
               <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50/50 dark:bg-blue-900/30 rounded-xl border border-blue-100 dark:border-blue-800/50 flex items-center justify-center p-1.5 md:p-2 shadow-sm flex-shrink-0 transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                     <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -503,13 +503,13 @@ const saveEmailSettings = () => {
                   </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 truncate">Calendly Webhook</p>
-                  <p class="text-[11px] md:text-[13px] text-slate-500 mt-0.5 md:mt-1 truncate leading-relaxed">Paste this URL in your Calendly Integrations.</p>
+                  <p class="text-[13.5px] md:text-[14.5px] font-bold text-slate-900 dark:text-white truncate">Calendly Webhook</p>
+                  <p class="text-[11px] md:text-[13px] text-slate-500 dark:text-slate-400 mt-0.5 md:mt-1 truncate leading-relaxed">Paste this URL in your Calendly Integrations.</p>
                 </div>
               </div>
               <div class="w-full sm:w-auto flex items-center gap-2">
-                <input type="text" readonly value="https://api.atlas.com/api/webhooks/calendly" class="flex-1 sm:w-64 border border-slate-200 bg-white/50 rounded-lg px-3 py-2 text-[12px] text-slate-500 font-mono focus:outline-none focus:ring-1 focus:ring-blue-600">
-                <button @click="copyToClipboard('https://api.atlas.com/api/webhooks/calendly')" class="px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition text-slate-600 shadow-sm flex items-center justify-center" title="Copy to clipboard">
+                <input type="text" readonly value="https://api.atlas.com/api/webhooks/calendly" class="flex-1 sm:w-64 border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 rounded-lg px-3 py-2 text-[12px] text-slate-500 dark:text-slate-400 font-mono focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors">
+                <button @click="copyToClipboard('https://api.atlas.com/api/webhooks/calendly')" class="px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-400 shadow-sm flex items-center justify-center" title="Copy to clipboard">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
               </div>
@@ -517,13 +517,13 @@ const saveEmailSettings = () => {
 
             <!-- Email Signature -->
             <form @submit.prevent="saveEmailSettings" class="max-w-2xl">
-              <label class="block text-[13px] md:text-[14px] font-bold text-slate-900 mb-1.5 md:mb-2">Email Signature</label>
-              <p class="text-[12px] md:text-[13px] text-slate-500 mb-2.5 md:mb-3 leading-relaxed">Tanda tangan ini akan otomatis disematkan di bagian bawah email keluar Anda.</p>
+              <label class="block text-[13px] md:text-[14px] font-bold text-slate-900 dark:text-white mb-1.5 md:mb-2">Email Signature</label>
+              <p class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 mb-2.5 md:mb-3 leading-relaxed">Tanda tangan ini akan otomatis disematkan di bagian bawah email keluar Anda.</p>
               
               <textarea 
                 v-model="emailSettings.signature" 
                 rows="4" 
-                class="w-full border border-slate-200/60 bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] rounded-2xl p-3 md:p-4 text-[12.5px] md:text-[13.5px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all mb-4 leading-relaxed"
+                class="w-full border border-slate-200/60 dark:border-slate-700 bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] rounded-2xl p-3 md:p-4 text-[12.5px] md:text-[13.5px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all mb-4 leading-relaxed"
               ></textarea>
               
               <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white text-[13px] md:text-[14px] font-semibold py-2 md:py-2.5 px-4 md:px-6 rounded-lg hover:bg-blue-700 transition shadow-sm">
@@ -540,39 +540,39 @@ const saveEmailSettings = () => {
   <!-- INVITE MEMBER MODAL -->
   <div v-if="isInviteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="isInviteModalOpen = false"></div>
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 animate-fade-in">
+    <div class="relative bg-white dark:bg-[#0F172A] rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 animate-fade-in transition-colors duration-300">
       <div class="flex items-start justify-between mb-6">
         <div>
-          <h2 class="text-[20px] font-bold text-slate-900 tracking-tight mb-1">Invite Team Member</h2>
-          <p class="text-[13px] text-slate-500">Kirim undangan untuk bergabung ke workspace ini.</p>
+          <h2 class="text-[20px] font-bold text-slate-900 dark:text-white tracking-tight mb-1">Invite Team Member</h2>
+          <p class="text-[13px] text-slate-500 dark:text-slate-400">Kirim undangan untuk bergabung ke workspace ini.</p>
         </div>
-        <button @click="isInviteModalOpen = false" class="text-slate-400 hover:text-slate-900 transition">
+        <button @click="isInviteModalOpen = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
           <X class="w-5 h-5" />
         </button>
       </div>
       
       <form @submit.prevent="sendInvite" class="space-y-4">
         <div>
-          <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Full Name</label>
-          <input v-model="inviteForm.name" type="text" required placeholder="John Doe" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+          <label class="block text-[13px] font-bold text-slate-900 dark:text-slate-300 mb-1.5">Full Name</label>
+          <input v-model="inviteForm.name" type="text" required placeholder="John Doe" class="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
         </div>
         
         <div>
-          <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Email Address</label>
-          <input v-model="inviteForm.email" type="email" required placeholder="name@company.com" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+          <label class="block text-[13px] font-bold text-slate-900 dark:text-slate-300 mb-1.5">Email Address</label>
+          <input v-model="inviteForm.email" type="email" required placeholder="name@company.com" class="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
         </div>
         
         <div>
-          <label class="block text-[13px] font-bold text-slate-900 mb-1.5">Role</label>
-          <select v-model="inviteForm.role" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white cursor-pointer">
+          <label class="block text-[13px] font-bold text-slate-900 dark:text-slate-300 mb-1.5">Role</label>
+          <select v-model="inviteForm.role" class="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white rounded-lg px-3.5 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all cursor-pointer">
             <option value="Super Admin">Super Admin</option>
             <option value="sales">Sales</option>
             <option value="viewer">Viewer</option>
           </select>
         </div>
         
-        <div class="pt-4 flex items-center gap-3 justify-end border-t border-slate-100 mt-6">
-          <button type="button" @click="isInviteModalOpen = false" class="px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 border border-slate-300 rounded-lg transition shadow-sm">Cancel</button>
+        <div class="pt-4 flex items-center gap-3 justify-end border-t border-slate-100 dark:border-slate-800/50 mt-6 transition-colors">
+          <button type="button" @click="isInviteModalOpen = false" class="px-5 py-2.5 text-[13px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg transition-colors shadow-sm">Cancel</button>
           <button type="submit" class="px-5 py-2.5 text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm">Send Invitation</button>
         </div>
       </form>

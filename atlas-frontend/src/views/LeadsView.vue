@@ -397,65 +397,67 @@ const getStatusClass = (status: string) => {
   <div v-if="activeDropdownId" @click="activeDropdownId = null" class="fixed inset-0 z-10"></div>
 
   <MainLayout active-menu="leads">
-    <main class="flex-1 p-8 overflow-y-auto">
+    <main class="flex-1 p-8 overflow-y-auto bg-slate-50 dark:bg-[#0B1120] transition-colors duration-300">
       <div class="mb-8">
-        <h1 class="text-[32px] font-bold text-slate-900 tracking-tight">Leads Management</h1>
-        <p class="text-[16px] text-slate-500 mt-1">All inbound and outbound leads captured by your AI workforce.</p>
+        <h1 class="text-[32px] font-bold text-slate-900 dark:text-white tracking-tight">Leads Management</h1>
+        <p class="text-[16px] text-slate-500 dark:text-slate-400 mt-1">All inbound and outbound leads captured by your AI workforce.</p>
       </div>
 
       <!-- Summary Cards dengan Animasi Fade In -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
-        <div v-for="(card, index) in summaryCards" :key="index" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div v-for="(card, index) in summaryCards" :key="index" class="bg-white dark:bg-[#0F172A] p-5 rounded-2xl border border-slate-200 dark:border-slate-800/50 shadow-sm flex flex-col justify-between transition-colors duration-300">
           <div class="flex items-center justify-between">
-            <span class="text-[13px] font-medium text-slate-500">{{ card.title }}</span>
-            <component :is="card.icon" class="w-5 h-5 text-slate-400" />
+            <span class="text-[13px] font-medium text-slate-500 dark:text-slate-400">{{ card.title }}</span>
+            <component :is="card.icon" class="w-5 h-5 text-slate-400 dark:text-slate-500" />
           </div>
           <div>
-            <div class="text-[26px] font-bold text-slate-900 leading-none mb-1.5">{{ card.value }}</div>
-            <p class="text-[11px] text-slate-400 font-medium">{{ card.description }}</p>
+            <div class="text-[26px] font-bold text-slate-900 dark:text-white leading-none mb-1.5">{{ card.value }}</div>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">{{ card.description }}</p>
           </div>
         </div>
       </div>
 
       <!-- TABS NAVIGATION: Valid vs Invalid -->
-      <div class="flex items-center gap-6 mb-4 px-2 border-b border-slate-200">
+      <!-- TABS NAVIGATION: Valid vs Invalid -->
+      <div class="flex items-center gap-6 mb-4 px-2 border-b border-slate-200 dark:border-slate-800/50 transition-colors">
         <button 
           @click="activeTab = 'valid'"
           class="pb-3 text-[14px] font-bold transition-colors border-b-2"
-          :class="activeTab === 'valid' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          :class="activeTab === 'valid' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-500' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
         >
           Valid Leads
         </button>
         <button 
           @click="activeTab = 'invalid'"
           class="pb-3 text-[14px] font-bold transition-colors border-b-2 flex items-center gap-2"
-          :class="activeTab === 'invalid' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          :class="activeTab === 'invalid' ? 'border-red-500 text-red-600 dark:text-red-400 dark:border-red-500' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
         >
           Spam / Invalid
-          <span v-if="invalidCount > 0" class="bg-red-50 text-red-600 px-2 py-0.5 rounded-full text-[10px] border border-red-100">{{ invalidCount }}</span>
+          <span v-if="invalidCount > 0" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full text-[10px] border border-red-100 dark:border-red-900/50">{{ invalidCount }}</span>
         </button>
         <button 
           @click="activeTab = 'all'"
           class="pb-3 text-[14px] font-bold transition-colors border-b-2"
-          :class="activeTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'"
+          :class="activeTab === 'all' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-500' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
         >
           All Data
         </button>
       </div>
 
       <!-- Table Container dengan Animasi Fade In Default -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col relative z-20 animate-fade-in">
+      <!-- Table Container dengan Animasi Fade In Default -->
+      <div class="bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-slate-800/50 shadow-sm overflow-hidden flex flex-col relative z-20 animate-fade-in transition-colors duration-300">
         
         <!-- Filter Bar Standar -->
-        <div v-if="selectedLeads.length === 0" class="p-4 border-b border-slate-200 flex flex-col gap-4">
+        <div v-if="selectedLeads.length === 0" class="p-4 border-b border-slate-200 dark:border-slate-800/50 flex flex-col gap-4">
           
           <!-- Row 1: Search & Mobile Toggle -->
           <div class="flex items-center justify-between gap-3 w-full">
             <div class="relative w-full md:w-64">
-              <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input v-model="searchQuery" type="text" placeholder="Search leads..." class="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600" />
+              <Search class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input v-model="searchQuery" type="text" placeholder="Search leads..." class="w-full pl-9 pr-3 py-2 text-[13px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 text-slate-900 dark:text-white transition-colors" />
             </div>
-            <button @click="isMobileFiltersOpen = !isMobileFiltersOpen" class="md:hidden flex items-center justify-center p-2 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm flex-shrink-0">
+            <button @click="isMobileFiltersOpen = !isMobileFiltersOpen" class="md:hidden flex items-center justify-center p-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition shadow-sm flex-shrink-0">
               <Filter class="w-5 h-5" />
             </button>
           </div>
@@ -465,7 +467,7 @@ const getStatusClass = (status: string) => {
             
             <!-- Filters Container -->
             <div :class="['md:flex items-center gap-3 w-full md:w-auto', isMobileFiltersOpen ? 'grid grid-cols-2 gap-3 mb-1 md:mb-0' : 'hidden md:flex']">
-              <select v-model="filterStatus" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+              <select v-model="filterStatus" class="w-full text-[13px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 focus:outline-none cursor-pointer font-medium text-slate-700 dark:text-slate-300 transition-colors">
                 <option value="">All status</option>
                 <option value="New Lead">New Lead</option>
                 <option value="Qualified">Qualified</option>
@@ -479,14 +481,14 @@ const getStatusClass = (status: string) => {
                 <option value="Disqualified">Disqualified</option>
               </select>
 
-              <select v-model="filterCountry" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+              <select v-model="filterCountry" class="w-full text-[13px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 focus:outline-none cursor-pointer font-medium text-slate-700 dark:text-slate-300 transition-colors">
                 <option value="">All countries</option>
                 <option value="Australia">Australia</option>
                 <option value="Indonesia">Indonesia</option>
                 <option value="New Zealand">New Zealand</option>
               </select>
 
-              <select v-model="filterSource" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+              <select v-model="filterSource" class="w-full text-[13px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 focus:outline-none cursor-pointer font-medium text-slate-700 dark:text-slate-300 transition-colors">
                 <option value="">All sources</option>
                 <option value="/requestdemo">Request Demo</option>
                 <option value="/assessment">Assessment</option>
@@ -495,7 +497,7 @@ const getStatusClass = (status: string) => {
                 <option value="/partner-inquiry">Partner Inquiry</option>
               </select>
 
-              <select v-model="filterTier" class="w-full text-[13px] border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none cursor-pointer font-medium text-slate-700">
+              <select v-model="filterTier" class="w-full text-[13px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 focus:outline-none cursor-pointer font-medium text-slate-700 dark:text-slate-300 transition-colors">
                 <option value="">All Tiers</option>
                 <option value="Tier A">Tier A</option>
                 <option value="Tier B">Tier B</option>
@@ -505,7 +507,7 @@ const getStatusClass = (status: string) => {
 
             <!-- Action Buttons (Always visible) -->
             <div class="flex items-center gap-3 w-full md:w-auto">
-              <button @click="exportToCSV" class="flex-1 md:flex-none justify-center text-[13px] rounded-lg px-4 py-2 border border-slate-200 bg-white text-slate-700 font-medium flex items-center gap-1.5 hover:bg-slate-50 transition shadow-sm">
+              <button @click="exportToCSV" class="flex-1 md:flex-none justify-center text-[13px] rounded-lg px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm">
                 <Download class="w-4 h-4" />
                 Export CSV
               </button>
@@ -517,15 +519,15 @@ const getStatusClass = (status: string) => {
         </div>
 
         <!-- Filter Bar Bulk Actions -->
-        <div v-else class="p-4 border-b border-slate-200 bg-blue-50 flex items-center justify-between gap-4 flex-wrap transition-colors">
+        <div v-else class="p-4 border-b border-slate-200 dark:border-slate-800/50 bg-blue-50 dark:bg-slate-800/50 flex items-center justify-between gap-4 flex-wrap transition-colors">
           <div class="flex items-center gap-3">
-            <span class="text-[13px] font-bold text-blue-600 bg-white px-2.5 py-1 rounded-md shadow-sm border border-blue-100">
+            <span class="text-[13px] font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 px-2.5 py-1 rounded-md shadow-sm border border-blue-100 dark:border-slate-600">
               {{ selectedLeads.length }} selected
             </span>
-            <span class="text-[13px] text-blue-600 font-medium">Choose an action for the selected records.</span>
+            <span class="text-[13px] text-blue-600 dark:text-blue-400 font-medium">Choose an action for the selected records.</span>
           </div>
           <div class="flex items-center gap-4">
-            <button @click="selectedLeads = []" class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition">Cancel</button>
+            <button @click="selectedLeads = []" class="text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Cancel</button>
             <button v-if="currentUser?.role === 'Super Admin'" @click="deleteSelectedLeads" class="text-[13px] rounded-lg px-4 py-1.5 bg-red-500 text-white font-medium flex items-center gap-1.5 hover:bg-red-600 transition shadow-sm">
               <Trash2 class="w-4 h-4" />
               Delete Selected
@@ -534,21 +536,21 @@ const getStatusClass = (status: string) => {
         </div>
 
         <!-- Table Container -->
-        <div class="bg-white overflow-x-auto min-h-75">
+        <div class="bg-white dark:bg-[#0F172A] overflow-x-auto min-h-75 transition-colors">
           <table class="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr class="border-b border-slate-200 bg-slate-50">
+              <tr class="border-b border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-[#0F172A]">
                 <th class="py-3 px-4 w-12 text-center">
-                  <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer" :checked="isAllSelected" @change="toggleSelectAll" />
+                  <input type="checkbox" class="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-600 cursor-pointer" :checked="isAllSelected" @change="toggleSelectAll" />
                 </th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900">Lead</th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900">Company</th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 text-center">Country</th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 text-center">Source</th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 text-center">Tier</th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 text-center">Status</th>
-                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 text-center">Value</th>
-                <th class="py-3 px-4 text-[13px] font-bold text-slate-900 text-right">Updated</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200">Lead</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200">Company</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Country</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Source</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Tier</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Status</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Value</th>
+                <th class="py-3 px-4 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-right">Updated</th>
                 <th class="py-3 px-2 w-10"></th>
               </tr>
             </thead>
@@ -573,29 +575,29 @@ const getStatusClass = (status: string) => {
 
             <!-- TRICK ANIMASI VUE: Binding atribut key ke activeTab dan currentPage -->
             <tbody v-else :key="activeTab + currentPage" class="animate-fade-in">
-              <tr v-for="lead in paginatedLeads" :key="lead.id" @click="handleRowClick(lead)" class="border-b border-gray-100 transition group cursor-pointer hover:bg-gray-50" :class="selectedLeads.includes(lead.id) ? 'bg-[#EFF6FF] hover:bg-[#E0E7FF]' : ''">
+              <tr v-for="lead in paginatedLeads" :key="lead.id" @click="handleRowClick(lead)" class="border-b border-gray-100 dark:border-slate-800/50 transition group cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/30" :class="selectedLeads.includes(lead.id) ? 'bg-[#EFF6FF] dark:bg-blue-900/20 hover:bg-[#E0E7FF] dark:hover:bg-blue-900/40' : ''">
                 <td class="py-3 px-4 text-center">
-                  <input type="checkbox" :value="lead.id" v-model="selectedLeads" @click.stop class="rounded border-slate-300 text-blue-600 focus:ring-blue-600 transition cursor-pointer" :class="selectedLeads.includes(lead.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'" />
+                  <input type="checkbox" :value="lead.id" v-model="selectedLeads" @click.stop class="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-600 transition cursor-pointer" :class="selectedLeads.includes(lead.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'" />
                 </td>
                 <td class="py-3 px-2">
-                  <div class="text-[13px] font-medium text-slate-900">{{ lead.name }}</div>
-                  <div class="text-[10px] text-slate-500">{{ lead.role }}</div>
+                  <div class="text-[13px] font-medium text-slate-900 dark:text-white">{{ lead.name }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400">{{ lead.role }}</div>
                 </td>
                 <td class="py-3 px-2">
-                  <div class="text-[13px] font-medium text-slate-900">{{ lead.company }}</div>
+                  <div class="text-[13px] font-medium text-slate-900 dark:text-white">{{ lead.company }}</div>
                 </td>
-                <td class="py-3 px-2 text-center text-[12px] text-slate-500">{{ lead.country }}</td>
-                <td class="py-3 px-2 text-center text-[12px] text-slate-500">{{ lead.source }}</td>
+                <td class="py-3 px-2 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ lead.country }}</td>
+                <td class="py-3 px-2 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ lead.source }}</td>
                 <td class="py-3 px-2 text-center">
                   <span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold" :class="getTierClass(lead.tier)">{{ lead.tier }}</span>
                 </td>
                 <td class="py-3 px-2 text-center">
                   <span class="text-[12px] font-medium" :class="getStatusClass(lead.status)">{{ lead.status }}</span>
                 </td>
-                <td class="py-3 px-2 text-center text-[12px] text-slate-900 font-medium">{{ lead.value }}</td>
-                <td class="py-3 px-4 text-right text-[12px] text-slate-400">{{ lead.updated }}</td>
+                <td class="py-3 px-2 text-center text-[12px] text-slate-900 dark:text-white font-medium">{{ lead.value }}</td>
+                <td class="py-3 px-4 text-right text-[12px] text-slate-400 dark:text-slate-500">{{ lead.updated }}</td>
                 <td class="py-3 px-2 text-center relative">
-                  <button @click.stop="activeDropdownId = activeDropdownId === lead.id ? null : lead.id" class="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition">
+                  <button @click.stop="activeDropdownId = activeDropdownId === lead.id ? null : lead.id" class="p-1 rounded text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition">
                     <MoreVertical class="w-5 h-5" />
                   </button>
                   <div v-if="activeDropdownId === lead.id" class="absolute right-8 top-10 w-32 bg-white rounded-lg shadow-xl border border-slate-100 z-30 py-1 text-left overflow-hidden">
@@ -609,16 +611,16 @@ const getStatusClass = (status: string) => {
 
           <!-- Empty State -->
           <div v-if="!isLoading && filteredLeads.length === 0" class="py-16 text-center animate-fade-in">
-            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-            <p class="text-[14px] text-gray-500 font-medium">No leads found in this category.</p>
+            <svg class="w-12 h-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+            <p class="text-[14px] text-gray-500 dark:text-slate-400 font-medium">No leads found in this category.</p>
           </div>
         </div>
 
         <!-- Footer Pagination -->
-        <div class="p-4 bg-white flex items-center justify-between border-t border-slate-200">
-          <div class="text-[14px] text-slate-900 font-medium">{{ paginationText }}</div>
+        <div class="p-4 bg-white dark:bg-[#0F172A] flex items-center justify-between border-t border-slate-200 dark:border-slate-800/50 transition-colors">
+          <div class="text-[14px] text-slate-900 dark:text-slate-400 font-medium">{{ paginationText }}</div>
           <div class="flex items-center gap-3">
-            <button @click="prevPage" :disabled="currentPage === 1" class="px-5 py-2 border border-slate-300 rounded-lg text-[13px] font-bold text-slate-900 hover:bg-slate-50 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+            <button @click="prevPage" :disabled="currentPage === 1" class="px-5 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-[13px] font-bold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
             <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="px-7 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
           </div>
         </div>
@@ -631,10 +633,10 @@ const getStatusClass = (status: string) => {
   <!--CREATE & UPDATE LEAD -->
   <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-175 p-8 overflow-y-auto max-h-[90vh] animate-fade-in">
+    <div class="relative bg-white dark:bg-[#0F172A] rounded-xl shadow-2xl w-full max-w-175 p-8 overflow-y-auto max-h-[90vh] animate-fade-in transition-colors">
       <div class="flex items-start justify-between mb-6">
-        <h2 class="text-[26px] font-bold text-slate-900 tracking-tight leading-none mb-1">{{ editingId ? "Edit lead" : "Add new lead" }}</h2>
-        <button @click="closeModal" class="text-slate-400 hover:text-slate-900 transition">
+        <h2 class="text-[26px] font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">{{ editingId ? "Edit lead" : "Add new lead" }}</h2>
+        <button @click="closeModal" class="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition">
           <X class="w-6 h-6" />
         </button>
       </div>

@@ -284,36 +284,36 @@ onMounted(() => {
 
 <template>
   <MainLayout active-menu="pipeline">
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-[#0B1120] transition-colors duration-300">
       
       <!-- HEADER & FILTER BAR -->
-      <div class="p-4 sm:p-6 pb-4 border-b border-slate-200 bg-white flex-shrink-0 shadow-sm z-10">
+      <div class="p-4 sm:p-6 pb-4 border-b border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#0F172A] flex-shrink-0 shadow-sm z-10 transition-colors duration-300">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div>
-            <h1 class="text-[26px] sm:text-[32px] font-bold text-slate-900">Sales Pipeline</h1>
-            <p class="text-[14px] sm:text-[16px] text-slate-500">Track and manage leads as they move through every stage.</p>
+            <h1 class="text-[26px] sm:text-[32px] font-bold text-slate-900 dark:text-white">Sales Pipeline</h1>
+            <p class="text-[14px] sm:text-[16px] text-slate-500 dark:text-slate-400">Track and manage leads as they move through every stage.</p>
           </div>
           
           <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
-            <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
               <button 
                 @click="viewMode = 'kanban'" 
-                :class="['px-3 sm:px-4 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-md transition flex items-center gap-2', viewMode === 'kanban' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900']"
+                :class="['px-3 sm:px-4 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-md transition flex items-center gap-2', viewMode === 'kanban' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
               >
                 <Kanban class="w-4 h-4" />
                 <span class="hidden sm:block">Kanban</span>
               </button>
               <button 
                 @click="viewMode = 'table'" 
-                :class="['px-3 sm:px-4 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-md transition flex items-center gap-2', viewMode === 'table' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900']"
+                :class="['px-3 sm:px-4 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-md transition flex items-center gap-2', viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
               >
                 <List class="w-4 h-4" />
                 <span class="hidden sm:block">Table</span>
               </button>
             </div>
 
-            <div class="text-[13px] sm:text-[14px] font-semibold text-slate-900 bg-slate-100 px-3 sm:px-4 py-2 rounded-lg border border-slate-200 whitespace-nowrap">
-              Total Deals: <span class="text-blue-600 font-bold">{{ filteredDeals.length }}</span>
+            <div class="text-[13px] sm:text-[14px] font-semibold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 whitespace-nowrap">
+              Total Deals: <span class="text-blue-600 dark:text-blue-400 font-bold">{{ filteredDeals.length }}</span>
             </div>
           </div>
         </div>
@@ -324,18 +324,18 @@ onMounted(() => {
               v-model="searchQuery"
               type="text" 
               placeholder="Cari deal / perusahaan..."
-              class="w-full text-[12px] sm:text-[13px] border border-slate-200 rounded-lg pl-8 sm:pl-9 pr-3 py-2 bg-slate-50 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-600 transition-colors"
+              class="w-full text-[12px] sm:text-[13px] border border-slate-200 dark:border-slate-700 rounded-lg pl-8 sm:pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900/50 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-1 focus:ring-blue-600 transition-colors"
             />
-            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
           </div>
 
-          <select v-model="selectedOwner" class="text-[12px] sm:text-[13px] font-medium border border-slate-200 rounded-lg px-2 sm:px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
+          <select v-model="selectedOwner" class="text-[12px] sm:text-[13px] font-medium border border-slate-200 dark:border-slate-700 rounded-lg px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
             <option value="All">Semua Owner</option>
             <option value="AC (Aldean)">AC (Aldean)</option>
             <option value="JM (Jordan)">JM (Jordan)</option>
           </select>
 
-          <select v-model="selectedTier" class="text-[12px] sm:text-[13px] font-medium border border-slate-200 rounded-lg px-2 sm:px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
+          <select v-model="selectedTier" class="text-[12px] sm:text-[13px] font-medium border border-slate-200 dark:border-slate-700 rounded-lg px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
             <option value="All">Semua Tier</option>
             <option value="Tier A">Tier A (High Fit)</option>
             <option value="Tier B">Tier B (Medium)</option>
@@ -353,8 +353,8 @@ onMounted(() => {
           v-for="stage in stages" 
           :key="stage.key"
           :class="[
-            'bg-slate-100/80 rounded-xl border border-slate-200 flex flex-col h-full max-h-full transition-all duration-300 ease-in-out',
-            collapsedStages[stage.key] ? 'w-[50px] sm:w-[60px] flex-shrink-0 items-center py-4 cursor-pointer hover:bg-slate-200' : 'w-[280px] sm:w-[300px] flex-shrink-0 p-3'
+            'bg-slate-100/80 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col h-full max-h-full transition-all duration-300 ease-in-out',
+            collapsedStages[stage.key] ? 'w-[50px] sm:w-[60px] flex-shrink-0 items-center py-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700' : 'w-[280px] sm:w-[300px] flex-shrink-0 p-3'
           ]"
           @click="collapsedStages[stage.key] ? toggleCollapse(stage.key) : null"
         >
@@ -372,8 +372,8 @@ onMounted(() => {
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/60 shrink-0">
               <div class="flex items-center gap-2">
                 <div class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: stage.color }"></div>
-                <h2 class="text-[14px] font-bold text-slate-900">{{ stage.label }}</h2>
-                <span class="text-[11px] font-semibold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+                <h2 class="text-[14px] font-bold text-slate-900 dark:text-white">{{ stage.label }}</h2>
+                <span class="text-[11px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
                   {{ kanbanColumns[stage.key].length }}
                 </span>
               </div>
@@ -411,7 +411,7 @@ onMounted(() => {
               @drop="onDrop(stage.key, $event)"
             >
               <!-- Kolom kosong: drop target placeholder -->
-              <div v-if="kanbanColumns[stage.key].length === 0" class="h-24 flex items-center justify-center border-2 border-dashed rounded-lg text-[12px] bg-white/50 transition-colors duration-200" :class="dragOverStage === stage.key ? 'border-blue-400 text-blue-500' : 'border-slate-300 text-slate-400'">
+              <div v-if="kanbanColumns[stage.key].length === 0" class="h-24 flex items-center justify-center border-2 border-dashed rounded-lg text-[12px] bg-white/50 dark:bg-[#0F172A]/50 transition-colors duration-200" :class="dragOverStage === stage.key ? 'border-blue-400 text-blue-500' : 'border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500'">
                 Drop deal di sini
               </div>
 
@@ -429,7 +429,7 @@ onMounted(() => {
                   @dragstart="onDragStart(deal.id, stage.key, $event)"
                   @dragend="onDragEnd($event)"
                   @dragover="onDragOverCard(stage.key, index, $event)"
-                  class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 cursor-grab active:cursor-grabbing transition-all duration-200 group flex items-start gap-2 mb-3"
+                  class="bg-white dark:bg-[#0F172A] p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/50 cursor-grab active:cursor-grabbing transition-all duration-200 group flex items-start gap-2 mb-3"
                 >
                   <div class="md:hidden flex items-center text-slate-300 group-hover:text-slate-400 pt-0.5 transition-colors flex-shrink-0">
                     <GripVertical class="w-5 h-5" />
@@ -452,11 +452,11 @@ onMounted(() => {
                       <span class="text-[13px] font-bold text-slate-900">Score: {{ deal.score }}/5</span>
                     </div>
 
-                    <h3 class="text-[13px] font-bold text-slate-900 leading-snug truncate">{{ deal.company }}</h3>
-                    <p class="text-[12px] text-slate-500 mb-3 truncate">{{ deal.name }}</p>
+                    <h3 class="text-[13px] font-bold text-slate-900 dark:text-white leading-snug truncate">{{ deal.company }}</h3>
+                    <p class="text-[12px] text-slate-500 dark:text-slate-400 mb-3 truncate">{{ deal.name }}</p>
 
-                    <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-slate-400">
-                      <span class="font-medium text-slate-600 flex items-center gap-1">
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/50 text-[11px] text-slate-400 dark:text-slate-500 transition-colors">
+                      <span class="font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1">
                         <User class="w-3 h-3" />
                         {{ deal.owner }}
                       </span>
@@ -476,7 +476,7 @@ onMounted(() => {
             <div v-if="!isLoading && kanbanColumns[stage.key].length > stageLimits[stage.key]" class="pt-2 pb-1">
               <button 
                 @click="loadMore(stage.key)"
-                class="w-full py-2 text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition border border-blue-100"
+                class="w-full py-2 text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors border border-blue-100 dark:border-blue-800/50"
               >
                 Load +10 More
               </button>
@@ -488,11 +488,11 @@ onMounted(() => {
       <!-- ==========================================
            TAMPILAN TABLE (CLEAN & SCANNABLE)
       ========================================== -->
-      <div v-else class="flex-1 p-4 sm:p-6 bg-slate-50 animate-fade-in">
-        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto custom-scrollbar">
+      <div v-else class="flex-1 p-4 sm:p-6 bg-slate-50 dark:bg-[#0B1120] animate-fade-in transition-colors duration-300">
+        <div class="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-xl shadow-sm overflow-x-auto custom-scrollbar transition-colors">
           <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr class="bg-slate-100 border-b border-slate-200 text-[12px] font-bold text-slate-600 uppercase tracking-wider">
+              <tr class="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800/50 text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider transition-colors">
                 <th class="p-4 pl-6 whitespace-nowrap">Company & Contact</th>
                 <th class="p-4 whitespace-nowrap">Stage</th>
                 <th class="p-4 whitespace-nowrap">Tier</th>
@@ -501,7 +501,7 @@ onMounted(() => {
                 <th class="p-4 pr-6 text-right whitespace-nowrap">Last Updated</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200">
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800/50">
               
               <!-- JIKA SEDANG LOADING (TAMPILKAN SKELETON TABEL) -->
               <template v-if="isLoading">
@@ -520,16 +520,16 @@ onMounted(() => {
 
               <!-- JIKA LOADING SELESAI (TAMPILKAN DATA ASLI) -->
               <template v-else>
-                <tr v-for="deal in filteredDeals" :key="deal.id" class="hover:bg-slate-50 transition">
+                <tr v-for="deal in filteredDeals" :key="deal.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                   <td class="p-4 pl-6">
-                    <div class="font-bold text-slate-900 text-[14px] whitespace-nowrap">{{ deal.company }}</div>
-                    <div class="text-[13px] text-slate-500 whitespace-nowrap">{{ deal.name }}</div>
+                    <div class="font-bold text-slate-900 dark:text-white text-[14px] whitespace-nowrap">{{ deal.company }}</div>
+                    <div class="text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ deal.name }}</div>
                   </td>
                   
                   <td class="p-4">
                     <div class="flex items-center gap-2">
                       <div class="w-2.5 h-2.5 rounded-full shadow-sm flex-shrink-0" :style="{ backgroundColor: getStageColor(deal.stage) }"></div>
-                      <span class="text-[13px] font-semibold text-slate-900 whitespace-nowrap">{{ deal.stage }}</span>
+                      <span class="text-[13px] font-semibold text-slate-900 dark:text-white whitespace-nowrap">{{ deal.stage }}</span>
                     </div>
                   </td>
 
@@ -549,22 +549,22 @@ onMounted(() => {
                   </td>
 
                   <td class="p-4">
-                    <span class="text-[13px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 whitespace-nowrap">
+                    <span class="text-[13px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 whitespace-nowrap transition-colors">
                       {{ deal.owner }}
                     </span>
                   </td>
 
-                  <td class="p-4 text-right font-bold text-slate-900 text-[14px]">
+                  <td class="p-4 text-right font-bold text-slate-900 dark:text-white text-[14px]">
                     {{ deal.score }}/5
                   </td>
 
-                  <td class="p-4 pr-6 text-right text-[13px] text-slate-500">
+                  <td class="p-4 pr-6 text-right text-[13px] text-slate-500 dark:text-slate-400">
                     {{ deal.updated_at }}
                   </td>
                 </tr>
 
                 <tr v-if="filteredDeals.length === 0">
-                  <td colspan="6" class="p-12 text-center text-[13px] text-slate-400">
+                  <td colspan="6" class="p-12 text-center text-[13px] text-slate-400 dark:text-slate-500">
                     Tidak ada data deal yang ditemukan dengan filter saat ini.
                   </td>
                 </tr>
