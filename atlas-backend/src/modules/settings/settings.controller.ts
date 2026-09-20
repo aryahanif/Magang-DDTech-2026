@@ -10,18 +10,19 @@ import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('api/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN)
 @Throttle({ default: { limit: 100, ttl: 60000 } })
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
   @Get('ai-rules')
+  @Roles(UserRole.SUPER_ADMIN)
   async getAiRules() {
     const rules = await this.settingsService.getAiRules();
     return { success: true, data: rules };
   }
 
   @Patch('ai-rules')
+  @Roles(UserRole.SUPER_ADMIN)
   async updateAiRules(@Body() updateDto: UpdateAiRulesDto) {
     const rules = await this.settingsService.updateAiRules(updateDto);
     return { success: true, message: 'Settings updated', data: rules };

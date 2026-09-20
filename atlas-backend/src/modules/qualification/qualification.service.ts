@@ -24,10 +24,23 @@ const SCORING_CONFIG = {
   }
 };
 
+export interface LeadScoringInput {
+  country?: string | null;
+  business_type?: string | null;
+  current_problem?: string | null;
+  automation_interest?: string | null;
+  message?: string | null;
+  email?: string | null;
+  company_name?: string | null;
+  full_name?: string | null;
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class QualificationService {
   private readonly logger = new Logger(QualificationService.name);
   private ai: GoogleGenAI;
+  private readonly defaultAiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -40,7 +53,7 @@ export class QualificationService {
    * Calculates a rule-based score based on basic lead information.
    * Uses weighted criteria to generate a final score from 1.0 to 5.0.
    */
-  async calculateRuleBasedScore(leadData: any): Promise<number> {
+  async calculateRuleBasedScore(leadData: LeadScoringInput): Promise<number> {
     // 1. Country Score (1-5)
     const country = (leadData.country || '').trim().toLowerCase();
     const countryScore = SCORING_CONFIG.COUNTRY_SCORES[country] || SCORING_CONFIG.COUNTRY_SCORES['default'];
@@ -85,7 +98,7 @@ export class QualificationService {
   /**
    * Asynchronously analyzes a lead using Google Gemini API.
    */
-  async analyzeLeadWithAI(leadId: string, leadData: any, ruleBasedScore?: number): Promise<void> {
+  async analyzeLeadWithAI(leadId: string, leadData: LeadScoringInput, ruleBasedScore?: number): Promise<void> {
     try {
       const settings = await this.prisma.systemSetting.findFirst();
       if (settings && !settings.is_ai_tiering_enabled) {
@@ -109,7 +122,7 @@ Client Data:
 ${JSON.stringify(leadData, null, 2)}`;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: this.defaultAiModel,
         contents: prompt,
         config: {
           responseMimeType: "application/json",

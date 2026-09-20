@@ -39,23 +39,25 @@ export class DashboardService {
 
     const conversionRate = totalLeads === 0 ? 0 : (convertedLeads / totalLeads) * 100;
 
-    const leadsByCountry = leadsByCountryRaw.reduce((acc, curr) => {
+    const leadsByCountry = leadsByCountryRaw.reduce<Record<string, number>>((acc, curr) => {
       if (curr.country) acc[curr.country] = curr._count.id;
       return acc;
     }, {});
 
-    const pipelineSummary = leadsByStatusRaw.reduce((acc, curr) => {
+    const STATUS_ALIASES: Record<string, string> = {
+      'Demo': 'Demo Scheduled',
+      'Demo Booked': 'Demo Scheduled',
+    };
+
+    const pipelineSummary = leadsByStatusRaw.reduce<Record<string, number>>((acc, curr) => {
       if (curr.status) {
-        let statusKey = curr.status;
-        if (statusKey === 'Demo' || statusKey === 'Demo Booked') {
-          statusKey = 'Demo Scheduled';
-        }
+        const statusKey = STATUS_ALIASES[curr.status] || curr.status;
         acc[statusKey] = (acc[statusKey] || 0) + curr._count.id;
       }
       return acc;
     }, {});
 
-    const leadsBySource = leadsBySourceRaw.reduce((acc, curr) => {
+    const leadsBySource = leadsBySourceRaw.reduce<Record<string, number>>((acc, curr) => {
       const source = curr.source_page || 'Website';
       acc[source] = (acc[source] || 0) + curr._count.id;
       return acc;
