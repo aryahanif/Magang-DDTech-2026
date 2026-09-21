@@ -10,3 +10,5 @@ declare module 'vue3-lottie' {
   import type { DefineComponent } from 'vue'
   export const Vue3Lottie: DefineComponent<{}, {}, any>
 }
+
+declare module '@lucide/vue';

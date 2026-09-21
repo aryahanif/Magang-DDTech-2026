@@ -21,7 +21,7 @@ const { toasts, removeToast } = useToast()
 
         <div class="flex-1 min-w-0">
           <p class="text-[13px] font-bold text-[#0F172A] mb-0.5">
-            {{ toast.type === 'success' ? 'Berhasil' : toast.type === 'error' ? 'Gagal' : 'Informasi' }}
+            {{ toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : 'Info' }}
           </p>
           <p class="text-[12px] text-[#64748B] leading-snug">{{ toast.message }}</p>
         </div>

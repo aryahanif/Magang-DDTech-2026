@@ -64,7 +64,7 @@ onMounted(() => {
 
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(34, 34, 34, ${opacity})`;
+      ctx.fillStyle = `rgba(59, 130, 246, ${opacity * 0.8})`; // blue-500
       ctx.fill();
     }
   }
@@ -108,7 +108,7 @@ onMounted(() => {
           ctx.lineTo(p2.x, p2.y);
           // Opacity decreases as distance increases
           const opacity = (1 - (distance / connectionDistance)) * posOpacity;
-          ctx.strokeStyle = `rgba(34, 34, 34, ${opacity * 0.5})`;
+          ctx.strokeStyle = `rgba(148, 163, 184, ${opacity * 0.6})`; // slate-400
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -132,7 +132,7 @@ const navigateToWelcome = () => {
 </script>
 
 <template>
-  <main class="relative min-h-screen w-full bg-[#EAE9E4] overflow-hidden font-sans">
+  <main class="relative min-h-screen w-full bg-slate-50 overflow-hidden font-sans">
     
     <!-- Canvas for Particle Network -->
     <canvas 
@@ -145,10 +145,10 @@ const navigateToWelcome = () => {
       
       <!-- Top Text -->
       <div class="overflow-hidden mb-6 flex items-start">
-        <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-[#222] border border-[#333] shadow-sm animate-mask-in-delay-1">
-          <span class="w-2 h-2 rounded-full bg-[#F3F0E6] animate-pulse"></span>
-          <span class="text-[14px] font-bold text-[#EAE9E4] uppercase tracking-[0.2em]">
-            Atlas AI WORKFORCE
+        <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-slate-200/80 shadow-[0_2px_10px_rgb(0,0,0,0.03)] animate-mask-in-delay-1 hover:bg-white hover:shadow-md transition-all cursor-default group">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-600 drop-shadow-sm"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          <span class="text-[13px] font-bold text-slate-700 tracking-wide bg-clip-text group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-indigo-600 transition-all duration-300">
+            Atlas AI Workforce
           </span>
         </div>
       </div>
@@ -156,7 +156,7 @@ const navigateToWelcome = () => {
       <!-- Main Headline -->
       <div class="max-w-4xl mb-4">
         <!-- Mask In Effect applied to lines -->
-        <h1 class="text-4xl sm:text-5xl lg:text-[4.5rem] leading-[1.1] font-medium text-[#222]">
+        <h1 class="text-4xl sm:text-5xl lg:text-[4.5rem] leading-[1.1] font-bold text-slate-900 tracking-tight">
           <div class="overflow-hidden">
             <span class="block animate-mask-in">Scale your revenue with</span>
           </div>
@@ -170,10 +170,10 @@ const navigateToWelcome = () => {
       </div>
 
       <!-- Button -->
-      <div class="pt-1">
+      <div class="pt-1 mt-4">
         <button 
           @click="navigateToWelcome"
-          class="animate-fade-in-up inline-flex items-center justify-center px-10 py-4 text-[16px] font-normal text-white bg-[#2D2D2D] border border-[#2D2D2D] rounded-full hover:bg-[#F3F0E6] hover:text-[#2D2D2D] transition-colors duration-300"
+          class="animate-fade-in-up inline-flex items-center justify-center px-10 py-4 text-[16px] font-semibold text-white bg-blue-600 border border-blue-600 rounded-full hover:bg-blue-700 hover:border-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg"
         >
           Get Started
         </button>
