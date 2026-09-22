@@ -83,7 +83,9 @@ model User {
   email         String?  @unique
   role          String?
   job_title     String?
-  password_hash String?
+  password_hash          String?
+  reset_password_token   String?
+  reset_password_expires DateTime?
   created_at    DateTime @default(now())
 
   @@map("users")

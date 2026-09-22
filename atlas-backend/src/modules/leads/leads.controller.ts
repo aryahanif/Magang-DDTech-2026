@@ -28,6 +28,7 @@ export class LeadsController {
       body: new URLSearchParams({ secret: process.env.TURNSTILE_SECRET_KEY || '', response: token }),
     });
     const result = await response.json();
+    console.log('Turnstile Verify Result:', result);
 
     if (!result.success) {
       throw new ForbiddenException('Bot verification failed');

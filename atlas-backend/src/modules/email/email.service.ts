@@ -22,7 +22,7 @@ export class EmailService {
     const response = await fetch(MAILTRAP_SEND_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.mailtrapToken}`,
+        Authorization: \Bearer \\,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -35,7 +35,7 @@ export class EmailService {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`Mailtrap request failed (${response.status}): ${body}`);
+      throw new Error(\Mailtrap request failed (\): \\);
     }
   }
 
@@ -45,39 +45,58 @@ export class EmailService {
       return;
     }
 
-    const leadUrl = `${this.dashboardUrl}/leads/${lead.id}`;
-    const subject = `[${lead.lead_tier}] New Lead from ${lead.company_name}`;
+    const leadUrl = \\/leads/\\;
+    const subject = \[\] New Lead from \\;
 
-    const html = `
-      <h2>New ${lead.lead_tier} Lead</h2>
-      <p><strong>Name:</strong> ${lead.full_name ?? '-'}</p>
-      <p><strong>Email:</strong> ${lead.email}</p>
-      <p><strong>Phone:</strong> ${lead.phone ?? '-'}</p>
-      <p><strong>Company:</strong> ${lead.company_name ?? '-'}</p>
+    const html = \
+      <h2>New \ Lead</h2>
+      <p><strong>Name:</strong> \</p>
+      <p><strong>Email:</strong> \</p>
+      <p><strong>Phone:</strong> \</p>
+      <p><strong>Company:</strong> \</p>
       <h3>Problem Summary</h3>
-      <p>${lead.qualification_summary ?? '-'}</p>
-      <p><a href="${leadUrl}">View in Dashboard</a></p>
-    `;
+      <p>\</p>
+      <p><a href="\">View in Dashboard</a></p>
+    \;
 
     try {
       await this.send(this.salesTeamEmail, subject, html);
     } catch (error) {
-      throw new Error(`Failed to send new lead alert email: ${(error as Error).message}`);
+      throw new Error(\Failed to send new lead alert email: \\);
     }
   }
 
   async sendProspectAutoReply(lead: Lead) {
-    const html = `
-      <p>Hi ${lead.full_name ?? 'there'},</p>
-      <p>Thank you for reaching out to Atlas. We have received your request regarding <strong>${lead.company_name ?? 'your business'}</strong>.</p>
+    const html = \
+      <p>Hi \,</p>
+      <p>Thank you for reaching out to Atlas. We have received your request regarding <strong>\</strong>.</p>
       <p>Our team is currently reviewing your details to understand how our AI Workforce Platform can best assist you. One of our automation specialists will be in touch with you shortly.</p>
       <p>Best regards,<br>The Atlas Team</p>
-    `;
+    \;
 
     try {
       await this.send(lead.email, "We've Received Your Request - Atlas AI Platform", html);
     } catch (error) {
-      throw new Error(`Failed to send prospect auto-reply email: ${(error as Error).message}`);
+      throw new Error(\Failed to send prospect auto-reply email: \\);
+    }
+  }
+
+  async sendPasswordResetEmail(email: string, resetUrl: string) {
+    const subject = \Reset Your Password - Atlas AI Platform\;
+    const html = \
+      <h2>Password Reset Request</h2>
+      <p>Hello,</p>
+      <p>We received a request to reset your password for the Atlas Admin Dashboard.</p>
+      <p>Please click the link below to reset your password. This link will expire in 1 hour.</p>
+      <p><a href="\">Reset Password</a></p>
+      <p>If you did not request this, please ignore this email.</p>
+      <p>Best regards,<br>The Atlas Team</p>
+    \;
+
+    try {
+      await this.send(email, subject, html);
+    } catch (error) {
+      throw new Error(\Failed to send password reset email: \\);
     }
   }
 }
