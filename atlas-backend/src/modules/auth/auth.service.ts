@@ -71,10 +71,10 @@ export class AuthService {
       },
     });
 
-    const resetUrl = \http://localhost:5173/reset-password?token=\&email=\\;
+    const resetUrl = `http://localhost:5173/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email!)}`;
 
     try {
-      await this.emailService.sendPasswordResetEmail(user.email, resetUrl);
+      await this.emailService.sendPasswordResetEmail(user.email!, resetUrl);
     } catch (e) {
       console.error('Failed to send reset email', e);
     }

@@ -41,7 +41,7 @@ export class LeadsService {
     });
 
     if (existingLead) {
-      let duplicateReason = [];
+      let duplicateReason: string[] = [];
       if (existingLead.email?.toLowerCase() === data.email.toLowerCase()) {
         duplicateReason.push(`Email (${data.email})`);
       }
