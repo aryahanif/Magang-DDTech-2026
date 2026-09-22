@@ -28,7 +28,7 @@ const fetchLeadDetail = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await api.get(`/api/leads/${leadId}`)
+    const response = await api.get(`/api/admin/leads/${leadId}`)
     if (response.data && response.data.success) {
       const data = response.data.data
       
