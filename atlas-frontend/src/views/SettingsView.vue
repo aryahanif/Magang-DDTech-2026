@@ -148,15 +148,24 @@ const changePassword = async () => {
 
   isPasswordLoading.value = true
   try {
-    await api.patch('/api/users/password', {
-      currentPassword: passwordForm.value.currentPassword,
-      newPassword: passwordForm.value.newPassword
+    const res = await api.post('/api/auth/change-password', {
+      current_password: passwordForm.value.currentPassword,
+      new_password: passwordForm.value.newPassword
     })
-    showToast('Password updated successfully!', 'success')
-    passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+    
+    if (res.data.success) {
+      showToast('Password updated successfully!', 'success')
+      passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+    } else {
+      showToast(res.data.message || 'Failed to update password', 'error')
+    }
   } catch (error: any) {
     console.error('Change password error:', error)
-    showToast('Backend API Error: Backend team has not yet implemented this endpoint.', 'error')
+    if (error.response?.data?.message) {
+      showToast(error.response.data.message, 'error')
+    } else {
+      showToast('Backend API Error: Failed to change password.', 'error')
+    }
   } finally {
     isPasswordLoading.value = false
   }

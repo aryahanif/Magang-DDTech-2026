@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Sun, Moon } from '@lucide/vue'
 import AtlasLogo from '../assets/atlas-logo.png'
+import api from '../services/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -36,12 +37,14 @@ onMounted(() => {
 })
 
 const handleReset = async () => {
-  // In a real scenario, you would extract the token from route.query.token
-  // const token = route.query.token
-  // if (!token) {
-  //   errorMessage.value = 'Invalid or missing reset token.'
-  //   return
-  // }
+  // Token is usually in URL query (e.g., ?token=xyz&email=abc)
+  const token = route.query.token as string
+  const email = route.query.email as string
+  
+  if (!token || !email) {
+    errorMessage.value = 'Invalid or missing reset token.'
+    return
+  }
 
   if (newPassword.value !== confirmPassword.value) {
     errorMessage.value = 'Passwords do not match.'
@@ -57,20 +60,42 @@ const handleReset = async () => {
   errorMessage.value = ''
   successMessage.value = ''
 
-  // Simulate API call for frontend mockup
-  setTimeout(() => {
+  try {
+    const response = await api.post('/api/auth/reset-password', {
+      email,
+      token,
+      new_password: newPassword.value
+    })
+    
+    if (response.data && response.data.success) {
+      successMessage.value = response.data.message || 'Password successfully reset! You can now log in.'
+      newPassword.value = ''
+      confirmPassword.value = ''
+    } else {
+      errorMessage.value = 'Failed to reset password. Please try again.'
+    }
+  } catch (error: any) {
+    console.error('Reset password failed:', error)
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage.value = error.response.data.message
+    } else {
+      errorMessage.value = 'An error occurred while resetting password. The link might be expired.'
+    }
+  } finally {
     isLoading.value = false
-    successMessage.value = 'Password successfully reset! You can now log in.'
-    newPassword.value = ''
-    confirmPassword.value = ''
-  }, 1500)
+  }
 }
 </script>
 
 <template>
   <div class="flex h-screen w-full bg-slate-50 dark:bg-[#0B1120] text-gray-800 dark:text-gray-200 font-sans relative overflow-hidden transition-colors items-center justify-center">
     
-    <div class="w-full max-w-md p-8 sm:p-10 relative overflow-hidden bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] m-4 transition-colors">
+    <!-- Living AI Orbs (Atlas Identity) -->
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/20 blur-[120px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-1"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/15 blur-[120px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-2"></div>
+    <div class="absolute top-[30%] left-[30%] w-[40%] h-[40%] bg-sky-400/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-3"></div>
+
+    <div class="w-full max-w-md p-8 sm:p-10 relative overflow-hidden bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] m-4 transition-colors z-10">
       <!-- Logo -->
       <div class="flex items-center justify-center gap-2.5 font-bold text-2xl text-gray-900 dark:text-white mb-8 transition-colors">
         <img :src="AtlasLogo" alt="Atlas Logo" class="h-8 w-auto" />

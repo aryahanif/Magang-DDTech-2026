@@ -7,73 +7,38 @@ import api from '../services/api';
 const { showToast } = useToast();
 
 // ==========================================
-// STATE MANAGEMENT & LOCAL STORAGE
+// STATE MANAGEMENT & API INTEGRATION
 // ==========================================
 const tasks = ref<any[]>([]);
-const apiTasks = ref<any[]>([]);
 
-const combinedTasks = computed(() => {
-  return [...tasks.value, ...apiTasks.value];
-});
-
-const loadTasks = () => {
-  const saved = localStorage.getItem('atlas_mock_tasks');
-  if (saved) {
-    tasks.value = JSON.parse(saved);
-  } else {
-    // Default tasks
-    tasks.value = [
-      { id: 1, title: 'Follow up demo with Acme Corp', date: '2026-09-01', time: '10:00', type: 'call', priority: 'high', status: 'pending', lead: 'John Doe' },
-      { id: 2, title: 'Send proposal to TechFlow', date: '2026-09-01', time: '14:00', type: 'email', priority: 'medium', status: 'pending', lead: 'Sarah Smith' },
-      { id: 3, title: 'Check in on integration progress', date: '2026-09-02', time: '11:30', type: 'meeting', priority: 'low', status: 'pending', lead: 'Mike Johnson' },
-      { id: 4, title: 'Quarterly review preparation', date: '2026-09-03', time: '09:00', type: 'task', priority: 'medium', status: 'completed', lead: '' },
-    ];
-    saveTasks();
-  }
-};
-
-const saveTasks = () => {
-  localStorage.setItem('atlas_mock_tasks', JSON.stringify(tasks.value));
-};
-
-const fetchLeadsForTasks = async () => {
+const fetchTasks = async () => {
   try {
-    const response = await api.get('/api/admin/leads');
+    const response = await api.get('/api/admin/tasks');
     if (response.data && response.data.success) {
-      const leads = response.data.data;
-      apiTasks.value = leads
-        .filter((lead: any) => lead.next_follow_up_at)
-        .map((lead: any) => {
-          const dateObj = new Date(lead.next_follow_up_at);
-          const dateStr = dateObj.toISOString().split('T')[0];
-          const timeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-          
-          return {
-            id: `lead-${lead.id}`, // Unique ID format to prevent clash with local storage IDs
-            title: `Follow up: ${lead.full_name || lead.company_name || 'Unknown'}`,
-            date: dateStr,
-            time: timeStr,
-            type: 'meeting',
-            priority: 'high',
-            status: 'pending',
-            lead: lead.full_name || lead.email || '',
-            isReadOnly: true
-          };
-        });
+      tasks.value = response.data.data.map((t: any) => {
+        const d = new Date(t.due_at);
+        return {
+          id: t.id,
+          title: t.title,
+          date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+          time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+          type: t.type,
+          priority: t.priority,
+          status: t.status,
+          lead: t.lead_name || ''
+        };
+      });
+      generateCalendar();
     }
-  } catch (error) {
-    console.error("Failed to fetch leads for tasks", error);
+  } catch (err) {
+    console.error("Failed to fetch tasks", err);
+    showToast("Failed to fetch tasks from server", "error");
   }
 };
 
 onMounted(() => {
-  loadTasks();
-  fetchLeadsForTasks().then(() => generateCalendar());
+  fetchTasks();
 });
-
-watch(tasks, () => {
-  saveTasks();
-}, { deep: true });
 
 // ==========================================
 // LIST VIEW FILTERING
@@ -82,7 +47,7 @@ const viewMode = ref('list'); // 'list' or 'calendar'
 const filterStatus = ref('all'); // 'all', 'pending', 'completed'
 
 const filteredTasks = computed(() => {
-  let result = [...combinedTasks.value];
+  let result = [...tasks.value];
   if (filterStatus.value !== 'all') {
     result = result.filter(t => t.status === filterStatus.value);
   }
@@ -125,39 +90,71 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
-const submitTask = () => {
+const submitTask = async () => {
   if (!newTask.value.title || !newTask.value.date || !newTask.value.time) {
     showToast('Please fill in all required fields.', 'error');
     return;
   }
   
-  tasks.value.push({
-    id: Date.now(),
-    ...newTask.value,
-    status: 'pending'
-  });
-  
-  showToast('Task successfully added!', 'success');
-  closeModal();
+  const [year = new Date().getFullYear(), month = 1, day = 1] = newTask.value.date.split('-').map(Number);
+  const [hour = 0, minute = 0] = newTask.value.time.split(':').map(Number);
+  const due_at = new Date(year, month - 1, day, hour, minute).toISOString();
+
+  try {
+    await api.post('/api/admin/tasks', {
+      title: newTask.value.title,
+      due_at,
+      type: newTask.value.type,
+      priority: newTask.value.priority,
+      lead_name: newTask.value.lead
+    });
+    
+    showToast('Task successfully added!', 'success');
+    closeModal();
+    fetchTasks();
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to create task', 'error');
+  }
 };
 
-const toggleStatus = (task: any) => {
-  if (task.isReadOnly) {
-    showToast('Tugas otomatis dari Leads tidak dapat diubah di sini.', 'error');
-    return;
+const toggleStatus = async (task: any) => {
+  const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+  try {
+    await api.patch(`/api/admin/tasks/${task.id}`, { status: newStatus });
+    task.status = newStatus;
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to update task status', 'error');
   }
-  task.status = task.status === 'completed' ? 'pending' : 'completed';
 };
+
+const isDeleteModalOpen = ref(false);
+const taskToDelete = ref<any>(null);
 
 const deleteTask = (task: any) => {
-  if (task.isReadOnly) {
-    showToast('Tugas otomatis dari Leads tidak dapat dihapus di sini.', 'error');
-    return;
-  }
-  if (confirm('Are you sure you want to delete this task?')) {
-    tasks.value = tasks.value.filter(t => t.id !== task.id);
+  taskToDelete.value = task;
+  isDeleteModalOpen.value = true;
+};
+
+const confirmDeleteTask = async () => {
+  if (!taskToDelete.value) return;
+  
+  try {
+    await api.delete(`/api/admin/tasks/${taskToDelete.value.id}`);
     showToast('Task deleted.', 'success');
+    fetchTasks();
+    isDeleteModalOpen.value = false;
+    taskToDelete.value = null;
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to delete task', 'error');
   }
+};
+
+const cancelDelete = () => {
+  isDeleteModalOpen.value = false;
+  taskToDelete.value = null;
 };
 
 // ==========================================
@@ -233,7 +230,7 @@ const generateCalendar = () => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
     
     // Find tasks for this day
-    const dayTasks = combinedTasks.value.filter(t => t.date === dateStr);
+    const dayTasks = tasks.value.filter(t => t.date === dateStr);
     
     days.push({
       empty: false,
@@ -258,7 +255,7 @@ const nextMonth = () => {
 };
 
 // Regenerate calendar when tasks change so new tasks appear on it
-watch(combinedTasks, generateCalendar, { deep: true });
+watch(tasks, generateCalendar, { deep: true });
 
 </script>
 
@@ -468,6 +465,25 @@ watch(combinedTasks, generateCalendar, { deep: true });
           <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">Save Task</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ================= DELETE CONFIRMATION MODAL ================= -->
+  <div v-if="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="cancelDelete"></div>
+    <div class="relative bg-white dark:bg-[#0F172A] rounded-xl shadow-2xl w-full max-w-sm p-6 sm:p-8 animate-fade-in transition-colors duration-300 text-center">
+      <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-500 mx-auto flex items-center justify-center mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <h2 class="text-[18px] font-bold text-[#0F172A] dark:text-white mb-2">Delete Task?</h2>
+      <p class="text-[13px] text-[#64748B] dark:text-slate-400 mb-6">
+        Are you sure you want to delete <strong>{{ taskToDelete?.title }}</strong>? This action cannot be undone.
+      </p>
+      
+      <div class="flex items-center justify-center gap-3">
+        <button @click="cancelDelete" class="px-5 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-lg text-[13px] font-bold hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors w-full">Cancel</button>
+        <button @click="confirmDeleteTask" class="px-5 py-2 bg-red-600 text-white rounded-lg text-[13px] font-bold hover:bg-red-700 transition shadow-sm w-full">Yes, Delete</button>
+      </div>
     </div>
   </div>
 
