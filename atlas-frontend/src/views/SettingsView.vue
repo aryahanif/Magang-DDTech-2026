@@ -19,10 +19,11 @@ const profileForm = ref({
 // Data: Team Management
 const teamMembers = ref<any[]>([])
 
-// Data: AI Scoring Rules
+// Data: AI Scoring Rules (Stubbed)
 const aiRules = ref({
   autoTiering: true,
   spamDetection: true,
+  sentimentAnalysis: false,
   dataEnrichment: true
 })
 
@@ -63,21 +64,6 @@ const fetchSettingsData = async () => {
       // Fallback
       teamMembers.value = [{ id: 1, name: 'Fallback User', email: 'waiting@backend', role: 'Admin', status: 'Active' }]
     }
-
-    // 3. Fetch AI Rules
-    try {
-      const aiRes = await api.get('/api/settings/ai-rules')
-      if (aiRes.data && aiRes.data.success) {
-        const rules = aiRes.data.data;
-        aiRules.value = {
-          autoTiering: rules.is_ai_tiering_enabled,
-          spamDetection: rules.is_spam_detection_enabled,
-          dataEnrichment: rules.is_data_enrichment_enabled,
-        }
-      }
-    } catch (e) {
-      console.warn('Backend API Not Ready: /api/settings/ai-rules')
-    }
   } finally {
     isLoading.value = false
   }
@@ -102,20 +88,6 @@ const saveProfile = async () => {
   } catch (error) {
     console.error('Save profile error:', error)
     showToast('Backend API Error: Failed to save profile.', 'error')
-  }
-}
-
-const updateAiRules = async () => {
-  try {
-    await api.patch('/api/settings/ai-rules', {
-      is_ai_tiering_enabled: aiRules.value.autoTiering,
-      is_spam_detection_enabled: aiRules.value.spamDetection,
-      is_data_enrichment_enabled: aiRules.value.dataEnrichment,
-    })
-    showToast('AI Rules updated successfully!', 'success')
-  } catch (error) {
-    console.error('Update AI rules error:', error)
-    showToast('Failed to update AI rules.', 'error')
   }
 }
 
@@ -314,7 +286,7 @@ const saveEmailSettings = () => {
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
-                    <input type="checkbox" v-model="aiRules.autoTiering" @change="updateAiRules" class="sr-only peer">
+                    <input type="checkbox" v-model="aiRules.autoTiering" class="sr-only peer">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -328,7 +300,7 @@ const saveEmailSettings = () => {
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
-                    <input type="checkbox" v-model="aiRules.spamDetection" @change="updateAiRules" class="sr-only peer">
+                    <input type="checkbox" v-model="aiRules.spamDetection" class="sr-only peer">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -345,7 +317,7 @@ const saveEmailSettings = () => {
                 </div>
                 <div class="flex justify-start sm:justify-end w-full sm:w-auto">
                   <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
-                    <input type="checkbox" v-model="aiRules.dataEnrichment" @change="updateAiRules" class="sr-only peer">
+                    <input type="checkbox" v-model="aiRules.dataEnrichment" class="sr-only peer">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>

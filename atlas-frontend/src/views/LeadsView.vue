@@ -329,34 +329,41 @@ const submitForm = async (values: any) => {
   }
 };
 
-const exportToCSV = async () => {
-  try {
-    const params = new URLSearchParams();
-    if (filterStatus.value) params.append('status', filterStatus.value);
-    if (filterTier.value) params.append('tier', filterTier.value);
-    if (filterCountry.value) params.append('country', filterCountry.value);
-    if (searchQuery.value) params.append('search_keyword', searchQuery.value);
-
-    // Call backend endpoint which returns CSV
-    const response = await api.get(`/api/admin/leads/export?${params.toString()}`, { 
-      responseType: 'blob' 
-    });
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "leads_export.csv");
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    showToast("Export successful!", "success");
-  } catch (error) {
-    console.error("Export failed", error);
-    showToast("Failed to export leads.", "error");
+const exportToCSV = () => {
+  if (filteredLeads.value.length === 0) {
+    showToast("No leads to export.", "error");
+    return;
   }
+  
+  const headers = ["Name", "Company", "Email", "Phone", "Country", "Source", "Tier", "Status", "Value", "Updated"];
+  const rows = filteredLeads.value.map(lead => [
+    lead.name,
+    lead.company,
+    lead.email,
+    lead.phone,
+    lead.country,
+    lead.source,
+    lead.tier,
+    lead.status,
+    lead.value,
+    lead.updated
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(","))
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "leads_export.csv");
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast("Export successful!", "success");
 };
 
 const closeModal = () => {
