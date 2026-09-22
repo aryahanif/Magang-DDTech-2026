@@ -14,6 +14,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { UsersModule } from './modules/users/users.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
     UsersModule,
     IntegrationsModule,
     TasksModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

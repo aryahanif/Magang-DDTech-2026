@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { GoogleGenAI, Type } from '@google/genai';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Define configuration for scoring weights and individual criteria scores (1-5 scale)
 const SCORING_CONFIG = {
@@ -45,6 +46,7 @@ export class QualificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly notificationsService: NotificationsService,
   ) {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
   }
@@ -170,6 +172,15 @@ ${JSON.stringify(leadData, null, 2)}`;
       this.logger.log(`Successfully analyzed lead ${leadId} with AI.`);
 
       if (updatedLead.lead_tier !== 'Spam') {
+        this.notificationsService
+          .create({
+            title: 'AI Scoring Complete',
+            message: `${updatedLead.full_name ?? updatedLead.email} has been qualified by AI as ${updatedLead.lead_tier}.`,
+            icon: 'sparkles',
+            lead_id: updatedLead.id,
+          })
+          .catch((error) => this.logger.error('Failed to create AI scoring notification', error));
+
         // Fire-and-forget so a slow/failing Resend call never blocks qualification.
         this.emailService
           .sendNewLeadAlert(updatedLead)

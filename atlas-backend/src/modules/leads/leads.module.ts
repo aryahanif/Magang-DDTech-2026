@@ -5,9 +5,10 @@ import { WebhooksController } from './webhooks.controller';
 import { LeadsService } from './leads.service';
 import { QualificationModule } from '../qualification/qualification.module';
 import { EmailModule } from '../email/email.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [QualificationModule, EmailModule],
+  imports: [QualificationModule, EmailModule, NotificationsModule],
   controllers: [LeadsController, AdminLeadsController, WebhooksController],
   providers: [LeadsService],
 })

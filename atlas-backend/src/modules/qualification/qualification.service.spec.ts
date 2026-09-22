@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { QualificationService } from './qualification.service';
 import { PrismaService } from '../../database/prisma.service';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const generateContent = jest.fn();
 jest.mock('@google/genai', () => ({
@@ -26,6 +27,7 @@ describe('QualificationService', () => {
       sendNewLeadAlert: jest.fn().mockResolvedValue(undefined),
       sendProspectAutoReply: jest.fn().mockResolvedValue(undefined),
     };
+    const notificationsService = { create: jest.fn().mockResolvedValue(undefined) };
     generateContent.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('QualificationService', () => {
         QualificationService,
         { provide: PrismaService, useValue: prisma },
         { provide: EmailService, useValue: emailService },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     }).compile();
 
