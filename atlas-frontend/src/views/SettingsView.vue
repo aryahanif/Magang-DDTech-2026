@@ -17,6 +17,14 @@ const profileForm = ref({
   job_title: ''
 })
 
+// Data: Security
+const passwordForm = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const isPasswordLoading = ref(false)
+
 // Data: Team Management
 const teamMembers = ref<any[]>([])
 
@@ -124,6 +132,33 @@ const saveProfile = async () => {
   } catch (error) {
     console.error('Save profile error:', error)
     showToast('Backend API Error: Failed to save profile.', 'error')
+  }
+}
+
+const changePassword = async () => {
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    showToast('New passwords do not match!', 'error')
+    return
+  }
+  
+  if (passwordForm.value.newPassword.length < 6) {
+    showToast('Password must be at least 6 characters long.', 'error')
+    return
+  }
+
+  isPasswordLoading.value = true
+  try {
+    await api.patch('/api/users/password', {
+      currentPassword: passwordForm.value.currentPassword,
+      newPassword: passwordForm.value.newPassword
+    })
+    showToast('Password updated successfully!', 'success')
+    passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+  } catch (error: any) {
+    console.error('Change password error:', error)
+    showToast('Backend API Error: Backend team has not yet implemented this endpoint.', 'error')
+  } finally {
+    isPasswordLoading.value = false
   }
 }
 
@@ -298,6 +333,32 @@ const saveEmailSettings = () => {
                 </button>
               </div>
             </form>
+
+            <!-- CHANGE PASSWORD SECTION -->
+            <div class="mt-10 md:mt-12 pt-8 md:pt-10 border-t border-slate-200 dark:border-slate-800/50">
+              <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 dark:text-white mb-1">Security</h2>
+              <p class="text-[13px] md:text-[14px] text-slate-500 dark:text-slate-400 mb-6 md:mb-8">Update your password to keep your account secure.</p>
+              
+              <form @submit.prevent="changePassword" class="border border-slate-200/60 dark:border-slate-800/50 rounded-2xl p-6 md:p-8 bg-white/60 dark:bg-slate-800/20 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.02)] max-w-2xl space-y-5 md:space-y-6">
+                <div>
+                  <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 dark:text-slate-300 mb-1.5 md:mb-2">Current Password</label>
+                  <input v-model="passwordForm.currentPassword" type="password" required class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+                </div>
+                <div>
+                  <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 dark:text-slate-300 mb-1.5 md:mb-2">New Password</label>
+                  <input v-model="passwordForm.newPassword" type="password" required minlength="6" class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+                </div>
+                <div>
+                  <label class="block text-[12px] md:text-[13px] font-semibold text-slate-900 dark:text-slate-300 mb-1.5 md:mb-2">Confirm New Password</label>
+                  <input v-model="passwordForm.confirmPassword" type="password" required minlength="6" class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-lg px-3 py-2 md:px-3.5 md:py-2.5 text-[13px] md:text-[14px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
+                </div>
+                <div>
+                  <button type="submit" :disabled="isPasswordLoading" class="w-full sm:w-auto bg-blue-600 text-white text-[13px] md:text-[14px] font-semibold py-2 md:py-2.5 px-4 md:px-6 rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                    {{ isPasswordLoading ? 'Updating...' : 'Update Password' }}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
           <!-- ================= TAB: TEAM MANAGEMENT ================= -->

@@ -29,7 +29,7 @@ if (!sessionStorage.getItem('saved_traffic_source')) {
   <div class="min-h-screen bg-white text-ff">
     <div id="app">
     <!-- Tampilkan UserNavbar HANYA jika BUKAN halaman admin dan bukan form pages -->
-    <UserNavbar v-if="!$route.path.startsWith('/admin') && !['/', '/assessment', '/contact-sales', '/waitlist', '/partner-inquiry', '/requestdemo'].includes($route.path)" />
+    <UserNavbar v-if="!$route.path.startsWith('/admin') && !['/', '/reset-password', '/assessment', '/contact-sales', '/waitlist', '/partner-inquiry', '/requestdemo'].includes($route.path)" />
     
     <!-- Tempat konten halaman akan muncul -->
     <RouterView />
