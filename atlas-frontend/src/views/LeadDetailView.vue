@@ -126,6 +126,12 @@ const formatCreatorName = (name: string) => {
   // Check if the name is a UUID
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidRegex.test(name)) {
+    const member = teamMembers.value.find(m => m.id === name);
+    if (member) return member.name;
+    
+    if (currentUser.value && currentUser.value.id === name) {
+      return currentUser.value.name || 'Admin';
+    }
     return 'Admin';
   }
   return name;
@@ -160,7 +166,7 @@ const submitNote = async () => {
   const newMockNote = {
     id: Date.now().toString(),
     note: noteText,
-    created_by: lead.value.assigned_owner || 'Admin',
+    created_by: currentUser.value?.name || currentUser.value?.id || 'Admin',
     created_at: new Date().toISOString()
   };
   if (!lead.value.notes) lead.value.notes = [];
@@ -396,6 +402,12 @@ const exportDetailToCSV = () => {
                   AI Qualification Summary
                 </h2>
                 <div class="flex items-center gap-3">
+                  <button
+                    @click="fetchLeadDetail"
+                    class="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                  >
+                    Refresh
+                  </button>
                   <span
                     class="text-[12px] font-bold px-2.5 py-1 rounded bg-[#DBEAFE] dark:bg-blue-900/30 text-[#1E40AF] dark:text-blue-400"
                     >Score: {{ lead.lead_score }}/5</span
@@ -403,7 +415,13 @@ const exportDetailToCSV = () => {
                 </div>
               </div>
 
-              <div class="space-y-4">
+              <div v-if="!lead.qualification_summary" class="flex flex-col items-center justify-center py-8 text-center">
+                <Loader2 class="w-8 h-8 text-blue-500 animate-spin mb-3" />
+                <p class="text-[14px] font-bold text-slate-700 dark:text-slate-300">AI is analyzing this lead...</p>
+                <p class="text-[12px] text-slate-500 mt-1">This usually takes 5-10 seconds. Click refresh to check the result.</p>
+              </div>
+
+              <div v-else class="space-y-4">
                 <div>
                   <label
                     class="block text-[11px] sm:text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1"
@@ -719,17 +737,34 @@ const exportDetailToCSV = () => {
                 <div
                   v-for="note in lead.notes"
                   :key="'note-' + note.id"
-                  class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-colors"
+                  :class="[
+                    'p-3 rounded-lg border transition-colors',
+                    note.created_by === 'System' 
+                      ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30' 
+                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700/50'
+                  ]"
                 >
-                  <p class="text-[13px] text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
+                  <p 
+                    :class="[
+                      'text-[13px] leading-relaxed mb-2',
+                      note.created_by === 'System' 
+                        ? 'text-amber-800 dark:text-amber-400 font-medium' 
+                        : 'text-slate-700 dark:text-slate-300'
+                    ]"
+                  >
                     {{ note.note }}
                   </p>
                   <div
-                    class="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500"
+                    class="flex items-center justify-between text-[11px]"
+                    :class="note.created_by === 'System' ? 'text-amber-600/70 dark:text-amber-500/70' : 'text-slate-400 dark:text-slate-500'"
                   >
-                    <span class="font-medium text-blue-600 dark:text-blue-400">{{
-                      formatCreatorName(note.created_by)
-                    }}</span>
+                    <span 
+                      class="font-bold flex items-center gap-1"
+                      :class="note.created_by === 'System' ? 'text-amber-600 dark:text-amber-500' : 'text-blue-600 dark:text-blue-400'"
+                    >
+                      <svg v-if="note.created_by === 'System'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                      {{ formatCreatorName(note.created_by) }}
+                    </span>
                     <span>{{ formatDate(note.created_at) }}</span>
                   </div>
                 </div>

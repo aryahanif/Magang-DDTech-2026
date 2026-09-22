@@ -112,8 +112,22 @@ const fetchLeads = async () => {
   }
 };
 
+const teamMembers = ref<any[]>([]);
+
+const fetchTeamMembers = async () => {
+  try {
+    const response = await api.get('/api/users');
+    if (response.data && response.data.success) {
+      teamMembers.value = response.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch team members", error);
+  }
+};
+
 onMounted(() => {
   fetchLeads();
+  fetchTeamMembers();
 });
 
 // ==========================================
@@ -720,8 +734,7 @@ const getStatusClass = (status: string) => {
             <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Assigned Owner (Internal)</label>
             <Field name="assigned_owner" as="select" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="">Unassigned</option>
-              <option value="AC (Aldean)">AC (Aldean)</option>
-              <option value="JM (Jordan)">JM (Jordan)</option>
+              <option v-for="member in teamMembers" :key="member.id" :value="member.name">{{ member.name }}</option>
             </Field>
             <ErrorMessage name="assigned_owner" class="text-red-500 text-[11px] mt-1 block" />
           </div>

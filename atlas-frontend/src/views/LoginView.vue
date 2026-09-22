@@ -26,11 +26,10 @@ const handleResetPassword = async () => {
     const response = await api.post('/api/auth/forgot-password', {
       email: resetEmail.value
     })
-    resetMessage.value = response.data?.message || 'If an account with that email exists, we have sent a reset link.'
+    resetMessage.value = 'Please check your inbox! A password reset link has been sent if the email is registered in our system.'
   } catch (error) {
     console.error('Forgot password failed:', error)
-    // For security reasons, usually we still show the same success message even if email not found
-    resetMessage.value = 'If an account with that email exists, we have sent a reset link.'
+    resetMessage.value = 'Please check your inbox! A password reset link has been sent if the email is registered in our system.'
   } finally {
     isResetLoading.value = false
   }

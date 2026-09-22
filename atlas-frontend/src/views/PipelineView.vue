@@ -25,6 +25,7 @@ interface Deal {
 type StageKey = Deal['stage']
 
 const allDeals = ref<Deal[]>([])
+const teamMembers = ref<any[]>([])
 
 const fetchDeals = async () => {
   try {
@@ -60,7 +61,21 @@ const fetchDeals = async () => {
   }
 }
 
-onMounted(() => fetchDeals())
+const fetchTeamMembers = async () => {
+  try {
+    const response = await api.get('/api/users')
+    if (response.data && response.data.success) {
+      teamMembers.value = response.data.data
+    }
+  } catch (error) {
+    console.error("Failed to fetch team members", error)
+  }
+}
+
+onMounted(() => {
+  fetchDeals()
+  fetchTeamMembers()
+})
 
 const stages: { key: StageKey; label: string; color: string }[] = [
   { key: 'New Lead', label: 'New Lead', color: '#64748B' },
@@ -331,8 +346,7 @@ onMounted(() => {
 
           <select v-model="selectedOwner" class="text-[12px] sm:text-[13px] font-medium border border-slate-200 dark:border-slate-700 rounded-lg px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
             <option value="All">Semua Owner</option>
-            <option value="AC (Aldean)">AC (Aldean)</option>
-            <option value="JM (Jordan)">JM (Jordan)</option>
+            <option v-for="member in teamMembers" :key="member.id" :value="member.name">{{ member.name }}</option>
           </select>
 
           <select v-model="selectedTier" class="text-[12px] sm:text-[13px] font-medium border border-slate-200 dark:border-slate-700 rounded-lg px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">

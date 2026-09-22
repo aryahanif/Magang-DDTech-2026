@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import ToastNotification from './ToastNotification.vue'
+import api from '../services/api'
 import { 
   LayoutDashboard, Users, KanbanSquare, CheckSquare, Settings, 
   Menu, X, Bell, User, Sparkles, LogOut, ChevronDown, LifeBuoy, Sun, Moon
@@ -22,26 +23,33 @@ const isNotificationDrawerOpen = ref(false) // State untuk panel laci (drawer) k
 
 // TODO: API Fetch Notifikasi
 
-const notifications = ref<any[]>([
-  {
-    id: 1,
-    title: 'New Lead: Jhon Smith',
-    message: 'Jhon Smith from TechCorp just submitted the Assessment form.',
-    time: '2 mins ago',
-    icon: 'user',
-    unread: true
-  },
-  {
-    id: 2,
-    title: 'AI Scoring Complete',
-    message: 'Jhon Smith data has been qualified by AI with a score of 4/5.',
-    time: '1 min ago',
-    icon: 'sparkles',
-    unread: true
-  }
-])
+const notifications = ref<any[]>([])
 
-const unreadCount = computed(() => notifications.value.filter(n => n.unread).length)
+const fetchNotifications = async () => {
+  try {
+    const res = await api.get('/api/admin/notifications')
+    if (res.data && res.data.success) {
+      notifications.value = res.data.data.map((n: any) => {
+        // Hitung selisih waktu sederhana (time ago)
+        const diff = Math.floor((new Date().getTime() - new Date(n.created_at).getTime()) / 60000)
+        let timeStr = 'Just now'
+        if (diff > 0 && diff < 60) timeStr = `${diff}m ago`
+        else if (diff >= 60 && diff < 1440) timeStr = `${Math.floor(diff / 60)}h ago`
+        else if (diff >= 1440) timeStr = `${Math.floor(diff / 1440)}d ago`
+
+        return {
+          ...n,
+          time: timeStr,
+          unread: !n.is_read
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error)
+  }
+}
+
+const unreadCount = computed(() => notifications.value.filter(n => n.unread || !n.is_read).length)
 
 // Hanya ambil 3 notifikasi terbaru untuk Dropdown kecil
 const recentNotifications = computed(() => notifications.value.slice(0, 3))
@@ -49,10 +57,29 @@ const recentNotifications = computed(() => notifications.value.slice(0, 3))
 const toggleNotification = () => isNotificationOpen.value = !isNotificationOpen.value
 const closeNotification = () => isNotificationOpen.value = false
 
-const markAllAsRead = () => notifications.value.forEach(n => n.unread = false)
-const markAsRead = (id: number) => {
-  const notif = notifications.value.find(n => n.id === id)
-  if (notif) notif.unread = false
+const markAllAsRead = async () => {
+  try {
+    await api.patch('/api/admin/notifications/read-all')
+    notifications.value.forEach(n => {
+      n.unread = false
+      n.is_read = true
+    })
+  } catch (error) {
+    console.error('Failed to mark all as read:', error)
+  }
+}
+
+const markAsRead = async (id: string | number) => {
+  try {
+    await api.patch(`/api/admin/notifications/${id}/read`)
+    const notif = notifications.value.find(n => n.id === id)
+    if (notif) {
+      notif.unread = false
+      notif.is_read = true
+    }
+  } catch (error) {
+    console.error('Failed to mark as read:', error)
+  }
 }
 
 
@@ -86,6 +113,8 @@ const isSidebarCollapsed = ref(false)
 const isSidebarHovered = ref(false)   
 
 onMounted(() => {
+  fetchNotifications()
+  
   document.addEventListener('click', handleClickOutside)
   
   // Load user data from localStorage
