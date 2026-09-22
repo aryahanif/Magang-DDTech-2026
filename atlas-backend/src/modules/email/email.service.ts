@@ -46,38 +46,38 @@ export class EmailService {
     }
 
     const leadUrl = `${this.dashboardUrl}/leads/${lead.id}`;
-    const subject = `[${lead.lead_tier}] New Lead from ${lead.company_name}`;
+    const subject = `[${lead.lead_tier || 'New'}] New Lead from ${lead.company_name || lead.full_name}`;
 
     const html = `
-      <h2>New ${lead.business_type} Lead</h2>
+      <h2>New ${lead.lead_tier || ''} Lead</h2>
       <p><strong>Name:</strong> ${lead.full_name}</p>
       <p><strong>Email:</strong> ${lead.email}</p>
-      <p><strong>Phone:</strong> ${lead.phone}</p>
-      <p><strong>Company:</strong> ${lead.company_name}</p>
+      <p><strong>Phone:</strong> ${lead.phone || 'N/A'}</p>
+      <p><strong>Company:</strong> ${lead.company_name || 'N/A'}</p>
       <h3>Problem Summary</h3>
-      <p>${lead.current_problem}</p>
+      <p>${lead.current_problem || 'N/A'}</p>
       <p><a href="${leadUrl}">View in Dashboard</a></p>
     `;
 
     try {
       await this.send(this.salesTeamEmail, subject, html);
-    } catch (error: any) {
-      throw new Error(`Failed to send new lead alert email: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Failed to send new lead alert email: ${(error as Error).message}`);
     }
   }
 
   async sendProspectAutoReply(lead: Lead) {
     const html = `
       <p>Hi ${lead.full_name},</p>
-      <p>Thank you for reaching out to Atlas. We have received your request regarding <strong>${lead.automation_interest}</strong>.</p>
+      <p>Thank you for reaching out to Atlas. We have received your request regarding <strong>${lead.current_problem || 'our AI solutions'}</strong>.</p>
       <p>Our team is currently reviewing your details to understand how our AI Workforce Platform can best assist you. One of our automation specialists will be in touch with you shortly.</p>
       <p>Best regards,<br>The Atlas Team</p>
     `;
 
     try {
       await this.send(lead.email, "We've Received Your Request - Atlas AI Platform", html);
-    } catch (error: any) {
-      throw new Error(`Failed to send prospect auto-reply email: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Failed to send prospect auto-reply email: ${(error as Error).message}`);
     }
   }
 
@@ -95,8 +95,8 @@ export class EmailService {
 
     try {
       await this.send(email, subject, html);
-    } catch (error: any) {
-      throw new Error(`Failed to send password reset email: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Failed to send password reset email: ${(error as Error).message}`);
     }
   }
 }

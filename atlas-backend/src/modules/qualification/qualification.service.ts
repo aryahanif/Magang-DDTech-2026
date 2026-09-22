@@ -41,7 +41,7 @@ export interface LeadScoringInput {
 export class QualificationService {
   private readonly logger = new Logger(QualificationService.name);
   private ai: GoogleGenAI;
-  private readonly defaultAiModel = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
+  private readonly defaultAiModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
   constructor(
     private readonly prisma: PrismaService,

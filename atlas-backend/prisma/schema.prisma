@@ -56,7 +56,7 @@ model LeadNote {
   created_by String?
   created_at DateTime @default(now())
 
-  lead       Lead     @relation(fields: [lead_id], references: [id])
+  lead       Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@map("lead_notes")
 }
@@ -69,7 +69,7 @@ model LeadActivityLog {
   metadata      Json?
   created_at    DateTime @default(now())
 
-  lead          Lead     @relation(fields: [lead_id], references: [id])
+  lead          Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@map("lead_activity_logs")
 }
