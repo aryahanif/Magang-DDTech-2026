@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Sun, Moon } from '@lucide/vue'
 import AtlasLogo from '../assets/atlas-logo.png'
+import api from '../services/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -36,12 +37,14 @@ onMounted(() => {
 })
 
 const handleReset = async () => {
-  // In a real scenario, you would extract the token from route.query.token
-  // const token = route.query.token
-  // if (!token) {
-  //   errorMessage.value = 'Invalid or missing reset token.'
-  //   return
-  // }
+  // Token is usually in URL query (e.g., ?token=xyz&email=abc)
+  const token = route.query.token as string
+  const email = route.query.email as string
+  
+  if (!token || !email) {
+    errorMessage.value = 'Invalid or missing reset token.'
+    return
+  }
 
   if (newPassword.value !== confirmPassword.value) {
     errorMessage.value = 'Passwords do not match.'
@@ -57,13 +60,30 @@ const handleReset = async () => {
   errorMessage.value = ''
   successMessage.value = ''
 
-  // Simulate API call for frontend mockup
-  setTimeout(() => {
+  try {
+    const response = await api.post('/api/auth/reset-password', {
+      email,
+      token,
+      new_password: newPassword.value
+    })
+    
+    if (response.data && response.data.success) {
+      successMessage.value = response.data.message || 'Password successfully reset! You can now log in.'
+      newPassword.value = ''
+      confirmPassword.value = ''
+    } else {
+      errorMessage.value = 'Failed to reset password. Please try again.'
+    }
+  } catch (error: any) {
+    console.error('Reset password failed:', error)
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage.value = error.response.data.message
+    } else {
+      errorMessage.value = 'An error occurred while resetting password. The link might be expired.'
+    }
+  } finally {
     isLoading.value = false
-    successMessage.value = 'Password successfully reset! You can now log in.'
-    newPassword.value = ''
-    confirmPassword.value = ''
-  }, 1500)
+  }
 }
 </script>
 

@@ -22,11 +22,18 @@ const resetMessage = ref('')
 const handleResetPassword = async () => {
   isResetLoading.value = true
   resetMessage.value = ''
-  // Dummy UI logic
-  setTimeout(() => {
-    isResetLoading.value = false
+  try {
+    const response = await api.post('/api/auth/forgot-password', {
+      email: resetEmail.value
+    })
+    resetMessage.value = response.data?.message || 'If an account with that email exists, we have sent a reset link.'
+  } catch (error) {
+    console.error('Forgot password failed:', error)
+    // For security reasons, usually we still show the same success message even if email not found
     resetMessage.value = 'If an account with that email exists, we have sent a reset link.'
-  }, 1500)
+  } finally {
+    isResetLoading.value = false
+  }
 }
 
 import { onMounted } from 'vue'

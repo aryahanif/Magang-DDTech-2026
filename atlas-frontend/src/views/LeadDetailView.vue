@@ -198,12 +198,23 @@ const updateFollowUpDate = async () => {
   if (!tempFollowUpDate.value) return;
   const isoDate = new Date(tempFollowUpDate.value).toISOString();
   try {
+    // 1. Update the lead's follow up date
     await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: isoDate });
+    
+    // 2. Create an actual Task in the new Tasks table
+    await api.post('/api/admin/tasks', {
+      title: `Follow up: ${lead.value?.full_name || lead.value?.company_name || 'Lead'}`,
+      due_at: isoDate,
+      type: 'meeting',
+      priority: 'high',
+      lead_name: lead.value?.full_name || lead.value?.company_name || ''
+    });
+
     lead.value.next_follow_up_at = isoDate;
-    showToast('Follow-up date successfully saved.', 'success');
+    showToast('Follow-up schedule and Task successfully saved.', 'success');
   } catch (error) {
-    console.error('Failed to update follow-up date:', error);
-    showToast('Backend API Error: Failed to save date.', 'error');
+    console.error('Failed to update follow-up schedule:', error);
+    showToast('Failed to save schedule.', 'error');
   }
 };
 
