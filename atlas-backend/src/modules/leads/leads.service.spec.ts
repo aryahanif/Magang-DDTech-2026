@@ -160,17 +160,28 @@ describe('LeadsService', () => {
   });
 
   describe('exportLeadsToCsv', () => {
-    it('applies the same filters as findAll and returns CSV with the required columns', async () => {
+    const CSV_HEADER =
+      'Full Name,Email,Phone,Company,Country,Business Type,Industry,Source,Lead Tier,Lead Score,Fit Status,Urgency,Status,Assigned Owner,Next Follow-up,Created At';
+
+    it('applies the same filters as findAll and returns CSV with human-readable columns', async () => {
       prisma.lead.findMany.mockResolvedValue([
         {
           full_name: 'John Smith',
           email: 'john@example.com',
+          phone: '+61411222333',
           company_name: 'ABC Mortgage Brokers',
           country: 'Australia',
           business_type: 'Mortgage Broker',
+          industry: 'Finance',
+          source_page: '/atlas',
           lead_tier: 'Tier A',
           lead_score: 90,
+          fit_status: 'Strong fit',
+          urgency_level: 'High',
           status: 'New Lead',
+          assigned_owner: 'Jane Doe',
+          next_follow_up_at: new Date('2026-01-15'),
+          created_at: new Date('2026-01-10'),
         },
       ]);
 
@@ -180,10 +191,10 @@ describe('LeadsService', () => {
         where: { lead_tier: 'Tier A' },
         orderBy: { created_at: 'desc' },
       });
-      expect(csv.split('\r\n')[0]).toBe(
-        'full_name,email,company_name,country,business_type,lead_tier,lead_score,status',
+      expect(csv.split('\r\n')[0]).toBe(CSV_HEADER);
+      expect(csv).toContain(
+        'John Smith,john@example.com,+61411222333,ABC Mortgage Brokers,Australia,Mortgage Broker,Finance,/atlas,Tier A,90,Strong fit,High,New Lead,Jane Doe,2026-01-15,2026-01-10',
       );
-      expect(csv).toContain('John Smith,john@example.com,ABC Mortgage Brokers,Australia,Mortgage Broker,Tier A,90,New Lead');
     });
 
     it('returns just the header row when there are no matching leads', async () => {
@@ -191,7 +202,7 @@ describe('LeadsService', () => {
 
       const csv = await service.exportLeadsToCsv();
 
-      expect(csv).toBe('full_name,email,company_name,country,business_type,lead_tier,lead_score,status');
+      expect(csv).toBe(CSV_HEADER);
     });
   });
 
