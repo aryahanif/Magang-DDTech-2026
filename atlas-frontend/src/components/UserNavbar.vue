@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Menu, X } from '@lucide/vue'
+import AtlasLogo from '../assets/atlas-logo.png'
 
 const isMenuOpen = ref(false)
 </script>
@@ -14,9 +15,7 @@ const isMenuOpen = ref(false)
       
       <!-- Inside Left Logo -->
       <RouterLink to="/welcome" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity" @click="isMenuOpen = false">
-        <div class="bg-blue-600 text-white rounded-lg w-8 h-8 flex items-center justify-center font-bold text-lg shadow-sm leading-none">
-          A
-        </div>
+        <img :src="AtlasLogo" alt="Atlas Logo" class="h-8 w-auto" />
         <span class="text-blue-600 font-extrabold text-[17px] tracking-wide">Atlas</span>
       </RouterLink>
 
