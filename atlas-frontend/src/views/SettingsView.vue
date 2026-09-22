@@ -141,8 +141,8 @@ const changePassword = async () => {
     return
   }
   
-  if (passwordForm.value.newPassword.length < 6) {
-    showToast('Password must be at least 6 characters long.', 'error')
+  if (passwordForm.value.newPassword.length < 8) {
+    showToast('New password must be at least 8 characters long.', 'error')
     return
   }
 

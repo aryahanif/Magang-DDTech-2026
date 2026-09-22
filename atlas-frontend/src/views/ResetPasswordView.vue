@@ -51,8 +51,8 @@ const handleReset = async () => {
     return
   }
   
-  if (newPassword.value.length < 6) {
-    errorMessage.value = 'Password must be at least 6 characters long.'
+  if (newPassword.value.length < 8) {
+    errorMessage.value = 'Password must be at least 8 characters long.'
     return
   }
 
@@ -95,18 +95,18 @@ const handleReset = async () => {
     <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/15 blur-[120px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-2"></div>
     <div class="absolute top-[30%] left-[30%] w-[40%] h-[40%] bg-sky-400/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-3"></div>
 
+    <!-- Theme Toggle (Outside Card) -->
+    <button @click="toggleTheme" class="absolute top-6 right-6 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-2 rounded-full transition-colors z-20 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50">
+      <Sun v-if="isDarkMode" class="w-5 h-5" />
+      <Moon v-else class="w-5 h-5" />
+    </button>
+
     <div class="w-full max-w-md p-8 sm:p-10 relative overflow-hidden bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] m-4 transition-colors z-10">
       <!-- Logo -->
       <div class="flex items-center justify-center gap-2.5 font-bold text-2xl text-gray-900 dark:text-white mb-8 transition-colors">
         <img :src="AtlasLogo" alt="Atlas Logo" class="h-8 w-auto" />
         Atlas
       </div>
-
-      <!-- Theme Toggle -->
-      <button @click="toggleTheme" class="absolute top-6 right-6 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-2 rounded-full transition-colors z-10 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-        <Sun v-if="isDarkMode" class="w-5 h-5" />
-        <Moon v-else class="w-5 h-5" />
-      </button>
       
       <div class="w-full space-y-6">
         
