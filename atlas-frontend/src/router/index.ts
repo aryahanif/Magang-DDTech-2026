@@ -9,6 +9,7 @@ import PartnerInquiryView from '../views/PartnerInquiryView.vue'
 import PolicyView from '../views/PolicyView.vue'
 
 import LoginView from '../views/LoginView.vue'
+import ResetPasswordView from '../views/ResetPasswordView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LeadsView from '../views/LeadsView.vue'
 import PipelineView from '../views/PipelineView.vue'
@@ -66,6 +67,11 @@ const router = createRouter({
       path: '/admin',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordView
     },
     {
       path: '/admin/dashboard',

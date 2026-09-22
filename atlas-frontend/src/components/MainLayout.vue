@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, CheckSquare, Settings, 
   Menu, X, Bell, User, Sparkles, LogOut, ChevronDown, LifeBuoy, Sun, Moon
 } from '@lucide/vue'
+import AtlasLogo from '../assets/atlas-logo.png'
 
 defineProps<{
   activeMenu: string
@@ -198,7 +199,7 @@ const getIconColor = (menuName: string, currentMenu: string) => {
         </button>
 
         <RouterLink to="/admin/dashboard" class="flex items-center gap-3 overflow-hidden whitespace-nowrap cursor-pointer w-[140px] lg:w-[180px] hover:opacity-80 transition-opacity">
-          <div class="bg-blue-600 text-white font-bold text-l px-2 py-1 rounded">A</div>
+          <img :src="AtlasLogo" alt="Atlas Logo" class="h-8 w-auto" />
           <div class="flex flex-col justify-center">
             <span class="font-bold text-[22px] text-slate-900 dark:text-white leading-none">Atlas</span>
             <span class="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 tracking-wider uppercase mt-1 leading-none">BY DDTECH</span>
