@@ -5,6 +5,7 @@ import { LeadsService } from './leads.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('LeadsService', () => {
   let service: LeadsService;
@@ -41,11 +42,13 @@ describe('LeadsService', () => {
       calculateRuleBasedScore: jest.fn().mockResolvedValue(55),
       analyzeLeadWithAI: jest.fn().mockResolvedValue(undefined),
     };
+    const notificationsService = { create: jest.fn().mockResolvedValue(undefined) };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LeadsService,
         { provide: PrismaService, useValue: prisma },
         { provide: QualificationService, useValue: qualificationService },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     }).compile();
 
