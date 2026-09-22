@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { parse } from 'json2csv';
 import { PrismaService } from '../../database/prisma.service';
@@ -132,9 +132,11 @@ export class LeadsService {
   }
 
   async remove(id: string) {
-    return this.prisma.lead.delete({
-      where: { id },
-    });
+    return this.prisma.$transaction([
+      this.prisma.leadNote.deleteMany({ where: { lead_id: id } }),
+      this.prisma.leadActivityLog.deleteMany({ where: { lead_id: id } }),
+      this.prisma.lead.delete({ where: { id } })
+    ]);
   }
 
   async updateLeadStatus(leadId: string, data: UpdateLeadDto, adminUserId: string) {

@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Sun, Moon } from '@lucide/vue'
 
 // State management untuk form
 const email = ref('')
@@ -13,9 +14,54 @@ const isLoading = ref(false)
 const isSuccess = ref(false)
 const router = useRouter()
 
+const showForgotPassword = ref(false)
+const resetEmail = ref('')
+const isResetLoading = ref(false)
+const resetMessage = ref('')
+
+const handleResetPassword = async () => {
+  isResetLoading.value = true
+  resetMessage.value = ''
+  // Dummy UI logic
+  setTimeout(() => {
+    isResetLoading.value = false
+    resetMessage.value = 'If an account with that email exists, we have sent a reset link.'
+  }, 1500)
+}
+
+import { onMounted } from 'vue'
+
+const isDarkMode = ref(false)
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark')
+    localStorage.setItem('theme', 'dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+    localStorage.setItem('theme', 'light')
+  }
+}
+
+onMounted(() => {
+  const savedEmail = localStorage.getItem('remembered_email')
+  if (savedEmail) {
+    email.value = savedEmail
+    rememberMe.value = true
+  }
+
+  if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDarkMode.value = true
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+})
+
 import api from '../services/api'
 import { Vue3Lottie } from 'vue3-lottie'
 import loginAnimationJSON from '../assets/login-lottie.json'
+import AtlasLogo from '../assets/atlas-logo.png'
 
 const handleLogin = async () => {
   try {
@@ -31,6 +77,12 @@ const handleLogin = async () => {
       // Simpan token dan data user ke localStorage
       localStorage.setItem('auth_token', response.data.token)
       localStorage.setItem('user', JSON.stringify(response.data.user))
+      
+      if (rememberMe.value) {
+        localStorage.setItem('remembered_email', email.value)
+      } else {
+        localStorage.removeItem('remembered_email')
+      }
       
       isSuccess.value = true
       setTimeout(() => {
@@ -52,7 +104,7 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="flex h-screen w-full bg-white text-gray-800 font-sans relative overflow-hidden">
+  <div class="flex h-screen w-full bg-white dark:bg-[#0B1120] text-gray-800 dark:text-gray-200 font-sans relative overflow-hidden transition-colors">
     
     <!-- SISI KIRI (Biru) -->
     <div class="hidden lg:flex w-1/2 bg-linear-to-br from-[#2563EB] to-[#0030AA] text-white items-center justify-center relative p-12">
@@ -85,27 +137,36 @@ const handleLogin = async () => {
     <!-- SISI KANAN (Form) -->
     <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative overflow-hidden">
       <!-- Logo -->
-      <div class="absolute top-8 left-8 lg:top-12 flex items-center gap-3 font-bold text-2xl text-gray-900 z-10">
-        <div class="bg-[#2563EB] text-white w-8 h-8 flex items-center justify-center rounded pt-0.5">
-          A
-        </div>
+      <div class="absolute top-8 left-8 lg:top-12 flex items-center gap-3 font-bold text-2xl text-gray-900 dark:text-white z-10 transition-colors">
+        <img :src="AtlasLogo" alt="Atlas Logo" class="h-8 w-auto" />
         Atlas
       </div>
+
+      <!-- Theme Toggle -->
+      <button @click="toggleTheme" class="absolute top-8 right-8 lg:top-12 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-2 rounded-full transition-colors z-10 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <Sun v-if="isDarkMode" class="w-5 h-5" />
+        <Moon v-else class="w-5 h-5" />
+      </button>
       
       <div class="w-full max-w-md space-y-8">
         
         <!-- Header Form -->
         <div class="text-center sm:text-left">
           <div class="overflow-hidden mb-2">
-            <h2 class="block text-3xl font-bold text-gray-900 animate-mask-in-delay-1">Sign in to your account</h2>
+            <h2 class="block text-3xl font-bold text-gray-900 dark:text-white animate-mask-in-delay-1 transition-colors">
+              {{ showForgotPassword ? 'Reset your password' : 'Sign in to your account' }}
+            </h2>
           </div>
           <div class="overflow-hidden">
-            <p class="block text-gray-500 animate-mask-in-delay-2">Enter your credentials to access the dashboard.</p>
+            <p class="block text-gray-500 dark:text-slate-400 animate-mask-in-delay-2 transition-colors">
+              {{ showForgotPassword ? 'Enter your email to receive a password reset link.' : 'Enter your credentials to access the dashboard.' }}
+            </p>
           </div>
         </div>
 
         <!-- Form Input -->
-        <form @submit.prevent="handleLogin" class="space-y-6 mt-8 animate-fade-in-up" style="animation-delay: 0.4s; opacity: 0;">
+        <template v-if="!showForgotPassword">
+          <form @submit.prevent="handleLogin" class="space-y-6 mt-8 animate-fade-in-up" style="animation-delay: 0.4s; opacity: 0;">
           
           <div v-if="errorMessage" class="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200">
             {{ errorMessage }}
@@ -113,7 +174,7 @@ const handleLogin = async () => {
 
           <!-- Email -->
           <div>
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Email address</label>
+            <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-2 transition-colors">Email address</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -125,14 +186,14 @@ const handleLogin = async () => {
                 type="email" 
                 required
                 placeholder="email" 
-                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
+                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
               />
             </div>
           </div>
 
           <!-- Password -->
           <div>
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Password</label>
+            <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-2 transition-colors">Password</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,7 +205,7 @@ const handleLogin = async () => {
                 :type="showPassword ? 'text' : 'password'" 
                 required
                 placeholder="............" 
-                class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
+                class="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
               />
               <button 
                 type="button" 
@@ -164,14 +225,14 @@ const handleLogin = async () => {
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input v-model="rememberMe" id="remember-me" type="checkbox" class="h-4 w-4 text-[#1a4bca] focus:ring-[#1a4bca] border-gray-300 rounded cursor-pointer">
-              <label for="remember-me" class="ml-2 block text-sm text-gray-600 cursor-pointer">
+              <label for="remember-me" class="ml-2 block text-sm text-gray-600 dark:text-slate-400 cursor-pointer transition-colors">
                 Remember me
               </label>
             </div>
             <div class="text-sm">
-              <a href="#" class="font-semibold text-[#1a4bca] hover:text-blue-800">
+              <button type="button" @click="showForgotPassword = true; errorMessage = ''" class="font-semibold text-[#1a4bca] hover:text-blue-800 dark:hover:text-blue-400 transition-colors">
                 Forgot password?
-              </a>
+              </button>
             </div>
           </div>
 
@@ -184,11 +245,56 @@ const handleLogin = async () => {
             <span v-if="isLoading">Signing in...</span>
             <span v-else>Sign in</span>
           </button>
-        </form>
+          </form>
 
-        <p class="text-center text-sm text-gray-600 mt-6">
-          Don't have an account? <a href="#" class="font-semibold text-[#1a4bca] hover:text-blue-800">Contact Sales</a>
-        </p>
+          <p class="text-center text-sm text-gray-600 dark:text-slate-400 mt-6 transition-colors">
+            Don't have an account? <router-link to="/contact-sales" class="font-semibold text-[#1a4bca] hover:text-blue-800 dark:hover:text-blue-400 transition-colors">Contact Sales</router-link>
+          </p>
+        </template>
+
+        <template v-else>
+          <form @submit.prevent="handleResetPassword" class="space-y-6 mt-8 animate-fade-in-up" style="animation-delay: 0.1s; opacity: 0;">
+            
+            <div v-if="resetMessage" class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm p-3 rounded-lg border border-emerald-200 dark:border-emerald-800/50">
+              {{ resetMessage }}
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 dark:text-white mb-2 transition-colors">Email address</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input 
+                  v-model="resetEmail" 
+                  type="email" 
+                  required
+                  placeholder="email" 
+                  class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-[#1a4bca] outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              :disabled="isResetLoading"
+              class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#2250c6] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <span v-if="isResetLoading">Sending...</span>
+              <span v-else>Send Reset Link</span>
+            </button>
+          </form>
+
+          <p class="text-center text-sm text-gray-600 dark:text-slate-400 mt-6 transition-colors">
+            Remember your password? 
+            <button @click="showForgotPassword = false; resetMessage = ''" class="font-semibold text-[#1a4bca] hover:text-blue-800 dark:hover:text-blue-400 transition-colors">
+              Back to Login
+            </button>
+          </p>
+        </template>
       </div>
     </div>
     

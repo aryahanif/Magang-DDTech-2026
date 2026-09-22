@@ -1,48 +1,50 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink } from 'vue-router'
+import { Menu, X } from '@lucide/vue'
+import AtlasLogo from '../assets/atlas-logo.png'
 
 const isMenuOpen = ref(false)
 </script>
-<template>
-<header class="bg-fbg border-b border-gray-200 sticky top-0 z-50">
-      <div class="py-4 px-8 flex justify-between items-center">
-        <div class="text-2xl font-bold">
-          <RouterLink to="/welcome" @click="isMenuOpen = false">Atlas</RouterLink>
-        </div>
-        
-        <!-- Desktop Nav -->
-        <nav class="hidden lg:flex gap-6 items-center">
-          <RouterLink to="/welcome" class="hover:text-blue-600 transition font-medium">Home</RouterLink>
-          <RouterLink to="/assessment" class="hover:text-blue-600 transition font-medium">Assessment</RouterLink>
-          <RouterLink to="/contact-sales" class="hover:text-blue-600 transition font-medium">Contact Sales</RouterLink>
-          <RouterLink to="/waitlist" class="hover:text-blue-600 transition font-medium">Waitlist</RouterLink>
-          <RouterLink to="/partner-inquiry" class="hover:text-blue-600 transition font-medium">Partner Inquiry</RouterLink>
-          <RouterLink to="/requestdemo" class="hover:text-blue-600 transition font-medium">Request Demo</RouterLink>
-        </nav>
 
-        <!-- Mobile Hamburger Button -->
-        <button 
-          @click="isMenuOpen = !isMenuOpen" 
-          class="lg:hidden flex flex-col justify-center items-center w-8 h-8 space-y-1.5 focus:outline-none"
-        >
-          <span :class="{'rotate-45 translate-y-2': isMenuOpen}" class="block w-6 h-0.5 bg-gray-800 transition-transform duration-300"></span>
-          <span :class="{'opacity-0': isMenuOpen}" class="block w-6 h-0.5 bg-gray-800 transition-opacity duration-300"></span>
-          <span :class="{'-rotate-45 -translate-y-2': isMenuOpen}" class="block w-6 h-0.5 bg-gray-800 transition-transform duration-300"></span>
+<template>
+  <header class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center w-[95%] lg:w-max transition-all duration-300">
+    
+    <!-- Main Pill -->
+    <div class="relative z-20 w-full bg-white/70 backdrop-blur-xl rounded-full border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-4 py-3 lg:py-4 lg:pl-5 lg:pr-10 flex justify-between lg:justify-start items-center gap-6 lg:gap-12">
+      
+      <!-- Inside Left Logo -->
+      <RouterLink to="/welcome" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity" @click="isMenuOpen = false">
+        <img :src="AtlasLogo" alt="Atlas Logo" class="h-8 w-auto" />
+        <span class="text-blue-600 font-extrabold text-[17px] tracking-wide">Atlas</span>
+      </RouterLink>
+
+      <!-- Desktop Links -->
+      <nav class="hidden lg:flex items-center gap-10">
+        <RouterLink to="/requestdemo" exact-active-class="!text-blue-600" class="text-[15px] py-1 font-semibold text-slate-600 hover:text-blue-600 transition-colors">Request demo</RouterLink>
+        <RouterLink to="/assessment" exact-active-class="!text-blue-600" class="text-[15px] py-1 font-semibold text-slate-600 hover:text-blue-600 transition-colors">Assessment</RouterLink>
+        <RouterLink to="/contact-sales" exact-active-class="!text-blue-600" class="text-[15px] py-1 font-semibold text-slate-600 hover:text-blue-600 transition-colors">Contact Sales</RouterLink>
+        <RouterLink to="/waitlist" exact-active-class="!text-blue-600" class="text-[15px] py-1 font-semibold text-slate-600 hover:text-blue-600 transition-colors">Waitlist</RouterLink>
+        <RouterLink to="/partner-inquiry" exact-active-class="!text-blue-600" class="text-[15px] py-1 font-semibold text-slate-600 hover:text-blue-600 transition-colors">Partner Inquiry</RouterLink>
+      </nav>
+
+      <!-- Mobile View Menu Toggle -->
+      <div class="lg:hidden flex items-center">
+        <button @click="isMenuOpen = !isMenuOpen" class="w-8 h-8 flex items-center justify-center text-slate-600">
+          <Menu v-if="!isMenuOpen" class="w-5 h-5" />
+          <X v-else class="w-5 h-5" />
         </button>
       </div>
 
-      <!-- Mobile Nav -->
-      <nav 
-        v-show="isMenuOpen" 
-        class="lg:hidden flex flex-col px-8 pb-4 space-y-3 bg-fbg border-t border-gray-100"
-      >
-        <RouterLink to="/welcome" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Home</RouterLink>
-        <RouterLink to="/assessment" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Assessment</RouterLink>
-        <RouterLink to="/contact-sales" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Contact Sales</RouterLink>
-        <RouterLink to="/waitlist" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Waitlist</RouterLink>
-        <RouterLink to="/partner-inquiry" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Partner Inquiry</RouterLink>
-        <RouterLink to="/requestdemo" @click="isMenuOpen = false" class="hover:text-blue-600 transition font-medium block py-2">Request Demo</RouterLink>
-      </nav>
-    </header>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div v-show="isMenuOpen" class="lg:hidden absolute top-[100%] left-0 right-0 mt-2 bg-white/90 backdrop-blur-xl border border-white/60 rounded-2xl shadow-xl p-3 flex flex-col gap-1 z-10 origin-top animate-mask-in">
+      <RouterLink to="/requestdemo" exact-active-class="!text-blue-600" @click="isMenuOpen = false" class="px-4 py-3 rounded-xl hover:bg-blue-50 font-bold text-[15px] text-slate-700 hover:text-blue-600 transition-colors">Request demo</RouterLink>
+      <RouterLink to="/assessment" exact-active-class="!text-blue-600" @click="isMenuOpen = false" class="px-4 py-3 rounded-xl hover:bg-blue-50 font-bold text-[15px] text-slate-700 hover:text-blue-600 transition-colors">Assessment</RouterLink>
+      <RouterLink to="/contact-sales" exact-active-class="!text-blue-600" @click="isMenuOpen = false" class="px-4 py-3 rounded-xl hover:bg-blue-50 font-bold text-[15px] text-slate-700 hover:text-blue-600 transition-colors">Contact Sales</RouterLink>
+      <RouterLink to="/waitlist" exact-active-class="!text-blue-600" @click="isMenuOpen = false" class="px-4 py-3 rounded-xl hover:bg-blue-50 font-bold text-[15px] text-slate-700 hover:text-blue-600 transition-colors">Waitlist</RouterLink>
+      <RouterLink to="/partner-inquiry" exact-active-class="!text-blue-600" @click="isMenuOpen = false" class="px-4 py-3 rounded-xl hover:bg-blue-50 font-bold text-[15px] text-slate-700 hover:text-blue-600 transition-colors">Partner Inquiry</RouterLink>
+    </div>
+  </header>
 </template>

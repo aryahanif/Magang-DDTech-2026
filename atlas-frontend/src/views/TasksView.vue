@@ -38,7 +38,7 @@ const saveTasks = () => {
 
 const fetchLeadsForTasks = async () => {
   try {
-    const response = await api.get('/api/leads');
+    const response = await api.get('/api/admin/leads');
     if (response.data && response.data.success) {
       const leads = response.data.data;
       apiTasks.value = leads
@@ -264,13 +264,13 @@ watch(combinedTasks, generateCalendar, { deep: true });
 
 <template>
   <MainLayout active-menu="tasks">
-    <main class="flex-1 p-8 overflow-y-auto bg-[#F8FAFC]">
+    <main class="flex-1 p-8 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0B1120] transition-colors duration-300">
       
       <!-- HEADER -->
       <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-fade-in">
         <div>
-          <h1 class="text-[32px] font-bold text-[#0F172A] tracking-tight">Tasks & Calendar</h1>
-          <p class="text-[16px] text-[#64748B] mt-1">Manage your follow-ups, calls, and upcoming meetings.</p>
+          <h1 class="text-[32px] font-bold text-[#0F172A] dark:text-white tracking-tight">Tasks & Calendar</h1>
+          <p class="text-[16px] text-[#64748B] dark:text-slate-400 mt-1">Manage your follow-ups, calls, and upcoming meetings.</p>
         </div>
         <button @click="openModal" class="px-5 py-2.5 bg-[#2563EB] text-white text-[14px] font-bold rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -279,24 +279,24 @@ watch(combinedTasks, generateCalendar, { deep: true });
       </div>
 
       <!-- CONTROL BAR -->
-      <div class="bg-white p-4 rounded-xl border border-[#E2E8F0] shadow-sm mb-6 flex items-center justify-between animate-fade-in">
-        <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+      <div class="bg-white dark:bg-[#0F172A] p-4 rounded-xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm mb-6 flex items-center justify-between animate-fade-in transition-colors duration-300">
+        <div class="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 p-1 rounded-lg">
           <button 
             @click="viewMode = 'list'" 
-            :class="['px-4 py-1.5 text-[13px] font-bold rounded-md transition-all', viewMode === 'list' ? 'bg-white text-[#2563EB] shadow-sm' : 'text-gray-500 hover:text-gray-700']"
+            :class="['px-4 py-1.5 text-[13px] font-bold rounded-md transition-all', viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-[#2563EB] dark:text-blue-400 shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200']"
           >
             List View
           </button>
           <button 
             @click="viewMode = 'calendar'" 
-            :class="['px-4 py-1.5 text-[13px] font-bold rounded-md transition-all', viewMode === 'calendar' ? 'bg-white text-[#2563EB] shadow-sm' : 'text-gray-500 hover:text-gray-700']"
+            :class="['px-4 py-1.5 text-[13px] font-bold rounded-md transition-all', viewMode === 'calendar' ? 'bg-white dark:bg-slate-700 text-[#2563EB] dark:text-blue-400 shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200']"
           >
             Calendar View
           </button>
         </div>
 
         <div v-if="viewMode === 'list'" class="flex items-center gap-3">
-          <select v-model="filterStatus" class="text-[13px] border border-[#E2E8F0] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563EB] font-medium text-[#475569]">
+          <select v-model="filterStatus" class="text-[13px] border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-[#2563EB] font-medium text-[#475569] dark:text-slate-300 transition-colors">
             <option value="all">All Tasks</option>
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
@@ -305,20 +305,20 @@ watch(combinedTasks, generateCalendar, { deep: true });
       </div>
 
       <!-- ================= LIST VIEW ================= -->
-      <div v-if="viewMode === 'list'" class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden animate-fade-in">
-        <div class="divide-y divide-[#E2E8F0]">
-          <div v-if="filteredTasks.length === 0" class="p-12 text-center text-gray-500 font-medium">
+      <div v-if="viewMode === 'list'" class="bg-white dark:bg-[#0F172A] rounded-xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm overflow-hidden animate-fade-in transition-colors duration-300">
+        <div class="divide-y divide-[#E2E8F0] dark:divide-slate-800/50">
+          <div v-if="filteredTasks.length === 0" class="p-12 text-center text-gray-500 dark:text-slate-400 font-medium">
             No tasks found.
           </div>
           <div 
             v-for="task in filteredTasks" 
             :key="task.id"
-            class="p-5 flex items-start gap-4 hover:bg-gray-50 transition group"
-            :class="task.status === 'completed' ? 'opacity-60 bg-gray-50' : ''"
+            class="p-5 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+            :class="task.status === 'completed' ? 'opacity-60 bg-gray-50 dark:bg-slate-800/30' : ''"
           >
             <!-- Checkbox -->
             <button @click="toggleStatus(task)" class="mt-1 flex-shrink-0 transition-transform active:scale-95 focus:outline-none">
-              <div :class="['w-6 h-6 rounded border flex items-center justify-center transition-colors', task.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 text-transparent hover:border-[#2563EB] hover:text-[#2563EB]/30']">
+              <div :class="['w-6 h-6 rounded border flex items-center justify-center transition-colors', task.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-slate-600 text-transparent hover:border-[#2563EB] hover:text-[#2563EB]/30']">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               </div>
             </button>
@@ -326,21 +326,21 @@ watch(combinedTasks, generateCalendar, { deep: true });
             <!-- Task Info -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-4 mb-1">
-                <h3 class="text-[15px] font-bold text-[#0F172A] truncate" :class="task.status === 'completed' ? 'line-through' : ''">{{ task.title }}</h3>
+                <h3 class="text-[15px] font-bold text-[#0F172A] dark:text-white truncate" :class="task.status === 'completed' ? 'line-through' : ''">{{ task.title }}</h3>
                 <span :class="['px-2.5 py-0.5 text-[11px] font-bold uppercase rounded border', getPriorityClass(task.priority)]">
                   {{ task.priority }}
                 </span>
               </div>
-              <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-[#64748B] font-medium">
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-[#64748B] dark:text-slate-400 font-medium">
                 <div class="flex items-center gap-1.5" :class="new Date(`${task.date}T${task.time}`) < new Date() && task.status !== 'completed' ? 'text-red-500 font-bold' : ''">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                   {{ task.date }} at {{ formatTime(task.time) }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <div v-html="getTypeIcon(task.type)" class="text-[#94A3B8]"></div>
+                  <div v-html="getTypeIcon(task.type)" class="text-[#94A3B8] dark:text-slate-500"></div>
                   <span class="capitalize">{{ task.type }}</span>
                 </div>
-                <div v-if="task.lead" class="flex items-center gap-1.5 text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded cursor-pointer hover:bg-blue-100">
+                <div v-if="task.lead" class="flex items-center gap-1.5 text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                   {{ task.lead }}
                 </div>
@@ -358,22 +358,22 @@ watch(combinedTasks, generateCalendar, { deep: true });
       </div>
 
       <!-- ================= CALENDAR VIEW ================= -->
-      <div v-if="viewMode === 'calendar'" class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 text-center animate-fade-in min-h-[500px] flex flex-col items-center">
+      <div v-if="viewMode === 'calendar'" class="bg-white dark:bg-[#0F172A] rounded-xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm p-6 text-center animate-fade-in min-h-[500px] flex flex-col items-center transition-colors duration-300">
         
         <div class="w-full max-w-5xl">
           <!-- Calendar Header -->
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-[20px] font-bold text-[#0F172A]">{{ monthYearString }}</h2>
+            <h2 class="text-[20px] font-bold text-[#0F172A] dark:text-white">{{ monthYearString }}</h2>
             <div class="flex gap-2">
-              <button @click="prevMonth" class="p-2 border rounded hover:bg-gray-50 focus:outline-none"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
-              <button @click="nextMonth" class="p-2 border rounded hover:bg-gray-50 focus:outline-none"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+              <button @click="prevMonth" class="p-2 border border-[#E2E8F0] dark:border-slate-700 rounded hover:bg-gray-50 dark:hover:bg-slate-800 text-[#0F172A] dark:text-white focus:outline-none transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+              <button @click="nextMonth" class="p-2 border border-[#E2E8F0] dark:border-slate-700 rounded hover:bg-gray-50 dark:hover:bg-slate-800 text-[#0F172A] dark:text-white focus:outline-none transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
             </div>
           </div>
           
           <!-- Calendar Grid -->
-          <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+          <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-slate-700 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden transition-colors">
             <!-- Days of Week -->
-            <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="bg-gray-50 py-2 text-[12px] font-bold text-center text-[#64748B] uppercase">
+            <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="bg-gray-50 dark:bg-slate-800/80 py-2 text-[12px] font-bold text-center text-[#64748B] dark:text-slate-400 uppercase">
               {{ day }}
             </div>
             
@@ -384,13 +384,13 @@ watch(combinedTasks, generateCalendar, { deep: true });
               @click="!day.empty && openModal(day.fullDate)"
               :class="[
                 'min-h-[120px] p-2 border-t border-transparent transition-colors relative flex flex-col',
-                day.empty ? 'bg-white' : 'bg-white hover:bg-blue-50 hover:border-blue-200 cursor-pointer'
+                day.empty ? 'bg-white dark:bg-[#0F172A]' : 'bg-white dark:bg-[#0F172A] hover:bg-blue-50 dark:hover:bg-slate-800/70 hover:border-blue-200 dark:hover:border-slate-600 cursor-pointer'
               ]"
             >
               <div v-if="!day.empty" class="w-full">
                 <!-- Date Number -->
                 <div class="flex justify-between items-start mb-1">
-                  <span :class="['text-[13px] font-bold w-7 h-7 flex items-center justify-center rounded-full', day.isToday ? 'bg-[#2563EB] text-white' : 'text-[#0F172A]']">
+                  <span :class="['text-[13px] font-bold w-7 h-7 flex items-center justify-center rounded-full', day.isToday ? 'bg-[#2563EB] text-white' : 'text-[#0F172A] dark:text-white']">
                     {{ day.date }}
                   </span>
                 </div>
@@ -418,30 +418,30 @@ watch(combinedTasks, generateCalendar, { deep: true });
   <!-- ================= ADD TASK MODAL ================= -->
   <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 animate-fade-in">
-      <h2 class="text-[22px] font-bold text-[#0F172A] mb-6">Add New Task</h2>
+    <div class="relative bg-white dark:bg-[#0F172A] rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 animate-fade-in transition-colors duration-300">
+      <h2 class="text-[22px] font-bold text-[#0F172A] dark:text-white mb-6">Add New Task</h2>
       
       <form @submit.prevent="submitTask" class="space-y-4">
         <div>
-          <label class="block text-[13px] font-bold text-[#0F172A] mb-1.5">Task Title <span class="text-red-500">*</span></label>
-          <input v-model="newTask.title" type="text" placeholder="e.g. Follow up on proposal" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]" required />
+          <label class="block text-[13px] font-bold text-[#0F172A] dark:text-slate-300 mb-1.5">Task Title <span class="text-red-500">*</span></label>
+          <input v-model="newTask.title" type="text" placeholder="e.g. Follow up on proposal" class="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-white rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors" required />
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-[13px] font-bold text-[#0F172A] mb-1.5">Date <span class="text-red-500">*</span></label>
-            <input v-model="newTask.date" type="date" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]" required />
+            <label class="block text-[13px] font-bold text-[#0F172A] dark:text-slate-300 mb-1.5">Date <span class="text-red-500">*</span></label>
+            <input v-model="newTask.date" type="date" class="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-white rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors" required />
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-[#0F172A] mb-1.5">Time <span class="text-red-500">*</span></label>
-            <input v-model="newTask.time" type="time" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]" required />
+            <label class="block text-[13px] font-bold text-[#0F172A] dark:text-slate-300 mb-1.5">Time <span class="text-red-500">*</span></label>
+            <input v-model="newTask.time" type="time" class="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-white rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors" required />
           </div>
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-[13px] font-bold text-[#0F172A] mb-1.5">Type</label>
-            <select v-model="newTask.type" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]">
+            <label class="block text-[13px] font-bold text-[#0F172A] dark:text-slate-300 mb-1.5">Type</label>
+            <select v-model="newTask.type" class="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-white rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors">
               <option value="task">To-Do / Task</option>
               <option value="call">Call</option>
               <option value="email">Email</option>
@@ -449,8 +449,8 @@ watch(combinedTasks, generateCalendar, { deep: true });
             </select>
           </div>
           <div>
-            <label class="block text-[13px] font-bold text-[#0F172A] mb-1.5">Priority</label>
-            <select v-model="newTask.priority" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]">
+            <label class="block text-[13px] font-bold text-[#0F172A] dark:text-slate-300 mb-1.5">Priority</label>
+            <select v-model="newTask.priority" class="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-white rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors">
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -459,12 +459,12 @@ watch(combinedTasks, generateCalendar, { deep: true });
         </div>
 
         <div>
-          <label class="block text-[13px] font-bold text-[#0F172A] mb-1.5">Related Lead (Optional)</label>
-          <input v-model="newTask.lead" type="text" placeholder="e.g. John Doe / TechCorp" class="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]" />
+          <label class="block text-[13px] font-bold text-[#0F172A] dark:text-slate-300 mb-1.5">Related Lead (Optional)</label>
+          <input v-model="newTask.lead" type="text" placeholder="e.g. John Doe / TechCorp" class="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-white rounded-lg px-3.5 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#2563EB] transition-colors" />
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-6">
-          <button type="button" @click="closeModal" class="px-5 py-2 border border-gray-300 rounded-lg text-[14px] font-bold hover:bg-gray-50 transition">Cancel</button>
+          <button type="button" @click="closeModal" class="px-5 py-2 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-lg text-[14px] font-bold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
           <button type="submit" class="px-5 py-2 bg-[#2563EB] text-white rounded-lg text-[14px] font-bold hover:bg-blue-700 transition">Save Task</button>
         </div>
       </form>
