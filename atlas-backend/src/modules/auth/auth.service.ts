@@ -54,7 +54,6 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Return success even if user not found to prevent email enumeration
       return { success: true, message: 'If that email is in our database, we have sent a password reset link to it.' };
     }
 
@@ -75,10 +74,8 @@ export class AuthService {
     const resetUrl = \http://localhost:5173/reset-password?token=\&email=\\;
 
     try {
-      // Need to add this method to email.service.ts
       await this.emailService.sendPasswordResetEmail(user.email, resetUrl);
     } catch (e) {
-      // Log error but don't fail
       console.error('Failed to send reset email', e);
     }
 
@@ -115,5 +112,27 @@ export class AuthService {
     });
 
     return { success: true, message: 'Password has been successfully reset. You can now login.' };
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.password_hash) {
+      throw new BadRequestException('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isMatch) {
+      throw new BadRequestException('Incorrect current password');
+    }
+
+    const salt = await bcrypt.genSalt();
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password_hash: newPasswordHash },
+    });
+
+    return { success: true, message: 'Password has been successfully updated.' };
   }
 }
