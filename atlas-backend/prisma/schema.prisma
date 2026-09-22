@@ -3,9 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model Lead {
@@ -89,6 +87,21 @@ model User {
   created_at    DateTime @default(now())
 
   @@map("users")
+}
+
+model Task {
+  id           String    @id @default(uuid()) @db.Uuid
+  title        String
+  due_at       DateTime
+  type         String    @default("task")
+  priority     String    @default("medium")
+  status       String    @default("pending")
+  lead_name    String?
+  created_by   String?   @db.Uuid
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  @@map("tasks")
 }
 
 model SystemSetting {
