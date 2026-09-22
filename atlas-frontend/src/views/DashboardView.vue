@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
+import api from '../services/api'
 
 // State untuk animasi dan interaksi
 const showBars = ref(false)
@@ -11,6 +12,8 @@ const hoveredSource = ref<any>(null)
 const tooltipX = ref(0)
 const tooltipY = ref(0)
 
+let refreshInterval: number | undefined;
+
 onMounted(() => {
   fetchDashboardData().then(() => {
     setTimeout(() => {
@@ -18,6 +21,17 @@ onMounted(() => {
       animateNumbers() 
     }, 150)
   })
+
+  // Auto refresh data every 10 seconds
+  refreshInterval = window.setInterval(() => {
+    fetchDashboardData()
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
 })
 
 const animateNumbers = () => {
@@ -53,8 +67,6 @@ const updateTooltip = (event: MouseEvent) => {
   tooltipY.value = event.clientY;
 }
 
-import { computed } from 'vue'
-import api from '../services/api'
 
 // Data state holding backend response
 const dashboardData = ref<any>({
@@ -126,13 +138,20 @@ const kpiCards = computed(() => {
 
 const maxChartValue = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
+  let australia = 0;
+  let newZealand = 0;
+  let indonesia = 0;
   let otherCount = 0;
+
   for (const key in counts) {
-    if (key !== 'Australia' && key !== 'New Zealand' && key !== 'Indonesia') {
-      otherCount += counts[key];
-    }
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'australia') australia += counts[key];
+    else if (lowerKey === 'new zealand' || lowerKey === 'newzealand') newZealand += counts[key];
+    else if (lowerKey === 'indonesia') indonesia += counts[key];
+    else otherCount += counts[key];
   }
-  const max = Math.max(counts['Australia'] || 0, counts['New Zealand'] || 0, counts['Indonesia'] || 0, otherCount, 1);
+
+  const max = Math.max(australia, newZealand, indonesia, otherCount, 1);
   
   if (max <= 4) return 4;
   if (max <= 10) return 10;
@@ -167,18 +186,25 @@ const yAxisLabels = computed(() => {
 
 const countryData = computed(() => {
   const counts = dashboardData.value.leads_by_country || {};
+  let australia = 0;
+  let newZealand = 0;
+  let indonesia = 0;
   let otherCount = 0;
+
   for (const key in counts) {
-    if (key !== 'Australia' && key !== 'New Zealand' && key !== 'Indonesia') {
-      otherCount += counts[key];
-    }
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'australia') australia += counts[key];
+    else if (lowerKey === 'new zealand' || lowerKey === 'newzealand') newZealand += counts[key];
+    else if (lowerKey === 'indonesia') indonesia += counts[key];
+    else otherCount += counts[key];
   }
+  
   const maxVal = maxChartValue.value;
 
   return [
-    { name: 'Australia', count: counts['Australia'] || 0, height: Math.round(((counts['Australia'] || 0) / maxVal) * 190) },
-    { name: 'New Zealand', count: counts['New Zealand'] || 0, height: Math.round(((counts['New Zealand'] || 0) / maxVal) * 190) },
-    { name: 'Indonesia', count: counts['Indonesia'] || 0, height: Math.round(((counts['Indonesia'] || 0) / maxVal) * 190) },
+    { name: 'Australia', count: australia, height: Math.round((australia / maxVal) * 190) },
+    { name: 'New Zealand', count: newZealand, height: Math.round((newZealand / maxVal) * 190) },
+    { name: 'Indonesia', count: indonesia, height: Math.round((indonesia / maxVal) * 190) },
     { name: 'Other', count: otherCount, height: Math.round((otherCount / maxVal) * 190) }
   ];
 })
@@ -245,20 +271,20 @@ const sourceData = computed(() => {
 
 <template>
   <MainLayout active-menu="dashboard">
-    <main class="flex-1 p-8 space-y-8 overflow-y-auto">
+    <main class="flex-1 p-8 space-y-8 overflow-y-auto bg-slate-50 dark:bg-[#0B1120] transition-colors duration-300">
       <div class="animate-fade-in">
-        <h1 class="text-[32px] font-bold text-[#0F172A]">Overview</h1>
-        <p class="text-[16px] text-[#64748B] mt-0.5">Your AI Workforce performance for the last 7 days</p>
+        <h1 class="text-[32px] font-bold text-[#0F172A] dark:text-white">Overview</h1>
+        <p class="text-[16px] text-[#64748B] dark:text-slate-400 mt-0.5">Your AI Workforce performance for the last 7 days</p>
       </div>
       <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 animate-fade-in">
         <div 
           v-for="(card, index) in kpiCards" 
           :key="index" 
-          class="bg-white p-5 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col justify-between"
+          class="bg-white dark:bg-[#0F172A] p-5 rounded-2xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm flex flex-col justify-between transition-colors duration-300"
         >
-          <span class="text-[12px] font-semibold text-[#64748B]">{{ card.label }}</span>
+          <span class="text-[12px] font-semibold text-[#64748B] dark:text-slate-400">{{ card.label }}</span>
           <div class="my-2">
-            <span class="text-2xl font-bold text-[#0F172A]">{{ card.value }}</span>
+            <span class="text-2xl font-bold text-[#0F172A] dark:text-white">{{ card.value }}</span>
           </div>
           
           <div class="flex items-center gap-1 mt-1">
@@ -281,18 +307,18 @@ const sourceData = computed(() => {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
         
         <!--Leads by Country (Bar Chart)-->
-        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
+        <div class="bg-white dark:bg-[#0F172A] p-6 rounded-2xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm flex flex-col transition-colors duration-300">
           <div class="mb-4">
-            <h2 class="text-[18px] font-bold text-[#0F172A]">Leads by Country</h2>
-            <p class="text-[12px] text-[#64748B]">Distribution across active markets</p>
+            <h2 class="text-[18px] font-bold text-[#0F172A] dark:text-white">Leads by Country</h2>
+            <p class="text-[12px] text-[#64748B] dark:text-slate-400">Distribution across active markets</p>
           </div>
 
           <div class="flex-1 flex mt-2 h-[220px]">
-            <div class="flex flex-col justify-between text-[10px] text-[#94A3B8] font-medium pr-3 text-right">
+            <div class="flex flex-col justify-between text-[10px] text-[#94A3B8] dark:text-slate-500 font-medium pr-3 text-right">
               <span v-for="(label, i) in yAxisLabels" :key="i">{{ label }}</span>
             </div>
 
-            <div class="flex-1 border-b border-[#E2E8F0] flex items-end justify-around pb-0 relative">
+            <div class="flex-1 border-b border-[#E2E8F0] dark:border-slate-700/50 flex items-end justify-around pb-0 relative">
               <div v-for="item in countryData" :key="item.name" class="flex flex-col items-center w-full max-w-[60px] relative group">
                 <div class="absolute -top-8 bg-[#0F172A] text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                   {{ item.count.toLocaleString() }} Leads
@@ -311,19 +337,19 @@ const sourceData = computed(() => {
         </div>
 
         <!--Leads by Source (Donut Chart)-->
-        <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col">
+        <div class="bg-white dark:bg-[#0F172A] p-6 rounded-2xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm flex flex-col transition-colors duration-300">
           <div class="mb-4">
-            <h2 class="text-[18px] font-bold text-[#0F172A]">Leads by Source</h2>
-            <p class="text-[12px] text-[#64748B]">Where qualified leads originate</p>
+            <h2 class="text-[18px] font-bold text-[#0F172A] dark:text-white">Leads by Source</h2>
+            <p class="text-[12px] text-[#64748B] dark:text-slate-400">Where qualified leads originate</p>
           </div>
           <div class="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 py-2">
             <!-- Donut Chart -->
             <div class="relative w-40 h-40 flex items-center justify-center flex-shrink-0">
               <div class="absolute flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
-                <span class="text-2xl font-bold text-[#0F172A] tracking-tight">
+                <span class="text-2xl font-bold text-[#0F172A] dark:text-white tracking-tight">
                   {{ hoveredSource ? hoveredSource.count : dashboardData.total_leads.toLocaleString() }}
                 </span>
-                <span class="text-[10px] text-[#64748B] font-semibold mt-0.5">
+                <span class="text-[10px] text-[#64748B] dark:text-slate-400 font-semibold mt-0.5">
                   {{ hoveredSource ? hoveredSource.label : 'Total' }}
                 </span>
               </div>
@@ -356,18 +382,18 @@ const sourceData = computed(() => {
               <div 
                 v-for="source in sourceData" :key="source.label" 
                 class="flex items-center justify-between text-[11px] p-1.5 rounded transition-colors cursor-pointer"
-                :class="hoveredSource === source ? 'bg-[#EFF6FF]' : ''"
+                :class="hoveredSource === source ? 'bg-[#EFF6FF] dark:bg-slate-800' : ''"
                 @mouseenter="hoveredSource = source" 
                 @mouseleave="hoveredSource = null"
                 @mousemove="updateTooltip"
               >
                 <div class="flex items-center gap-2 pointer-events-none">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: source.color }"></span>
-                  <span class="font-medium truncate" :class="hoveredSource === source ? 'text-[#2563EB]' : 'text-[#475569]'">
+                  <span class="font-medium truncate" :class="hoveredSource === source ? 'text-[#2563EB] dark:text-blue-400' : 'text-[#475569] dark:text-slate-400'">
                     {{ source.label }}
                   </span>
                 </div>
-                <span class="font-bold text-[#0F172A] pointer-events-none flex-shrink-0">{{ source.percent }}</span>
+                <span class="font-bold text-[#0F172A] dark:text-white pointer-events-none flex-shrink-0">{{ source.percent }}</span>
               </div>
             </div>
           </div>
@@ -375,23 +401,23 @@ const sourceData = computed(() => {
       </div>
 
       <!--Pipeline Status Summary-->
-      <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm animate-fade-in">
+      <div class="bg-white dark:bg-[#0F172A] p-6 rounded-2xl border border-[#E2E8F0] dark:border-slate-800/50 shadow-sm animate-fade-in transition-colors duration-300">
         <div class="mb-6">
-          <h2 class="text-[20px] font-bold text-[#0F172A]">Pipeline Status Summary</h2>
-          <p class="text-[12px] text-[#64748B]">Lead volume at each stage of the Atlas workflow</p>
+          <h2 class="text-[20px] font-bold text-[#0F172A] dark:text-white">Pipeline Status Summary</h2>
+          <p class="text-[12px] text-[#64748B] dark:text-slate-400">Lead volume at each stage of the Atlas workflow</p>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           <div 
             v-for="step in pipelineSteps" 
             :key="step.step" 
-            class="p-4 rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] flex flex-col justify-between"
+            class="p-4 rounded-xl border border-[#E2E8F0] dark:border-slate-700/50 bg-[#FAFAFA] dark:bg-slate-800/30 flex flex-col justify-between transition-colors duration-300"
           >
             <div>
-              <div class="flex items-center gap-1.5 text-xs text-[#64748B] mb-2 font-medium">
-                <span class="w-4 h-4 rounded bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-[10px] font-bold">{{ step.step }}</span>
+              <div class="flex items-center gap-1.5 text-xs text-[#64748B] dark:text-slate-400 mb-2 font-medium">
+                <span class="w-4 h-4 rounded bg-[#E0E7FF] dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center text-[10px] font-bold">{{ step.step }}</span>
                 <span>{{ step.title }}</span>
               </div>
-              <div class="text-xl font-bold text-[#0F172A] mb-3">{{ step.displayCount }}</div>
+              <div class="text-xl font-bold text-[#0F172A] dark:text-white mb-3">{{ step.displayCount }}</div>
             </div>
             <div>
               <div class="w-full bg-[#E2E8F0] h-1 rounded-full overflow-hidden mb-1.5">

@@ -91,6 +91,21 @@ model User {
   @@map("users")
 }
 
+model Task {
+  id           String    @id @default(uuid()) @db.Uuid
+  title        String
+  due_at       DateTime
+  type         String    @default("task")
+  priority     String    @default("medium")
+  status       String    @default("pending")
+  lead_name    String?
+  created_by   String?   @db.Uuid
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  @@map("tasks")
+}
+
 model SystemSetting {
   id                         String   @id @default(uuid()) @db.Uuid
   is_ai_tiering_enabled      Boolean  @default(true)
