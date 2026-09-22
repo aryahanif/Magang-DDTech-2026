@@ -7,6 +7,7 @@ import { CreateLeadDto } from './dto/create-lead.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class LeadsService {
@@ -15,6 +16,7 @@ export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qualificationService: QualificationService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createLead(dto: CreateLeadDto) {
@@ -58,6 +60,15 @@ export class LeadsService {
       ]);
       this.logger.warn(`Lead ${lead.id} flagged as duplicate of ${existingLead.id}`);
     }
+
+    this.notificationsService
+      .create({
+        title: `New Lead: ${lead.full_name ?? lead.email}`,
+        message: `${lead.full_name ?? lead.email}${lead.company_name ? ` from ${lead.company_name}` : ''} just submitted the Assessment form.`,
+        icon: 'user',
+        lead_id: lead.id,
+      })
+      .catch((error) => this.logger.error('Failed to create new lead notification', error));
 
     // Asynchronous AI Processing (Non-blocking). The sales alert and the
     // prospect confirmation email are both sent from QualificationService
