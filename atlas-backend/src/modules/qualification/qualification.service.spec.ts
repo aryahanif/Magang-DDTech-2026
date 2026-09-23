@@ -122,8 +122,8 @@ describe('QualificationService', () => {
       expect(emailService.sendNewLeadAlert).toHaveBeenCalledWith({ id: 'lead-1', lead_tier: tier });
     });
 
-    it('does not send the alert for Spam', async () => {
-      mockAiReply('Spam');
+    it.each(['Spam', 'Disqualified'])('does not send the alert for %s', async (tier) => {
+      mockAiReply(tier);
 
       await service.analyzeLeadWithAI('lead-1', {});
 

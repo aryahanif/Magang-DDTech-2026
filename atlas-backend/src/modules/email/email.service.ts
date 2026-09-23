@@ -15,7 +15,7 @@ export class EmailService {
     this.mailtrapToken = process.env.MAILTRAP_API_TOKEN || '';
     this.salesTeamEmail = process.env.SALES_TEAM_EMAIL || '';
     this.emailFrom = process.env.EMAIL_FROM || 'onboarding@atlas.dev';
-    this.dashboardUrl = process.env.ADMIN_DASHBOARD_URL || 'http://localhost:3000';
+    this.dashboardUrl = process.env.ADMIN_DASHBOARD_URL || 'http://localhost:5173';
   }
 
   private async send(to: string, subject: string, html: string) {
@@ -45,7 +45,7 @@ export class EmailService {
       return;
     }
 
-    const leadUrl = `${this.dashboardUrl}/leads/${lead.id}`;
+    const leadUrl = `${this.dashboardUrl}/admin/leads/${lead.id}`;
     const subject = `[${lead.lead_tier || 'New'}] New Lead from ${lead.company_name || lead.full_name}`;
 
     const html = `
