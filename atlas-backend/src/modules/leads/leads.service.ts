@@ -17,7 +17,7 @@ export class LeadsService {
     private readonly prisma: PrismaService,
     private readonly qualificationService: QualificationService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   async createLead(dto: CreateLeadDto) {
     const { cf_turnstile_token, ...data } = dto;
@@ -123,7 +123,7 @@ export class LeadsService {
 
     if (leads.length === 0) return LeadsService.CSV_FIELDS.map((field) => field.label).join(',');
 
-    return parse(leads, { fields: LeadsService.CSV_FIELDS, quote: '' });
+    return parse(leads, { fields: LeadsService.CSV_FIELDS, withBOM: true });
   }
 
   private buildLeadsWhere(query: GetLeadsQueryDto): Prisma.LeadWhereInput {

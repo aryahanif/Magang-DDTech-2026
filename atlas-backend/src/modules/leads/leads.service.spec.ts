@@ -161,7 +161,7 @@ describe('LeadsService', () => {
 
   describe('exportLeadsToCsv', () => {
     const CSV_HEADER =
-      'Full Name,Email,Phone,Company,Country,Business Type,Industry,Source,Lead Tier,Lead Score,Fit Status,Urgency,Status,Assigned Owner,Next Follow-up,Created At';
+      '\uFEFF"Full Name","Email","Phone","Company","Country","Business Type","Industry","Source","Lead Tier","Lead Score","Fit Status","Urgency","Status","Assigned Owner","Next Follow-up","Created At"';
 
     it('applies the same filters as findAll and returns CSV with human-readable columns', async () => {
       prisma.lead.findMany.mockResolvedValue([
@@ -193,7 +193,7 @@ describe('LeadsService', () => {
       });
       expect(csv.split('\r\n')[0]).toBe(CSV_HEADER);
       expect(csv).toContain(
-        'John Smith,john@example.com,+61411222333,ABC Mortgage Brokers,Australia,Mortgage Broker,Finance,/atlas,Tier A,90,Strong fit,High,New Lead,Jane Doe,2026-01-15,2026-01-10',
+        '"John Smith","john@example.com","+61411222333","ABC Mortgage Brokers","Australia","Mortgage Broker","Finance","/atlas","Tier A",90,"Strong fit","High","New Lead","Jane Doe","2026-01-15","2026-01-10"',
       );
     });
 

@@ -21,7 +21,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 5, // strict default for public endpoints (e.g. POST /api/leads)
+        limit: 100, // strict default for public endpoints (e.g. POST /api/leads)
       },
     ]),
     PrismaModule,
@@ -40,4 +40,4 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule { }

@@ -502,17 +502,17 @@ onMounted(() => {
       <!-- ==========================================
            TAMPILAN TABLE (CLEAN & SCANNABLE)
       ========================================== -->
-      <div v-else class="flex-1 p-4 sm:p-6 bg-slate-50 dark:bg-[#0B1120] animate-fade-in transition-colors duration-300">
-        <div class="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-xl shadow-sm overflow-x-auto custom-scrollbar transition-colors">
+      <div v-else class="flex-1 p-4 sm:p-6 bg-slate-50 dark:bg-[#0B1120] animate-fade-in transition-colors duration-300 flex flex-col overflow-hidden">
+        <div class="flex-1 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800/50 rounded-xl shadow-sm overflow-auto custom-scrollbar transition-colors">
           <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr class="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800/50 text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider transition-colors">
-                <th class="p-4 pl-6 whitespace-nowrap">Company & Contact</th>
-                <th class="p-4 whitespace-nowrap">Stage</th>
-                <th class="p-4 whitespace-nowrap">Tier</th>
-                <th class="p-4 whitespace-nowrap">Owner</th>
-                <th class="p-4 text-right whitespace-nowrap">Score</th>
-                <th class="p-4 pr-6 text-right whitespace-nowrap">Last Updated</th>
+              <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800/50 text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider transition-colors sticky top-0 z-10 shadow-sm">
+                <th class="p-4 pl-6 whitespace-nowrap bg-slate-100 dark:bg-slate-800">Company & Contact</th>
+                <th class="p-4 whitespace-nowrap bg-slate-100 dark:bg-slate-800">Stage</th>
+                <th class="p-4 whitespace-nowrap bg-slate-100 dark:bg-slate-800">Tier</th>
+                <th class="p-4 whitespace-nowrap bg-slate-100 dark:bg-slate-800">Owner</th>
+                <th class="p-4 text-right whitespace-nowrap bg-slate-100 dark:bg-slate-800">Score</th>
+                <th class="p-4 pr-6 text-right whitespace-nowrap bg-slate-100 dark:bg-slate-800">Last Updated</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800/50">
@@ -579,7 +579,7 @@ onMounted(() => {
 
                 <tr v-if="filteredDeals.length === 0">
                   <td colspan="6" class="p-12 text-center text-[13px] text-slate-400 dark:text-slate-500">
-                    Tidak ada data deal yang ditemukan dengan filter saat ini.
+                    No deal data found with the current filters.
                   </td>
                 </tr>
               </template>

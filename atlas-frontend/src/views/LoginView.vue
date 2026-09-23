@@ -113,7 +113,12 @@ const handleLogin = async () => {
   <div class="flex h-screen w-full bg-white dark:bg-[#0B1120] text-gray-800 dark:text-gray-200 font-sans relative overflow-hidden transition-colors">
     
     <!-- SISI KIRI (Biru) -->
-    <div class="hidden lg:flex w-1/2 bg-linear-to-br from-[#2563EB] to-[#0030AA] text-white items-center justify-center relative p-12">
+    <div class="hidden lg:flex w-1/2 bg-gradient-to-br from-[#2563EB] to-[#0030AA] text-white items-center justify-center relative p-12 overflow-hidden">
+      <!-- Ambient Orbs -->
+      <div class="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-300/40 blur-[120px] rounded-full pointer-events-none mix-blend-overlay animate-orb-1"></div>
+      <div class="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-indigo-300/30 blur-[120px] rounded-full pointer-events-none mix-blend-overlay animate-orb-2"></div>
+      <div class="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-cyan-300/30 blur-[100px] rounded-full pointer-events-none mix-blend-overlay animate-orb-3"></div>
+      
       <!-- Content Container -->
       <div class="w-full max-w-lg flex flex-col items-center text-center">
         
@@ -368,4 +373,21 @@ const handleLogin = async () => {
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
+
+/* Ambient Orbs Animations */
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5%, 5%) scale(1.1); }
+}
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5%, -5%) scale(1.05); }
+}
+@keyframes orb-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5%, -5%) scale(1.15); }
+}
+.animate-orb-1 { animation: orb-float-1 15s ease-in-out infinite; }
+.animate-orb-2 { animation: orb-float-2 18s ease-in-out infinite; }
+.animate-orb-3 { animation: orb-float-3 20s ease-in-out infinite; }
 </style>

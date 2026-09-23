@@ -21,6 +21,7 @@ const lead = ref<any>({
 const isLoading = ref(true)
 const errorMessage = ref('')
 const tempFollowUpDate = ref('')
+const tempFollowUpPriority = ref('high')
 const isEditingSummary = ref(false)
 const newNote = ref('')
 const teamMembers = ref<any[]>([])
@@ -207,20 +208,67 @@ const updateFollowUpDate = async () => {
     // 1. Update the lead's follow up date
     await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: isoDate });
     
-    // 2. Create an actual Task in the new Tasks table
-    await api.post('/api/admin/tasks', {
-      title: `Follow up: ${lead.value?.full_name || lead.value?.company_name || 'Lead'}`,
-      due_at: isoDate,
-      type: 'meeting',
-      priority: 'high',
-      lead_name: lead.value?.full_name || lead.value?.company_name || ''
-    });
+    // 2. Fetch existing tasks to prevent duplication
+    const leadName = lead.value?.full_name || lead.value?.company_name || 'Lead';
+    const expectedTitle = `Follow up: ${leadName}`;
+    
+    const tasksRes = await api.get('/api/admin/tasks?status=pending');
+    let existingTask = null;
+    
+    if (tasksRes.data && tasksRes.data.success) {
+      existingTask = tasksRes.data.data.find((t: any) => t.title === expectedTitle && t.status === 'pending');
+    }
+
+    if (existingTask) {
+      // Update existing task instead of creating duplicate
+      await api.patch(`/api/admin/tasks/${existingTask.id}`, {
+        due_at: isoDate,
+        priority: tempFollowUpPriority.value
+      });
+    } else {
+      // Create new task
+      await api.post('/api/admin/tasks', {
+        title: expectedTitle,
+        due_at: isoDate,
+        type: 'meeting',
+        priority: tempFollowUpPriority.value,
+        lead_name: leadName
+      });
+    }
 
     lead.value.next_follow_up_at = isoDate;
     showToast('Follow-up schedule and Task successfully saved.', 'success');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to update follow-up schedule:', error);
-    showToast('Failed to save schedule.', 'error');
+    const errorMsg = error.response?.data?.message || error.message || 'Failed to save schedule.';
+    const finalMsg = Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg;
+    showToast(`Error: ${finalMsg}`, 'error');
+  }
+};
+
+const clearFollowUpDate = async () => {
+  try {
+    // 1. Remove date from Lead
+    await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: null });
+    
+    // 2. Fetch and delete existing pending task if any
+    const leadName = lead.value?.full_name || lead.value?.company_name || 'Lead';
+    const expectedTitle = `Follow up: ${leadName}`;
+    const tasksRes = await api.get('/api/admin/tasks?status=pending');
+    
+    if (tasksRes.data && tasksRes.data.success) {
+      const existingTask = tasksRes.data.data.find((t: any) => t.title === expectedTitle && t.status === 'pending');
+      if (existingTask) {
+        await api.delete(`/api/admin/tasks/${existingTask.id}`);
+      }
+    }
+    
+    lead.value.next_follow_up_at = null;
+    tempFollowUpDate.value = '';
+    showToast('Follow-up schedule cleared successfully.', 'success');
+  } catch (error) {
+    console.error('Failed to clear follow-up schedule:', error);
+    showToast('Failed to clear schedule.', 'error');
   }
 };
 
@@ -674,12 +722,26 @@ const exportDetailToCSV = () => {
                         type="datetime-local"
                         v-model="tempFollowUpDate"
                         :disabled="currentUser?.role === 'viewer'"
-                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700/50 rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60"
+                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700/50 rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60 [color-scheme:light] dark:[color-scheme:dark]"
                       />
                     </div>
-                    <button @click="updateFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="w-full py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
-                      Save Schedule
-                    </button>
+                    <select
+                      v-model="tempFollowUpPriority"
+                      :disabled="currentUser?.role === 'viewer'"
+                      class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700/50 rounded-lg px-3 py-2 bg-[#F8FAFC] dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60"
+                    >
+                      <option value="low">Low Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="high">High Priority</option>
+                    </select>
+                    <div class="flex gap-2">
+                      <button @click="clearFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="flex-1 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
+                        Clear
+                      </button>
+                      <button @click="updateFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="flex-1 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div>
