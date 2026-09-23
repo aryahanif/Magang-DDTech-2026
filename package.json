@@ -1,1 +1,11 @@
-{}
+{
+  "name": "atlas-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "start-dev.bat",
+    "dev:be": "npm --prefix atlas-backend run start:dev",
+    "dev:fe": "npm --prefix atlas-frontend run dev",
+    "build:be": "npm --prefix atlas-backend run build",
+    "build:fe": "npm --prefix atlas-frontend run build"
+  }
+}

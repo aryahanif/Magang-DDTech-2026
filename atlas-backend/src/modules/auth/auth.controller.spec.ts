@@ -39,7 +39,7 @@ describe('AuthController', () => {
     });
 
     it('should return a token if credentials are correct', async () => {
-      const mockUser = { id: '123', email: 'test@test.com', name: 'Admin', role: 'Super Admin' };
+      const mockUser = { id: '123', email: 'test@test.com', name: 'Admin', role: 'Super Admin', created_at: new Date() };
       jest.spyOn(authService, 'validateUser').mockResolvedValue(mockUser);
       jest.spyOn(authService, 'login').mockResolvedValue({ success: true, token: 'fake_token', user: mockUser });
 
