@@ -10,6 +10,16 @@ jest.mock('@google/genai', () => ({
   Type: { OBJECT: 'OBJECT', STRING: 'STRING', ARRAY: 'ARRAY' },
 }));
 
+// Mock Groq SDK so we can simulate fallback
+const chatCompletionsCreate = jest.fn();
+jest.mock('groq-sdk', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
+    chat: { completions: { create: chatCompletionsCreate } },
+  })),
+}));
+
+
 describe('QualificationService', () => {
   let service: QualificationService;
   let prisma: { lead: { update: jest.Mock }; systemSetting: { findFirst: jest.Mock } };
@@ -29,6 +39,8 @@ describe('QualificationService', () => {
     };
     const notificationsService = { create: jest.fn().mockResolvedValue(undefined) };
     generateContent.mockReset();
+    chatCompletionsCreate.mockReset();
+    process.env.GROQ_API_KEY = 'test-groq-key';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -148,6 +160,102 @@ describe('QualificationService', () => {
       await service.analyzeLeadWithAI('lead-1', {});
 
       expect(emailService.sendProspectAutoReply).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── AI qualification fallback chain ──────────────────────────────────────────
+  describe('AI qualification fallback chain', () => {
+    const validAiResponse = {
+      lead_tier: 'Tier A',
+      fit_status: 'Good Fit',
+      qualification_summary: 'High-value prospect.',
+      recommended_next_action: 'Schedule a demo.',
+      urgency_level: 'High',
+      risk_flags: [],
+    };
+
+    beforeEach(() => {
+      prisma.lead.update.mockResolvedValue({ id: 'lead-1', lead_tier: 'Tier A' });
+    });
+
+    it('uses Gemini when it succeeds (primary provider)', async () => {
+      generateContent.mockResolvedValue({ text: JSON.stringify(validAiResponse) });
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(generateContent).toHaveBeenCalledTimes(1);
+      expect(chatCompletionsCreate).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Groq when Gemini throws an error', async () => {
+      generateContent.mockRejectedValue(new Error('Gemini API 503'));
+      chatCompletionsCreate.mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(validAiResponse) } }],
+      });
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(generateContent).toHaveBeenCalledTimes(1);
+      expect(chatCompletionsCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back to Ollama when both Gemini and Groq throw errors', async () => {
+      generateContent.mockRejectedValue(new Error('Gemini API 503'));
+      chatCompletionsCreate.mockRejectedValue(new Error('Groq rate limit exceeded'));
+
+      // Mock global fetch for Ollama
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: JSON.stringify(validAiResponse) }),
+      }) as jest.Mock;
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(generateContent).toHaveBeenCalledTimes(1);
+      expect(chatCompletionsCreate).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/generate'),
+        expect.any(Object),
+      );
+    });
+
+    it('does not throw and logs an error when all three providers fail', async () => {
+      generateContent.mockRejectedValue(new Error('Gemini down'));
+      chatCompletionsCreate.mockRejectedValue(new Error('Groq down'));
+      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503 }) as jest.Mock;
+
+      // Should resolve (not reject) — errors are caught internally
+      await expect(service.analyzeLeadWithAI('lead-1', {})).resolves.toBeUndefined();
+      // Lead should NOT be updated since all providers failed
+      expect(prisma.lead.update).not.toHaveBeenCalled();
+    });
+
+    it('skips Groq when GROQ_API_KEY is not set and falls through to Ollama', async () => {
+      delete process.env.GROQ_API_KEY;
+      generateContent.mockRejectedValue(new Error('Gemini down'));
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: JSON.stringify(validAiResponse) }),
+      }) as jest.Mock;
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      // Groq should never be called because the key isn't set
+      expect(chatCompletionsCreate).not.toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    it('skips AI analysis entirely when is_ai_tiering_enabled is false', async () => {
+      prisma.systemSetting.findFirst.mockResolvedValue({
+        is_ai_tiering_enabled: false,
+        is_spam_detection_enabled: true,
+      });
+
+      await service.analyzeLeadWithAI('lead-1', {});
+
+      expect(generateContent).not.toHaveBeenCalled();
+      expect(chatCompletionsCreate).not.toHaveBeenCalled();
+      expect(prisma.lead.update).not.toHaveBeenCalled();
     });
   });
 });
