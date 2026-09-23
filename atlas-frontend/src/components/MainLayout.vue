@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import ToastNotification from './ToastNotification.vue'
+import api from '../services/api'
 import { 
   LayoutDashboard, Users, KanbanSquare, CheckSquare, Settings, 
   Menu, X, Bell, User, Sparkles, LogOut, ChevronDown, LifeBuoy, Sun, Moon
@@ -22,24 +23,35 @@ const isNotificationDrawerOpen = ref(false) // State untuk panel laci (drawer) k
 
 // TODO: API Fetch Notifikasi
 
-const notifications = ref<any[]>([
-  {
-    id: 1,
-    title: 'New Lead: Jhon Smith',
-    message: 'Jhon Smith from TechCorp just submitted the Assessment form.',
-    time: '2 mins ago',
-    icon: 'user',
-    unread: true
-  },
-  {
-    id: 2,
-    title: 'AI Scoring Complete',
-    message: 'Jhon Smith data has been qualified by AI with a score of 4/5.',
-    time: '1 min ago',
-    icon: 'sparkles',
-    unread: true
+const notifications = ref<any[]>([])
+
+const fetchNotifications = async () => {
+  try {
+    const res = await api.get('/api/admin/notifications')
+    if (res.data && res.data.success) {
+      notifications.value = res.data.data.map((n: any) => {
+        // Hitung selisih waktu sederhana (time ago)
+        const diff = Math.floor((new Date().getTime() - new Date(n.created_at).getTime()) / 60000)
+        let timeStr = 'Just now'
+        if (diff > 0 && diff < 60) timeStr = `${diff}m ago`
+        else if (diff >= 60 && diff < 1440) timeStr = `${Math.floor(diff / 60)}h ago`
+        else if (diff >= 1440) timeStr = `${Math.floor(diff / 1440)}d ago`
+
+        const storedUser = localStorage.getItem('user');
+        const userEmail = storedUser ? JSON.parse(storedUser).email : 'guest';
+        const readIds = JSON.parse(localStorage.getItem(`read_notifs_${userEmail}`) || '[]');
+
+        return {
+          ...n,
+          time: timeStr,
+          unread: !readIds.includes(n.id)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error)
   }
-])
+}
 
 const unreadCount = computed(() => notifications.value.filter(n => n.unread).length)
 
@@ -49,10 +61,43 @@ const recentNotifications = computed(() => notifications.value.slice(0, 3))
 const toggleNotification = () => isNotificationOpen.value = !isNotificationOpen.value
 const closeNotification = () => isNotificationOpen.value = false
 
-const markAllAsRead = () => notifications.value.forEach(n => n.unread = false)
-const markAsRead = (id: number) => {
-  const notif = notifications.value.find(n => n.id === id)
-  if (notif) notif.unread = false
+const markAllAsRead = async () => {
+  try {
+    const storedUser = localStorage.getItem('user');
+    const userEmail = storedUser ? JSON.parse(storedUser).email : 'guest';
+    const localKey = `read_notifs_${userEmail}`;
+    const readIds = JSON.parse(localStorage.getItem(localKey) || '[]');
+
+    notifications.value.forEach(n => {
+      if (!readIds.includes(n.id)) readIds.push(n.id);
+      n.unread = false;
+    })
+    
+    localStorage.setItem(localKey, JSON.stringify(readIds));
+  } catch (error) {
+    console.error('Failed to mark all as read:', error)
+  }
+}
+
+const markAsRead = async (id: string | number) => {
+  try {
+    const storedUser = localStorage.getItem('user');
+    const userEmail = storedUser ? JSON.parse(storedUser).email : 'guest';
+    const localKey = `read_notifs_${userEmail}`;
+    const readIds = JSON.parse(localStorage.getItem(localKey) || '[]');
+    
+    if (!readIds.includes(id)) {
+      readIds.push(id);
+      localStorage.setItem(localKey, JSON.stringify(readIds));
+    }
+    
+    const notif = notifications.value.find(n => n.id === id)
+    if (notif) {
+      notif.unread = false
+    }
+  } catch (error) {
+    console.error('Failed to mark as read:', error)
+  }
 }
 
 
@@ -86,6 +131,8 @@ const isSidebarCollapsed = ref(false)
 const isSidebarHovered = ref(false)   
 
 onMounted(() => {
+  fetchNotifications()
+  
   document.addEventListener('click', handleClickOutside)
   
   // Load user data from localStorage
@@ -423,17 +470,34 @@ const getIconColor = (menuName: string, currentMenu: string) => {
     </div>
   </div>
 
-  <div v-if="isLogoutModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="closeLogoutModal"></div>
-    <div class="relative bg-white shadow-2xl w-full max-w-[450px] pt-12 pb-10 px-8 text-center rounded-[5px] transition-colors border border-transparent">
-      <button @click="closeLogoutModal" class="absolute top-4 right-4 text-blue-600 hover:text-blue-800 transition">
-        <X class="w-6 h-6" />
+  <div v-if="isLogoutModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+    <div class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity" @click="closeLogoutModal"></div>
+    <div class="relative bg-white dark:bg-slate-900 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] w-full max-w-sm p-8 text-center rounded-3xl border border-slate-200 dark:border-slate-800 transition-colors animate-fade-in">
+      
+      <!-- Close Button -->
+      <button @click="closeLogoutModal" class="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-all">
+        <X class="w-5 h-5" />
       </button>
-      <h2 class="text-[24px] font-bold text-slate-900 mb-2 leading-snug tracking-tight transition-colors">You are attempting to log out of <span class="text-blue-600">Atlas</span></h2>
-      <p class="text-[16px] text-slate-500 font-semibold mb-8 transition-colors">Are you sure?</p>
-      <div class="flex flex-col gap-3 max-w-[320px] mx-auto">
-        <button @click="closeLogoutModal" class="w-full py-2.5 border border-slate-300 bg-white text-slate-900 text-[16px] font-bold hover:bg-slate-50 transition rounded-[5px]">Cancel</button>
-        <button @click="confirmLogout" class="w-full py-2.5 bg-blue-600 text-white text-[16px] font-bold hover:bg-blue-700 transition shadow-sm rounded-[5px]">Sign Out</button>
+      
+      <!-- Icon Header -->
+      <div class="mx-auto w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+        <LogOut class="w-8 h-8 text-red-500 dark:text-red-400 ml-1" />
+      </div>
+
+      <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight transition-colors">
+        Sign out of <span class="text-blue-600 dark:text-blue-500">Atlas</span>?
+      </h2>
+      <p class="text-[15px] text-slate-500 dark:text-slate-400 font-medium mb-8 transition-colors leading-relaxed px-2">
+        You will need to re-enter your credentials to access your dashboard again.
+      </p>
+
+      <div class="flex flex-col gap-3">
+        <button @click="confirmLogout" class="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-[15px] font-bold transition-all shadow-[0_4px_14px_0_rgba(239,68,68,0.39)] hover:shadow-[0_6px_20px_rgba(239,68,68,0.23)] rounded-xl transform hover:-translate-y-0.5">
+          Yes, Sign out
+        </button>
+        <button @click="closeLogoutModal" class="w-full py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[15px] font-bold transition-all rounded-xl">
+          Cancel
+        </button>
       </div>
     </div>
   </div>

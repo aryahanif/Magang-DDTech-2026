@@ -71,10 +71,15 @@ const updateTooltip = (event: MouseEvent) => {
 // Data state holding backend response
 const dashboardData = ref<any>({
   total_leads: 0,
+  total_leads_trend: 0,
   new_leads_this_week: 0,
+  new_leads_trend: 0,
   tier_a_leads: 0,
+  tier_a_trend: 0,
   demo_requests: 0,
+  demo_requests_trend: 0,
   conversion_rate: 0,
+  conversion_rate_trend: 0,
   leads_by_country: { Australia: 0, 'New Zealand': 0, Indonesia: 0 },
   leads_by_source: { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 },
   pipeline_summary: {
@@ -99,10 +104,15 @@ const fetchDashboardData = async () => {
       const resData = response.data.data || response.data;
       dashboardData.value = {
         total_leads: resData.total_leads || 0,
+        total_leads_trend: resData.total_leads_trend || 0,
         new_leads_this_week: resData.new_leads_this_week || 0,
+        new_leads_trend: resData.new_leads_trend || 0,
         tier_a_leads: resData.tier_a_leads || 0,
+        tier_a_trend: resData.tier_a_trend || 0,
         demo_requests: resData.demo_requests || 0,
+        demo_requests_trend: resData.demo_requests_trend || 0,
         conversion_rate: resData.conversion_rate || 0,
+        conversion_rate_trend: resData.conversion_rate_trend || 0,
         leads_by_country: resData.leads_by_country || { Australia: 0, 'New Zealand': 0, Indonesia: 0 },
         leads_by_source: resData.leads_by_source || { Website: 0, 'Outbound AI': 0, Referral: 0, Events: 0, Partners: 0 },
         pipeline_summary: resData.pipeline_summary || {
@@ -125,14 +135,20 @@ const fetchDashboardData = async () => {
   }
 }
 
+const formatTrend = (trend: number, isPoints = false) => {
+  const sign = trend > 0 ? '+' : (trend < 0 ? '-' : '');
+  const suffix = isPoints ? 'pp' : '%';
+  return `${sign} ${Math.abs(trend)}${suffix}`;
+}
+
 const kpiCards = computed(() => {
   const data = dashboardData.value;
   return [
-    { label: 'Tier A leads', value: data.tier_a_leads.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
-    { label: 'Total Leads', value: data.total_leads.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
-    { label: 'New Leads', value: data.new_leads_this_week.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: true },
-    { label: 'Demo Request', value: data.demo_requests.toLocaleString(), trendValue: '+ 0%', trendText: 'Live Data', isPositive: false },
-    { label: 'Conversion Rate', value: `${data.conversion_rate}%`, trendValue: '+ 0pp', trendText: 'Live Data', isPositive: true }
+    { label: 'Tier A leads', value: data.tier_a_leads.toLocaleString(), trendValue: formatTrend(data.tier_a_trend), trendText: 'vs last week', isPositive: data.tier_a_trend >= 0 },
+    { label: 'Total Leads', value: data.total_leads.toLocaleString(), trendValue: formatTrend(data.total_leads_trend), trendText: 'vs last week', isPositive: data.total_leads_trend >= 0 },
+    { label: 'New Leads', value: data.new_leads_this_week.toLocaleString(), trendValue: formatTrend(data.new_leads_trend), trendText: 'vs last week', isPositive: data.new_leads_trend >= 0 },
+    { label: 'Demo Request', value: data.demo_requests.toLocaleString(), trendValue: formatTrend(data.demo_requests_trend), trendText: 'vs last week', isPositive: data.demo_requests_trend >= 0 },
+    { label: 'Conversion Rate', value: `${data.conversion_rate}%`, trendValue: formatTrend(data.conversion_rate_trend, true), trendText: 'vs last week', isPositive: data.conversion_rate_trend >= 0 }
   ]
 })
 

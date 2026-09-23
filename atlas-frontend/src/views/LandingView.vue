@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { Sun, Moon } from '@lucide/vue';
+
+const isDarkMode = ref(localStorage.getItem('theme') === 'dark');
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value;
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }
+};
 
 const router = useRouter();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -29,6 +42,19 @@ onMounted(() => {
 
   setCanvasSize();
   window.addEventListener('resize', setCanvasSize);
+
+  const mouse = { x: -1000, y: -1000 };
+  const handleMouseMove = (e: MouseEvent) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  };
+  const handleMouseLeave = () => {
+    mouse.x = -1000;
+    mouse.y = -1000;
+  };
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseout', handleMouseLeave);
 
   class Particle {
     x: number;
@@ -61,7 +87,7 @@ onMounted(() => {
       // Opacity fades out on the left side (0% at left 40%, 100% at right 60%)
       const opacity = Math.max(0, Math.min(1, (this.x - (width * 0.4)) / (width * 0.2)));
       if (opacity <= 0) return;
-
+      
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(59, 130, 246, ${opacity * 0.8})`; // blue-500
@@ -115,6 +141,18 @@ onMounted(() => {
       }
     }
 
+    // Draw mouse glow
+    if (mouse.x > 0 && mouse.y > 0) {
+      const gradient = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 250);
+      gradient.addColorStop(0, 'rgba(59, 130, 246, 0.15)'); // light blue glow center
+      gradient.addColorStop(1, 'rgba(59, 130, 246, 0)'); // fade out to transparent
+      
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, 250, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+
     animationFrameId = requestAnimationFrame(animate);
   };
 
@@ -122,6 +160,8 @@ onMounted(() => {
 
   onUnmounted(() => {
     window.removeEventListener('resize', setCanvasSize);
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseout', handleMouseLeave);
     cancelAnimationFrame(animationFrameId);
   });
 });
@@ -132,8 +172,19 @@ const navigateToWelcome = () => {
 </script>
 
 <template>
-  <main class="relative min-h-screen w-full bg-slate-50 overflow-hidden font-sans">
+  <main class="relative min-h-screen w-full bg-slate-50 dark:bg-[#0B1120] transition-colors duration-300 overflow-hidden font-sans">
     
+    <!-- Theme Toggle -->
+    <button @click="toggleTheme" class="absolute top-6 right-6 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-2 rounded-full transition-colors z-50 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50">
+      <Sun v-if="isDarkMode" class="w-5 h-5" />
+      <Moon v-else class="w-5 h-5" />
+    </button>
+    
+    <!-- Living AI Orbs (Atlas Identity) -->
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/20 blur-[120px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-1 z-0"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/15 blur-[120px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-2 z-0"></div>
+    <div class="absolute top-[30%] left-[30%] w-[40%] h-[40%] bg-sky-400/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen animate-orb-3 z-0"></div>
+
     <!-- Canvas for Particle Network -->
     <canvas 
       ref="canvasRef" 
@@ -145,9 +196,9 @@ const navigateToWelcome = () => {
       
       <!-- Top Text -->
       <div class="overflow-hidden mb-6 flex items-start">
-        <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-slate-200/80 shadow-[0_2px_10px_rgb(0,0,0,0.03)] animate-mask-in-delay-1 hover:bg-white hover:shadow-md transition-all cursor-default group">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-600 drop-shadow-sm"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-          <span class="text-[13px] font-bold text-slate-700 tracking-wide bg-clip-text group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-indigo-600 transition-all duration-300">
+        <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 shadow-[0_2px_10px_rgb(0,0,0,0.03)] animate-mask-in-delay-1 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all cursor-default group">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-600 dark:text-blue-400 drop-shadow-sm"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          <span class="text-[13px] font-bold text-slate-700 dark:text-slate-300 tracking-wide bg-clip-text group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-indigo-600 transition-all duration-300">
             Atlas AI Workforce
           </span>
         </div>
@@ -156,7 +207,7 @@ const navigateToWelcome = () => {
       <!-- Main Headline -->
       <div class="max-w-4xl mb-4">
         <!-- Mask In Effect applied to lines -->
-        <h1 class="text-4xl sm:text-5xl lg:text-[4.5rem] leading-[1.1] font-bold text-slate-900 tracking-tight">
+        <h1 class="text-4xl sm:text-5xl lg:text-[4.5rem] leading-[1.1] font-bold text-slate-900 dark:text-white tracking-tight">
           <div class="overflow-hidden">
             <span class="block animate-mask-in">Scale your revenue with</span>
           </div>

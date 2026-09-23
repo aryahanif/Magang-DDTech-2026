@@ -218,11 +218,11 @@ const submitForm = async (values, { resetForm }) => {
           class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
-          <option value="" disabled selected>Select country</option>
-          <option value="australia">Australia</option>
-          <option value="newzealand">New Zealand</option>
-          <option value="Indonesia">Indonesia</option>
-          <option value="Other">Other</option>
+          <option  value="" disabled selected>Select country</option>
+          <option  value="australia">Australia</option>
+          <option  value="newzealand">New Zealand</option>
+          <option  value="Indonesia">Indonesia</option>
+          <option  value="Other">Other</option>
         </Field>
         <ErrorMessage name="country" class="text-red-500 text-sm mt-1" />
       </div>
@@ -236,10 +236,10 @@ const submitForm = async (values, { resetForm }) => {
           class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
-          <option value="" disabled selected>Select business type</option>
-          <option value="mortgagebroker">Mortgage Broker</option>
-          <option value="financebroker">Finance Broker</option>
-          <option value="other">Other</option>
+          <option  value="" disabled selected>Select business type</option>
+          <option  value="mortgagebroker">Mortgage Broker</option>
+          <option  value="financebroker">Finance Broker</option>
+          <option  value="other">Other</option>
         </Field>
         <ErrorMessage name="business_type" class="text-red-500 text-sm mt-1" />
       </div>
@@ -295,12 +295,12 @@ const submitForm = async (values, { resetForm }) => {
           class="w-full border border-gray-300 rounded-md text-slate-700 placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
-          <option value="" disabled selected>Select company size</option>
-          <option value="1-10">1-10 employees</option>
-          <option value="11-50">11-50 employees</option>
-          <option value="51-200">51-200 employees</option>
-          <option value="201-500">201-500 employees</option>
-          <option value="501+">501+ employees</option>
+          <option  value="" disabled selected>Select company size</option>
+          <option  value="1-10">1-10 employees</option>
+          <option  value="11-50">11-50 employees</option>
+          <option  value="51-200">51-200 employees</option>
+          <option  value="201-500">201-500 employees</option>
+          <option  value="501+">501+ employees</option>
         </Field>
         <ErrorMessage name="company_size" class="text-red-500 text-sm mt-1" />
       </div>
@@ -314,12 +314,12 @@ const submitForm = async (values, { resetForm }) => {
           class="w-full border border-gray-300 text-slate-700 rounded-md placeholder:text-gray-400 p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
-          <option value="" disabled selected>Select level</option>
-          <option value="1">A1</option>
-          <option value="2">A2</option>
-          <option value="3">A3</option>
-          <option value="4">A4</option>
-          <option value="5">A5</option>
+          <option  value="" disabled selected>Select level</option>
+          <option  value="1">A1</option>
+          <option  value="2">A2</option>
+          <option  value="3">A3</option>
+          <option  value="4">A4</option>
+          <option  value="5">A5</option>
         </Field>
         <ErrorMessage name="automation_interest" class="text-red-500 text-sm mt-1" />
       </div>
@@ -333,10 +333,10 @@ const submitForm = async (values, { resetForm }) => {
           class="w-full border border-gray-300 text-slate-700 rounded-md p-3 mt-1 focus:border-blue-500 focus:outline-none"
           required
         >
-          <option value="" disabled selected>Select method</option>
-          <option value="email">Email</option>
-          <option value="phone">Phone</option>
-          <option value="whatsapp">WhatsApp</option>
+          <option  value="" disabled selected>Select method</option>
+          <option  value="email">Email</option>
+          <option  value="phone">Phone</option>
+          <option  value="whatsapp">WhatsApp</option>
         </Field>
         <ErrorMessage name="preferred_contact_method" class="text-red-500 text-sm mt-1" />
       </div>

@@ -21,6 +21,7 @@ const lead = ref<any>({
 const isLoading = ref(true)
 const errorMessage = ref('')
 const tempFollowUpDate = ref('')
+const tempFollowUpPriority = ref('high')
 const isEditingSummary = ref(false)
 const newNote = ref('')
 const teamMembers = ref<any[]>([])
@@ -126,6 +127,12 @@ const formatCreatorName = (name: string) => {
   // Check if the name is a UUID
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidRegex.test(name)) {
+    const member = teamMembers.value.find(m => m.id === name);
+    if (member) return member.name;
+    
+    if (currentUser.value && currentUser.value.id === name) {
+      return currentUser.value.name || 'Admin';
+    }
     return 'Admin';
   }
   return name;
@@ -160,7 +167,7 @@ const submitNote = async () => {
   const newMockNote = {
     id: Date.now().toString(),
     note: noteText,
-    created_by: lead.value.assigned_owner || 'Admin',
+    created_by: currentUser.value?.name || currentUser.value?.id || 'Admin',
     created_at: new Date().toISOString()
   };
   if (!lead.value.notes) lead.value.notes = [];
@@ -198,12 +205,70 @@ const updateFollowUpDate = async () => {
   if (!tempFollowUpDate.value) return;
   const isoDate = new Date(tempFollowUpDate.value).toISOString();
   try {
+    // 1. Update the lead's follow up date
     await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: isoDate });
+    
+    // 2. Fetch existing tasks to prevent duplication
+    const leadName = lead.value?.full_name || lead.value?.company_name || 'Lead';
+    const expectedTitle = `Follow up: ${leadName}`;
+    
+    const tasksRes = await api.get('/api/admin/tasks?status=pending');
+    let existingTask = null;
+    
+    if (tasksRes.data && tasksRes.data.success) {
+      existingTask = tasksRes.data.data.find((t: any) => t.title === expectedTitle && t.status === 'pending');
+    }
+
+    if (existingTask) {
+      // Update existing task instead of creating duplicate
+      await api.patch(`/api/admin/tasks/${existingTask.id}`, {
+        due_at: isoDate,
+        priority: tempFollowUpPriority.value
+      });
+    } else {
+      // Create new task
+      await api.post('/api/admin/tasks', {
+        title: expectedTitle,
+        due_at: isoDate,
+        type: 'meeting',
+        priority: tempFollowUpPriority.value,
+        lead_name: leadName
+      });
+    }
+
     lead.value.next_follow_up_at = isoDate;
-    showToast('Follow-up date successfully saved.', 'success');
+    showToast('Follow-up schedule and Task successfully saved.', 'success');
+  } catch (error: any) {
+    console.error('Failed to update follow-up schedule:', error);
+    const errorMsg = error.response?.data?.message || error.message || 'Failed to save schedule.';
+    const finalMsg = Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg;
+    showToast(`Error: ${finalMsg}`, 'error');
+  }
+};
+
+const clearFollowUpDate = async () => {
+  try {
+    // 1. Remove date from Lead
+    await api.patch(`/api/admin/leads/${leadId}`, { next_follow_up_at: null });
+    
+    // 2. Fetch and delete existing pending task if any
+    const leadName = lead.value?.full_name || lead.value?.company_name || 'Lead';
+    const expectedTitle = `Follow up: ${leadName}`;
+    const tasksRes = await api.get('/api/admin/tasks?status=pending');
+    
+    if (tasksRes.data && tasksRes.data.success) {
+      const existingTask = tasksRes.data.data.find((t: any) => t.title === expectedTitle && t.status === 'pending');
+      if (existingTask) {
+        await api.delete(`/api/admin/tasks/${existingTask.id}`);
+      }
+    }
+    
+    lead.value.next_follow_up_at = null;
+    tempFollowUpDate.value = '';
+    showToast('Follow-up schedule cleared successfully.', 'success');
   } catch (error) {
-    console.error('Failed to update follow-up date:', error);
-    showToast('Backend API Error: Failed to save date.', 'error');
+    console.error('Failed to clear follow-up schedule:', error);
+    showToast('Failed to clear schedule.', 'error');
   }
 };
 
@@ -385,6 +450,12 @@ const exportDetailToCSV = () => {
                   AI Qualification Summary
                 </h2>
                 <div class="flex items-center gap-3">
+                  <button
+                    @click="fetchLeadDetail"
+                    class="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                  >
+                    Refresh
+                  </button>
                   <span
                     class="text-[12px] font-bold px-2.5 py-1 rounded bg-[#DBEAFE] dark:bg-blue-900/30 text-[#1E40AF] dark:text-blue-400"
                     >Score: {{ lead.lead_score }}/5</span
@@ -392,7 +463,13 @@ const exportDetailToCSV = () => {
                 </div>
               </div>
 
-              <div class="space-y-4">
+              <div v-if="!lead.qualification_summary" class="flex flex-col items-center justify-center py-8 text-center">
+                <Loader2 class="w-8 h-8 text-blue-500 animate-spin mb-3" />
+                <p class="text-[14px] font-bold text-slate-700 dark:text-slate-300">AI is analyzing this lead...</p>
+                <p class="text-[12px] text-slate-500 mt-1">This usually takes 5-10 seconds. Click refresh to check the result.</p>
+              </div>
+
+              <div v-else class="space-y-4">
                 <div>
                   <label
                     class="block text-[11px] sm:text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1"
@@ -645,12 +722,26 @@ const exportDetailToCSV = () => {
                         type="datetime-local"
                         v-model="tempFollowUpDate"
                         :disabled="currentUser?.role === 'viewer'"
-                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700/50 rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60"
+                        class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700/50 rounded-lg pl-9 pr-2 py-2 bg-[#F8FAFC] dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60 [color-scheme:light] dark:[color-scheme:dark]"
                       />
                     </div>
-                    <button @click="updateFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="w-full py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
-                      Save Schedule
-                    </button>
+                    <select
+                      v-model="tempFollowUpPriority"
+                      :disabled="currentUser?.role === 'viewer'"
+                      class="w-full text-[13px] sm:text-[14px] font-medium text-[#334155] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700/50 rounded-lg px-3 py-2 bg-[#F8FAFC] dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all cursor-pointer disabled:opacity-60"
+                    >
+                      <option value="low">Low Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="high">High Priority</option>
+                    </select>
+                    <div class="flex gap-2">
+                      <button @click="clearFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="flex-1 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
+                        Clear
+                      </button>
+                      <button @click="updateFollowUpDate" :disabled="currentUser?.role === 'viewer'" class="flex-1 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60">
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -708,17 +799,34 @@ const exportDetailToCSV = () => {
                 <div
                   v-for="note in lead.notes"
                   :key="'note-' + note.id"
-                  class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-colors"
+                  :class="[
+                    'p-3 rounded-lg border transition-colors',
+                    note.created_by === 'System' 
+                      ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30' 
+                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700/50'
+                  ]"
                 >
-                  <p class="text-[13px] text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
+                  <p 
+                    :class="[
+                      'text-[13px] leading-relaxed mb-2',
+                      note.created_by === 'System' 
+                        ? 'text-amber-800 dark:text-amber-400 font-medium' 
+                        : 'text-slate-700 dark:text-slate-300'
+                    ]"
+                  >
                     {{ note.note }}
                   </p>
                   <div
-                    class="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500"
+                    class="flex items-center justify-between text-[11px]"
+                    :class="note.created_by === 'System' ? 'text-amber-600/70 dark:text-amber-500/70' : 'text-slate-400 dark:text-slate-500'"
                   >
-                    <span class="font-medium text-blue-600 dark:text-blue-400">{{
-                      formatCreatorName(note.created_by)
-                    }}</span>
+                    <span 
+                      class="font-bold flex items-center gap-1"
+                      :class="note.created_by === 'System' ? 'text-amber-600 dark:text-amber-500' : 'text-blue-600 dark:text-blue-400'"
+                    >
+                      <svg v-if="note.created_by === 'System'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                      {{ formatCreatorName(note.created_by) }}
+                    </span>
                     <span>{{ formatDate(note.created_at) }}</span>
                   </div>
                 </div>

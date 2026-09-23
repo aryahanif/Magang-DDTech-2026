@@ -112,8 +112,22 @@ const fetchLeads = async () => {
   }
 };
 
+const teamMembers = ref<any[]>([]);
+
+const fetchTeamMembers = async () => {
+  try {
+    const response = await api.get('/api/users');
+    if (response.data && response.data.success) {
+      teamMembers.value = response.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch team members", error);
+  }
+};
+
 onMounted(() => {
   fetchLeads();
+  fetchTeamMembers();
 });
 
 // ==========================================
@@ -384,11 +398,11 @@ const getTierClass = (tier: string) => {
 
 const getStatusClass = (status: string) => {
   switch (status) {
-    case "Meeting Requested": case "Demo Scheduled": case "Proposal Sent": return "text-blue-600";
-    case "Negotiation": return "text-orange-600";
-    case "Won": return "text-green-600";
-    case "Lost": case "Disqualified": return "text-red-600";
-    default: return "text-slate-900";
+    case "Meeting Requested": case "Demo Scheduled": case "Proposal Sent": return "text-blue-600 dark:text-blue-400";
+    case "Negotiation": return "text-orange-600 dark:text-orange-400";
+    case "Won": return "text-green-600 dark:text-green-400";
+    case "Lost": case "Disqualified": return "text-red-600 dark:text-red-400";
+    default: return "text-slate-900 dark:text-slate-200";
   }
 };
 </script>
@@ -549,6 +563,7 @@ const getStatusClass = (status: string) => {
                 <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Source</th>
                 <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Tier</th>
                 <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Status</th>
+                <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Owner</th>
                 <th class="py-3 px-2 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-center">Value</th>
                 <th class="py-3 px-4 text-[13px] font-bold text-slate-900 dark:text-slate-200 text-right">Updated</th>
                 <th class="py-3 px-2 w-10"></th>
@@ -567,6 +582,7 @@ const getStatusClass = (status: string) => {
                 <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div></td>
                 <td class="py-3 px-2 text-center"><div class="h-5 bg-gray-200 rounded-md w-16 mx-auto animate-pulse"></div></td>
                 <td class="py-3 px-2 text-center"><div class="h-5 bg-gray-200 rounded-md w-20 mx-auto animate-pulse"></div></td>
+                <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div></td>
                 <td class="py-3 px-2 text-center"><div class="h-4 bg-gray-200 rounded w-24 mx-auto animate-pulse"></div></td>
                 <td class="py-3 px-4 text-right"><div class="h-4 bg-gray-200 rounded w-20 ml-auto animate-pulse"></div></td>
                 <td class="py-3 px-2"><div class="h-5 w-5 bg-gray-200 rounded mx-auto animate-pulse"></div></td>
@@ -593,6 +609,12 @@ const getStatusClass = (status: string) => {
                 </td>
                 <td class="py-3 px-2 text-center">
                   <span class="text-[12px] font-medium" :class="getStatusClass(lead.status)">{{ lead.status }}</span>
+                </td>
+                <td class="py-3 px-2 text-center text-[12px] text-slate-500 dark:text-slate-400">
+                  <div class="flex items-center justify-center gap-1.5" v-if="lead.assigned_owner">
+                    <span class="text-[12px] font-medium text-slate-700 dark:text-slate-300">{{ lead.assigned_owner }}</span>
+                  </div>
+                  <span v-else class="italic opacity-50">Unassigned</span>
                 </td>
                 <td class="py-3 px-2 text-center text-[12px] text-slate-900 dark:text-white font-medium">{{ lead.value }}</td>
                 <td class="py-3 px-4 text-right text-[12px] text-slate-400 dark:text-slate-500">{{ lead.updated }}</td>
@@ -720,8 +742,7 @@ const getStatusClass = (status: string) => {
             <label class="block text-[13px] font-bold text-black dark:text-slate-300 mb-1.5 transition-colors">Assigned Owner (Internal)</label>
             <Field name="assigned_owner" as="select" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-[13px] transition-colors">
               <option value="">Unassigned</option>
-              <option value="AC (Aldean)">AC (Aldean)</option>
-              <option value="JM (Jordan)">JM (Jordan)</option>
+              <option v-for="member in teamMembers" :key="member.id" :value="member.name">{{ member.name }}</option>
             </Field>
             <ErrorMessage name="assigned_owner" class="text-red-500 text-[11px] mt-1 block" />
           </div>

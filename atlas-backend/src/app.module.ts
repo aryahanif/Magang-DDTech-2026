@@ -15,13 +15,14 @@ import { UsersModule } from './modules/users/users.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 5, // strict default for public endpoints (e.g. POST /api/leads)
+        limit: 100, // strict default for public endpoints (e.g. POST /api/leads)
       },
     ]),
     PrismaModule,
@@ -36,8 +37,9 @@ import { AuditModule } from './modules/audit/audit.module';
     IntegrationsModule,
     TasksModule,
     AuditModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule { }

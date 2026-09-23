@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Lead, Prisma } from '@prisma/client';
 import { parse } from 'json2csv';
 import { PrismaService } from '../../database/prisma.service';
 import { AddLeadNoteDto } from './dto/add-lead-note.dto';
@@ -7,6 +7,7 @@ import { CreateLeadDto } from './dto/create-lead.dto';
 import { GetLeadsQueryDto } from './dto/get-leads-query.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QualificationService } from '../qualification/qualification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class LeadsService {
@@ -15,7 +16,8 @@ export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qualificationService: QualificationService,
-  ) {}
+    private readonly notificationsService: NotificationsService,
+  ) { }
 
   async createLead(dto: CreateLeadDto) {
     const { cf_turnstile_token, ...data } = dto;
@@ -68,6 +70,15 @@ export class LeadsService {
       this.logger.warn(`Lead ${lead.id} flagged as duplicate of ${existingLead.id}`);
     }
 
+    this.notificationsService
+      .create({
+        title: `New Lead: ${lead.full_name ?? lead.email}`,
+        message: `${lead.full_name ?? lead.email}${lead.company_name ? ` from ${lead.company_name}` : ''} just submitted the Assessment form.`,
+        icon: 'user',
+        lead_id: lead.id,
+      })
+      .catch((error) => this.logger.error('Failed to create new lead notification', error));
+
     // Asynchronous AI Processing (Non-blocking). The sales alert and the
     // prospect confirmation email are both sent from QualificationService
     // once the AI determines the lead_tier, since it isn't known yet here.
@@ -83,35 +94,36 @@ export class LeadsService {
     return this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
   }
 
+  private static readonly CSV_FIELDS: { label: string; value: string | ((lead: Lead) => string) }[] = [
+    { label: 'Full Name', value: 'full_name' },
+    { label: 'Email', value: 'email' },
+    { label: 'Phone', value: 'phone' },
+    { label: 'Company', value: 'company_name' },
+    { label: 'Country', value: 'country' },
+    { label: 'Business Type', value: 'business_type' },
+    { label: 'Industry', value: 'industry' },
+    { label: 'Source', value: 'source_page' },
+    { label: 'Lead Tier', value: 'lead_tier' },
+    { label: 'Lead Score', value: 'lead_score' },
+    { label: 'Fit Status', value: 'fit_status' },
+    { label: 'Urgency', value: 'urgency_level' },
+    { label: 'Status', value: 'status' },
+    { label: 'Assigned Owner', value: 'assigned_owner' },
+    { label: 'Next Follow-up', value: (lead) => LeadsService.formatCsvDate(lead.next_follow_up_at) },
+    { label: 'Created At', value: (lead) => LeadsService.formatCsvDate(lead.created_at) },
+  ];
+
+  private static formatCsvDate(date: Date | null): string {
+    return date ? date.toISOString().slice(0, 10) : '';
+  }
+
   async exportLeadsToCsv(query: GetLeadsQueryDto = {}) {
     const where = this.buildLeadsWhere(query);
     const leads = await this.prisma.lead.findMany({ where, orderBy: { created_at: 'desc' } });
 
-    const rows = leads.map((lead) => ({
-      full_name: lead.full_name,
-      email: lead.email,
-      company_name: lead.company_name,
-      country: lead.country,
-      business_type: lead.business_type,
-      lead_tier: lead.lead_tier,
-      lead_score: lead.lead_score,
-      status: lead.status,
-    }));
+    if (leads.length === 0) return LeadsService.CSV_FIELDS.map((field) => field.label).join(',');
 
-    const fields = [
-      'full_name',
-      'email',
-      'company_name',
-      'country',
-      'business_type',
-      'lead_tier',
-      'lead_score',
-      'status',
-    ];
-
-    if (rows.length === 0) return fields.join(',');
-
-    return parse(rows, { fields, quote: '' });
+    return parse(leads, { fields: LeadsService.CSV_FIELDS, withBOM: true });
   }
 
   private buildLeadsWhere(query: GetLeadsQueryDto): Prisma.LeadWhereInput {
