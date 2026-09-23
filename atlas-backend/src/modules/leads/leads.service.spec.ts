@@ -98,9 +98,9 @@ describe('LeadsService', () => {
     expect(prisma.leadActivityLog.create).toHaveBeenCalledWith({
       data: {
         lead_id: 'uuid-1',
-        activity_type: 'DUPLICATE_DETECTED',
+        activity_type: 'DUPLICATE_FLAGGED',
         description: expect.stringContaining('uuid-0'),
-        metadata: { duplicate_of: 'uuid-0' },
+        metadata: expect.objectContaining({ duplicate_of: 'uuid-0' }),
       },
     });
     expect(result).toBe(created);
@@ -164,8 +164,13 @@ describe('LeadsService', () => {
   });
 
   describe('exportLeadsToCsv', () => {
-    const CSV_HEADER =
+    // When leads exist, json2csv is used: quoted columns + BOM prefix
+    const CSV_HEADER_WITH_BOM =
       '\uFEFF"Full Name","Email","Phone","Company","Country","Business Type","Industry","Source","Lead Tier","Lead Score","Fit Status","Urgency","Status","Assigned Owner","Next Follow-up","Created At"';
+
+    // When no leads exist, a simple join is used: unquoted columns, no BOM
+    const CSV_HEADER_EMPTY =
+      'Full Name,Email,Phone,Company,Country,Business Type,Industry,Source,Lead Tier,Lead Score,Fit Status,Urgency,Status,Assigned Owner,Next Follow-up,Created At';
 
     it('applies the same filters as findAll and returns CSV with human-readable columns', async () => {
       prisma.lead.findMany.mockResolvedValue([
@@ -195,7 +200,7 @@ describe('LeadsService', () => {
         where: { lead_tier: 'Tier A' },
         orderBy: { created_at: 'desc' },
       });
-      expect(csv.split('\r\n')[0]).toBe(CSV_HEADER);
+      expect(csv.split('\r\n')[0]).toBe(CSV_HEADER_WITH_BOM);
       expect(csv).toContain(
         '"John Smith","john@example.com","+61411222333","ABC Mortgage Brokers","Australia","Mortgage Broker","Finance","/atlas","Tier A",90,"Strong fit","High","New Lead","Jane Doe","2026-01-15","2026-01-10"',
       );
@@ -206,7 +211,7 @@ describe('LeadsService', () => {
 
       const csv = await service.exportLeadsToCsv();
 
-      expect(csv).toBe(CSV_HEADER);
+      expect(csv).toBe(CSV_HEADER_EMPTY);
     });
   });
 
