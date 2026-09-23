@@ -1,63 +1,32 @@
-# Deployment & Setup Guide
+# Deployment Guide
 
-This guide covers the necessary steps to set up the Atlas Backend locally for development, and considerations for deploying to production.
+The Atlas backend can be deployed easily on modern PaaS platforms (AWS Elastic Beanstalk, Render, Railway, or Heroku) or on a traditional VPS.
 
-## 🛠 Local Development Setup
+## Standard PaaS Deployment (Render, Railway, Heroku)
 
-### Prerequisites
-1. Node.js (v18 or higher recommended)
-2. Docker & Docker Compose (for the local PostgreSQL database)
-3. Git
-
-### Step-by-Step Installation
-
-1. **Install Dependencies**
-   Navigate to the backend directory and run:
+1. **Connect Repository:** Connect your GitHub repository to the hosting provider.
+2. **Set Build Command:**
    ```bash
-   npm install
+   npm install && npx prisma generate && npm run build
    ```
-
-2. **Start the Database**
-   The project includes a `docker-compose.yml` file pre-configured for PostgreSQL.
+3. **Set Start Command:**
    ```bash
-   docker-compose up -d
+   npm run start:prod
    ```
-   *(This starts the database on port `5433` to avoid conflicts).*
+4. **Environment Variables:** Define all variables from `.env.example` in the hosting provider's dashboard.
+   *Ensure `NODE_ENV=production` is set so the HTTPS enforcement middleware applies correctly.*
 
-3. **Configure Environment Variables**
-   Create a `.env` file in the root directory. Ensure all required keys (`DATABASE_URL`, `JWT_SECRET`, `GEMINI_API_KEY`, etc.) are filled correctly.
+## Database Migrations in Production
 
-4. **Synchronize Database Schema**
-   Push the Prisma schema to the database:
-   ```bash
-   npx prisma db push
-   ```
+When deploying a new schema change, you should run database migrations before the app starts:
 
-5. **Seed the Database (First-time only)**
-   Create the initial Super Admin account:
-   ```bash
-   npx prisma db seed
-   ```
+```bash
+npx prisma db push
+# OR
+npx prisma migrate deploy
+```
+*(In PaaS like Render, you can specify this in the "Pre-deploy Command" setting).*
 
-6. **Start the NestJS Server**
-   ```bash
-   npm run start:dev
-   ```
-   The API will now be available at `http://localhost:3000`.
+## HTTPS Enforcement
 
-## 🌐 Production Deployment Considerations
-
-When moving to a production environment (such as AWS, Render, Railway, or VPS), ensure the following:
-
-- **Environment Configuration:** Never commit `.env` files. Use your hosting provider's Secrets/Environment Variables manager.
-- **Database Migrations:** Instead of `db push`, use Prisma migrations for production:
-  ```bash
-  npx prisma migrate deploy
-  ```
-- **Build Step:** Always build the NestJS application before starting:
-  ```bash
-  npm run build
-  npm run start:prod
-  ```
-- **HTTPS & SSL:** Ensure the API is sitting behind a reverse proxy (e.g., Nginx, Caddy, or a Load Balancer) that terminates SSL/HTTPS. The `POST /api/leads` endpoint must be secure.
-- **Node Environment:** Set `NODE_ENV=production` to enable caching and disable debugging logs.
+The backend is configured to trust the `x-forwarded-proto` header in production. As long as your hosting provider uses a reverse proxy or load balancer (which handles SSL termination), the backend will automatically redirect HTTP traffic to HTTPS.

@@ -1,130 +1,86 @@
 # Atlas Backend API Documentation
 
-All API responses follow a standard JSON structure. Endpoints prefixed with `/api/admin` require a valid JWT token passed in the `Authorization` header as a Bearer token.
+## Public Endpoints
 
----
-
-## 1. Public Endpoints
-
-### `POST /api/leads`
-Submit a new lead from the Atlas website form.
-
-**Request Body:**
-```json
-{
-  "full_name": "John Smith",
-  "email": "john@example.com",
-  "phone": "+61 412 345 678",
-  "company_name": "ABC Mortgage Brokers",
-  "country": "Australia",
-  "business_type": "Mortgage Broker",
-  "current_problem": "Manual client onboarding and document collection",
-  "automation_interest": "AI assistant for broker workflow",
-  "message": "We want to explore automation",
-  "source_page": "/atlas",
-  "utm_source": "linkedin"
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "lead_id": "uuid-string",
-  "message": "Lead submitted successfully"
-}
-```
-
----
-
-## 2. Authentication
-
-### `POST /api/auth/login`
-Authenticate an admin user and retrieve a JWT token.
-
-**Request Body:**
-```json
-{
-  "email": "admin@atlas.ddtech.com",
-  "password": "your_password"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1Ni...",
-  "user": {
-    "id": "uuid-string",
-    "email": "admin@atlas.ddtech.com",
-    "name": "Administrator",
-    "role": "Super Admin"
+### 1. Submit Lead
+- **Method:** `POST /api/leads`
+- **Purpose:** Receive lead submission from the Atlas website.
+- **Request Body:**
+  ```json
+  {
+    "full_name": "John Smith",
+    "email": "john@example.com",
+    "phone": "+61...",
+    "company_name": "ABC Mortgage Brokers",
+    "country": "Australia",
+    "business_type": "Mortgage Broker",
+    "current_problem": "Manual client onboarding",
+    "automation_interest": "AI assistant for broker workflow",
+    "message": "We want to explore automation",
+    "source_page": "/atlas",
+    "utm_source": "linkedin"
   }
-}
-```
+  ```
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "lead_id": "uuid",
+    "message": "Lead submitted successfully"
+  }
+  ```
 
 ---
 
-## 3. Admin CRM Endpoints
-*(Requires `Authorization: Bearer <token>`)*
+## Admin Endpoints (Require Authentication)
 
-### `GET /api/admin/leads`
-Fetch all leads. Supports query parameters for filtering.
+*Note: All endpoints below require a valid JWT token in the `Authorization: Bearer <token>` header.*
 
-**Query Parameters:**
-- `status` (string)
-- `tier` (string) - e.g., "Tier A"
-- `country` (string)
-- `search_keyword` (string) - Searches by name or company
+### 2. Get All Leads
+- **Method:** `GET /api/admin/leads`
+- **Filters (Query Params):** `status`, `tier`, `country`, `source`, `search`
+- **Description:** Returns a list of leads for the CRM view.
 
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "uuid",
-      "full_name": "John Smith",
-      "lead_tier": "Tier A",
-      "status": "New Lead",
-      "created_at": "2026-08-30T10:00:00.000Z"
+### 3. Get Lead Detail
+- **Method:** `GET /api/admin/leads/:id`
+- **Description:** Returns full lead details, including AI qualification summary and activity logs.
+
+### 4. Update Lead Status
+- **Method:** `PATCH /api/admin/leads/:id`
+- **Request Body:**
+  ```json
+  {
+    "status": "Qualified",
+    "assigned_owner": "user-uuid"
+  }
+  ```
+
+### 5. Add Internal Note to Lead
+- **Method:** `POST /api/admin/leads/:id/notes`
+- **Request Body:**
+  ```json
+  {
+    "note": "Followed up on LinkedIn. Waiting for reply."
+  }
+  ```
+
+### 6. Admin Dashboard Metrics
+- **Method:** `GET /api/admin/dashboard`
+- **Response:**
+  ```json
+  {
+    "total_leads": 120,
+    "new_leads_this_week": 14,
+    "tier_a_leads": 6,
+    "demo_requests": 4,
+    "conversion_rate": 12.5,
+    "leads_by_country": {
+      "Australia": 80,
+      "New Zealand": 22
     }
-  ]
-}
-```
+  }
+  ```
 
-### `PATCH /api/admin/leads/:id`
-Update a lead's pipeline status or assign an owner. This action is automatically recorded in the Activity Logs.
-
-**Request Body (Partial):**
-```json
-{
-  "status": "Demo Scheduled",
-  "assigned_owner": "admin_uuid",
-  "next_follow_up_at": "2026-09-05T10:00:00.000Z"
-}
-```
-
-### `POST /api/admin/leads/:id/notes`
-Add an internal note to a lead profile.
-
-**Request Body:**
-```json
-{
-  "note": "Called the prospect today. They are very interested in the AI qualification feature."
-}
-```
-
-### `GET /api/admin/dashboard`
-Retrieve high-level pipeline metrics for the dashboard widgets.
-
-**Response (200 OK):**
-```json
-{
-  "total_leads": 120,
-  "new_leads_this_week": 14,
-  "tier_a_leads": 6,
-  "conversion_rate": 12.5
-}
-```
+### 7. Export Leads
+- **Method:** `GET /api/admin/leads/export`
+- **Description:** Returns a CSV file of leads matching the applied query filters.
