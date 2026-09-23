@@ -31,9 +31,9 @@ async function testGroq() {
     console.log(response.choices[0]?.message?.content);
     console.log('--------------------------------------------------');
     console.log('\nSilakan refresh halaman dashboard Groq kamu, "API Calls" seharusnya akan bertambah menjadi 1.');
-  } catch (error) {
+  } catch (error: any) {
     console.error('\n❌ [GAGAL] Terjadi kesalahan saat memanggil Groq:');
-    console.error(error.message);
+    console.error(error.message || error);
   }
 }
 
