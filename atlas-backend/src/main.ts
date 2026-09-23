@@ -7,6 +7,15 @@ import { SanitizePipe } from './common/pipes/sanitize.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Enforce HTTPS in production
+  app.use((req: any, res: any, next: any) => {
+    if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, `https://${req.hostname}${req.originalUrl}`);
+    }
+    next();
+  });
+
   app.use(helmet());
   app.useGlobalPipes(
     new SanitizePipe(),

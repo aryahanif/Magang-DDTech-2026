@@ -88,8 +88,12 @@ describe('LeadsService', () => {
     const result = await service.createLead(dto);
 
     expect(prisma.lead.findFirst).toHaveBeenCalledWith({
-      where: { email: dto.email, id: { not: 'uuid-1' } },
-      orderBy: { created_at: 'desc' },
+      where: {
+        OR: [
+          { email: { equals: dto.email, mode: 'insensitive' } },
+          { company_name: { equals: dto.company_name, mode: 'insensitive' } }
+        ]
+      },
     });
     expect(prisma.leadActivityLog.create).toHaveBeenCalledWith({
       data: {

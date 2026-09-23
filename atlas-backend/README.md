@@ -1,66 +1,78 @@
 # Atlas Backend MVP
 
-Atlas is DDTech's AI Workforce Platform. This backend system is designed to capture website visitors and ANZ mortgage broker prospects, transforming them into highly qualified sales conversations.
+This is the backend for Atlas, DDTech's AI Workforce Platform. Built with **NestJS**, **Prisma**, and **PostgreSQL**.
 
-## 📌 Project Overview
-This repository contains the Node.js (NestJS) backend for the Atlas CRM MVP. 
+## 🚀 Environment Setup
 
-**Key Features:**
-- **Lead Capture:** API to receive submissions from the Atlas website.
-- **AI-Assisted Qualification:** Hybrid rule-based & AI (Gemini) lead qualification engine.
-- **CRM Pipeline:** Lead management, status updates, and internal notes.
-- **Admin Dashboard:** Pipeline metrics and conversions.
-- **Email Notifications:** Instant alerts for the DDTech sales team via Resend.
+1. Copy `.env.example` to `.env` and fill in all required values:
+   ```bash
+   cp .env.example .env
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Apply the database schema:
+   ```bash
+   npx prisma db push
+   ```
+4. Start the development server:
+   ```bash
+   npm run start:dev
+   ```
+   The API will be available at `http://localhost:3000`.
 
-## 📂 Documentation Structure
-To keep this README clean, detailed documentation is split into separate files:
-- [API Documentation](docs/api.md) - Details on all public and protected API endpoints.
-- [Deployment & Setup Guide](docs/deployment.md) - Step-by-step instructions to run the server locally or in production.
+## 👤 Admin User Setup Guide
 
-## 🔐 Environment Variables
-To run this project, you must configure a `.env` file in the root directory. 
+When running for the first time, you need to create the initial Super Admin account.
 
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/atlas_db`) |
-| `JWT_SECRET` | Secret key used to sign and verify Admin authentication tokens |
-| `JWT_EXPIRES_IN` | Token validity duration (e.g., `1d` for 1 day) |
-| `GEMINI_API_KEY` | Google Gemini API key for the AI Qualification Engine |
-| `RESEND_API_KEY` | Resend API key for sending email notifications |
-| `EMAIL_FROM` | The sender address for notifications (e.g., `onboarding@resend.dev`) |
-| `SALES_EMAIL_TO` | The inbox address that receives new lead alerts |
-
-*(Note: Never commit your real `.env` file to the repository. Use `.env.example` as a template).*
-
-## 👨‍💻 Admin User Setup
-The MVP includes a secure login system. To generate the first Super Admin account, you must run the database seeder:
-```bash
-npx prisma db seed
-```
-**Default Credentials:**
-- **Email:** `admin@atlas.ddtech.com`
-- **Password:** `rahasia_negara_123`
+1. Ensure `.env` is configured (especially `DATABASE_URL`).
+2. Run the seed script:
+   ```bash
+   npm run seed
+   ```
+3. The seeder will create an initial Super Admin user. Log in at the frontend with those credentials and immediately change the password via `POST /api/auth/change-password`.
 
 ## 💾 Backup and Restore Procedure
-Since we are using PostgreSQL, standard `pg_dump` commands apply.
-**Backup:**
+
+The application includes a backup script based on `pg_dump`.
+
+**Prerequisites:**
+- Install [PostgreSQL for Windows](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads) and ensure the `bin/` folder (containing `pg_dump.exe`) is added to your System PATH.
+- Alternatively, if using Docker, use `docker exec` to run `pg_dump` inside the container.
+
+**Run Backup:**
 ```bash
-pg_dump -U postgres -h localhost -p 5433 -F c -d atlas_db -f atlas_backup.dump
+npm run backup
 ```
-**Restore:**
+The backup file is saved to the `backups/` directory with a timestamp. This folder is excluded from Git via `.gitignore`.
+
+**Restore from Backup:**
 ```bash
-pg_restore -U postgres -h localhost -p 5433 -d atlas_db -1 atlas_backup.dump
+psql "postgresql://user:password@localhost:5432/atlas_db" -f backups/atlas-db-backup-YYYY-MM-DD.sql
 ```
 
-## ⚠️ Known Limitations (MVP Scope)
-- **Single-Tenant Only:** Currently built for DDTech internal use. Multi-tenant architecture for clients is not yet implemented.
-- **Manual Deletion:** Data privacy deletion requests must be handled manually via Prisma Studio or SQL queries.
-- **File Uploads:** The current intake API does not support file attachments (e.g., PDF uploads).
+## ⚠️ Known Limitations
 
-## 🚀 Future Roadmap
-Once the MVP proves commercial traction, planned features include:
-1. Customer/Client workspaces
-2. Integration marketplace (HubSpot, Pipedrive, Salesforce)
-3. Advanced analytics per client
-4. Billing and subscriptions
-5. Broker-specific automation modules
+- **Calendly Webhook HMAC verification not implemented:** The webhook endpoint at `/api/integrations/calendly/webhook` accepts all requests without signature verification. This is a security risk in production.
+- **No Multi-tenant Architecture:** Designed for DDTech's single-tenant internal use as an MVP.
+- **AI Rate Limits:** On the Gemini Free Tier, the SDK silently retries on `503` errors, which can cause background qualification tasks to hang for up to 5 minutes. Groq fallback mitigates this.
+- **No File Storage:** The system does not process or store file uploads (e.g., to S3).
+- **Hardcoded AI Prompts:** Lead qualification prompts are embedded in code, not configurable from the dashboard.
+- **Admin Module is Empty:** `src/modules/admin/admin.module.ts` is a shell with no functionality.
+
+## 🗺️ Future Improvement List (Roadmap)
+
+- Implement Calendly webhook HMAC signature verification.
+- Multi-tenant architecture and per-client workspaces.
+- AI prompt management via the settings dashboard.
+- Billing and Stripe subscription integration.
+- Per-client analytics and enhanced reporting.
+- Integration marketplace (HubSpot, Pipedrive, Zoho, Airtable, etc.).
+- Client-facing API access with API keys.
+
+## 📚 Documentation
+
+- **[API Documentation](./docs/api.md)** — All HTTP endpoints, request/response shapes
+- **[Database Schema](./docs/database.md)** — All Prisma models and their fields
+- **[Deployment Guide](./docs/deployment.md)** — How to deploy to production

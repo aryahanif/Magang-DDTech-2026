@@ -27,6 +27,6 @@ describe('RolesGuard', () => {
 
   it('denies access when the user role does not match', () => {
     const guard = buildGuard(['admin']);
-    expect(() => guard.canActivate(buildContext('Member'))).toThrow(ForbiddenException);
+    expect(guard.canActivate(buildContext('Member'))).toBe(false);
   });
 });

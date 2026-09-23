@@ -7,44 +7,44 @@ datasource db {
 }
 
 model Lead {
-  id                      String    @id @default(uuid()) @db.Uuid
-  full_name               String?
-  email                   String
-  phone                   String?
-  company_name            String?
-  country                 String?
-  business_type           String?
-  industry                String?
-  role                    String?
-  website_url             String?
-  company_size            String?
-  current_problem         String?
-  automation_interest     String?
+  id                       String    @id @default(uuid()) @db.Uuid
+  full_name                String?
+  email                    String
+  phone                    String?
+  company_name             String?
+  country                  String?
+  business_type            String?
+  industry                 String?
+  role                     String?
+  website_url              String?
+  company_size             String?
+  current_problem          String?
+  automation_interest      String?
   preferred_contact_method String?
-  message                 String?
-  source_page             String?
-  utm_source              String?
-  utm_medium              String?
-  utm_campaign            String?
-  consent_status          Boolean?
-  consent_at              DateTime?
-  
+  message                  String?
+  source_page              String?
+  utm_source               String?
+  utm_medium               String?
+  utm_campaign             String?
+  consent_status           Boolean?
+  consent_at               DateTime?
+
   lead_score              Int?
   lead_tier               String?
   fit_status              String?
   qualification_summary   String?
   recommended_next_action String?
   urgency_level           String?
-  
-  status                  String?   @default("New Lead")
-  assigned_owner          String?
-  next_follow_up_at       DateTime?
-  
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
 
-  notes                   LeadNote[]
-  activity_logs           LeadActivityLog[]
+  status            String?   @default("New Lead")
+  assigned_owner    String?
+  next_follow_up_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  notes         LeadNote[]
+  activity_logs LeadActivityLog[]
 
   @@map("leads")
 }
@@ -56,7 +56,7 @@ model LeadNote {
   created_by String?
   created_at DateTime @default(now())
 
-  lead       Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  lead Lead @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@map("lead_notes")
 }
@@ -69,39 +69,40 @@ model LeadActivityLog {
   metadata      Json?
   created_at    DateTime @default(now())
 
-  lead          Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  lead Lead @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@map("lead_activity_logs")
 }
 
 model User {
-  google_access_token String?
-  google_refresh_token String?
-  email_signature     String?
-  id            String   @id @default(uuid()) @db.Uuid
-  name          String?
-  email         String?  @unique
-  role          String?
-  job_title     String?
+  google_access_token    String?
+  google_refresh_token   String?
+  email_signature        String?
+  id                     String             @id @default(uuid()) @db.Uuid
+  name                   String?
+  email                  String?            @unique
+  role                   String?
+  job_title              String?
   password_hash          String?
   reset_password_token   String?
   reset_password_expires DateTime?
-  created_at    DateTime @default(now())
+  created_at             DateTime           @default(now())
+  adminActivityLogs      AdminActivityLog[]
 
   @@map("users")
 }
 
 model Task {
-  id           String    @id @default(uuid()) @db.Uuid
-  title        String
-  due_at       DateTime
-  type         String    @default("task")
-  priority     String    @default("medium")
-  status       String    @default("pending")
-  lead_name    String?
-  created_by   String?   @db.Uuid
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  due_at     DateTime
+  type       String   @default("task")
+  priority   String   @default("medium")
+  status     String   @default("pending")
+  lead_name  String?
+  created_by String?  @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@map("tasks")
 }
@@ -126,4 +127,18 @@ model SystemSetting {
   updated_at                 DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+model AdminActivityLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  admin_user_id String   @db.Uuid
+  action        String
+  resource      String?
+  details       String?
+  metadata      Json?
+  created_at    DateTime @default(now())
+
+  user User @relation(fields: [admin_user_id], references: [id], onDelete: Cascade)
+
+  @@map("admin_activity_logs")
 }

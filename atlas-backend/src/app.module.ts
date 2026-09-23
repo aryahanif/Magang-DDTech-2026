@@ -14,6 +14,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { UsersModule } from './modules/users/users.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     UsersModule,
     IntegrationsModule,
     TasksModule,
+    AuditModule,
     NotificationsModule,
   ],
   controllers: [AppController],
