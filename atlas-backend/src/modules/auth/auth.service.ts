@@ -17,12 +17,15 @@ export interface SafeUser {
   created_at: Date;
 }
 
+import { AuditService } from '../audit/audit.service';
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private auditService: AuditService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<SafeUser | null> {
@@ -39,6 +42,10 @@ export class AuthService {
 
   async login(user: SafeUser) {
     const payload = { email: user.email, sub: user.id, role: user.role };
+    
+    // Log activity
+    await this.auditService.logAdminActivity(user.id, 'LOGIN', 'Auth', 'User logged in successfully');
+
     return {
       success: true,
       token: await this.jwtService.signAsync(payload),
@@ -132,6 +139,8 @@ export class AuthService {
       where: { id: userId },
       data: { password_hash: newPasswordHash },
     });
+
+    await this.auditService.logAdminActivity(userId, 'UPDATE_SETTINGS', 'Auth', 'User changed their password');
 
     return { success: true, message: 'Password has been successfully updated.' };
   }

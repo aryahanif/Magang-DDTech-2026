@@ -11,11 +11,16 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
+import { AuditService } from '../audit/audit.service';
+
 @Controller('api/admin/leads')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Throttle({ default: { limit: 100, ttl: 60000 } })
 export class AdminLeadsController {
-  constructor(private readonly leadsService: LeadsService) {}
+  constructor(
+    private readonly leadsService: LeadsService,
+    private readonly auditService: AuditService
+  ) {}
 
   @Get()
   async findAll(@Query() query: GetLeadsQueryDto) {
@@ -27,8 +32,9 @@ export class AdminLeadsController {
   }
 
   @Get('export')
-  async exportCsv(@Query() query: GetLeadsQueryDto, @Res() res: Response) {
+  async exportCsv(@Req() req: Request & { user: { id: string } }, @Query() query: GetLeadsQueryDto, @Res() res: Response) {
     const csv = await this.leadsService.exportLeadsToCsv(query);
+    await this.auditService.logAdminActivity(req.user.id, 'EXPORT_LEADS', 'Leads', 'Exported leads to CSV');
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
     res.send(csv);
@@ -77,8 +83,9 @@ export class AdminLeadsController {
 
   @Delete(':id')
   @Roles(UserRole.SUPER_ADMIN)
-  async remove(@Param('id') id: string) {
+  async remove(@Req() req: Request & { user: { id: string } }, @Param('id') id: string) {
     await this.leadsService.remove(id);
+    await this.auditService.logAdminActivity(req.user.id, 'DELETE_LEAD', 'Leads', `Deleted lead ${id}`);
     return {
       success: true,
       message: 'Lead deleted successfully',

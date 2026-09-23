@@ -8,11 +8,16 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
+import { AuditService } from '../audit/audit.service';
+
 @Controller('api/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Throttle({ default: { limit: 100, ttl: 60000 } })
 export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) {}
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly auditService: AuditService
+  ) {}
 
   @Get('ai-rules')
   @Roles(UserRole.SUPER_ADMIN)
@@ -23,8 +28,9 @@ export class SettingsController {
 
   @Patch('ai-rules')
   @Roles(UserRole.SUPER_ADMIN)
-  async updateAiRules(@Body() updateDto: UpdateAiRulesDto) {
+  async updateAiRules(@Req() req: Request & { user: { id: string } }, @Body() updateDto: UpdateAiRulesDto) {
     const rules = await this.settingsService.updateAiRules(updateDto);
+    await this.auditService.logAdminActivity(req.user.id, 'UPDATE_SETTINGS', 'SystemSettings', 'Updated AI rules');
     return { success: true, message: 'Settings updated', data: rules };
   }
 
@@ -34,6 +40,7 @@ export class SettingsController {
     @Body() body: { signature: string }
   ) {
     await this.settingsService.updateEmailSignature(req.user.id, body.signature);
+    await this.auditService.logAdminActivity(req.user.id, 'UPDATE_SETTINGS', 'Users', 'Updated email signature');
     return { success: true, message: 'Email signature updated successfully' };
   }
 }
