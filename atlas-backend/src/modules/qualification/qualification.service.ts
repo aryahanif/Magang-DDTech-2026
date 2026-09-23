@@ -323,14 +323,13 @@ Respond ONLY with a valid JSON object with these fields:
             lead_id: updatedLead.id,
           })
           .catch((error) => this.logger.error('Failed to create AI scoring notification', error));
+      }
 
-        // Fire-and-forget so a slow/failing Resend call never blocks qualification.
+      // Only qualified tiers get emails. Fire-and-forget so a slow/failing send never blocks qualification.
+      if (updatedLead.lead_tier && ['Tier A', 'Tier B', 'Tier C'].includes(updatedLead.lead_tier)) {
         this.emailService
           .sendNewLeadAlert(updatedLead)
           .catch((error) => this.logger.error('Failed to send new lead alert email', error));
-      }
-
-      if (updatedLead.lead_tier && ['Tier A', 'Tier B', 'Tier C'].includes(updatedLead.lead_tier)) {
         this.emailService
           .sendProspectAutoReply(updatedLead)
           .catch((error) => this.logger.error('Failed to send auto-reply to prospect', error));
