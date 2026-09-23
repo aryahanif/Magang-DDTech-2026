@@ -30,6 +30,7 @@ export class LeadsController {
     const result = await response.json();
 
     if (!result.success) {
+      console.error('Turnstile verification failed:', result);
       throw new ForbiddenException('Bot verification failed');
     }
   }

@@ -228,17 +228,19 @@ const updatePipelineSteps = () => {
     'New Lead': 0, 'Qualified': 0, 'Contacted': 0, 'Meeting Requested': 0, 'Demo Scheduled': 0, 'Proposal Sent': 0, 'Negotiation': 0, 'Won': 0, 'Lost': 0, 'Disqualified': 0
   }
 
+  const getDisplay = (val: number) => showBars.value ? val.toLocaleString('en-US') : '0';
+
   pipelineSteps.value = [
-    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['New Lead'] || 0)/total)*100) },
-    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Qualified'] || 0)/total)*100) },
-    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Contacted'] || 0)/total)*100) },
-    { step: '4', title: 'Meeting Requested', targetCount: stepCounts['Meeting Requested'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Meeting Requested'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Meeting Requested'] || 0)/total)*100) },
-    { step: '5', title: 'Demo Scheduled', targetCount: stepCounts['Demo Scheduled'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Demo Scheduled'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Demo Scheduled'] || 0)/total)*100) },
-    { step: '6', title: 'Proposal Sent', targetCount: stepCounts['Proposal Sent'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Proposal Sent'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Proposal Sent'] || 0)/total)*100) },
-    { step: '7', title: 'Negotiation', targetCount: stepCounts['Negotiation'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Negotiation'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Negotiation'] || 0)/total)*100) },
-    { step: '8', title: 'Won', targetCount: stepCounts['Won'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Won'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Won'] || 0)/total)*100) },
-    { step: '9', title: 'Lost', targetCount: stepCounts['Lost'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Lost'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Lost'] || 0)/total)*100) },
-    { step: '10', title: 'Disqualified', targetCount: stepCounts['Disqualified'] || 0, displayCount: '0', percentage: `${Math.round(((stepCounts['Disqualified'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Disqualified'] || 0)/total)*100) }
+    { step: '1', title: 'New Lead', targetCount: stepCounts['New Lead'] || 0, displayCount: getDisplay(stepCounts['New Lead'] || 0), percentage: `${Math.round(((stepCounts['New Lead'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['New Lead'] || 0)/total)*100) },
+    { step: '2', title: 'Qualified', targetCount: stepCounts['Qualified'] || 0, displayCount: getDisplay(stepCounts['Qualified'] || 0), percentage: `${Math.round(((stepCounts['Qualified'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Qualified'] || 0)/total)*100) },
+    { step: '3', title: 'Contacted', targetCount: stepCounts['Contacted'] || 0, displayCount: getDisplay(stepCounts['Contacted'] || 0), percentage: `${Math.round(((stepCounts['Contacted'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Contacted'] || 0)/total)*100) },
+    { step: '4', title: 'Meeting Requested', targetCount: stepCounts['Meeting Requested'] || 0, displayCount: getDisplay(stepCounts['Meeting Requested'] || 0), percentage: `${Math.round(((stepCounts['Meeting Requested'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Meeting Requested'] || 0)/total)*100) },
+    { step: '5', title: 'Demo Scheduled', targetCount: stepCounts['Demo Scheduled'] || 0, displayCount: getDisplay(stepCounts['Demo Scheduled'] || 0), percentage: `${Math.round(((stepCounts['Demo Scheduled'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Demo Scheduled'] || 0)/total)*100) },
+    { step: '6', title: 'Proposal Sent', targetCount: stepCounts['Proposal Sent'] || 0, displayCount: getDisplay(stepCounts['Proposal Sent'] || 0), percentage: `${Math.round(((stepCounts['Proposal Sent'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Proposal Sent'] || 0)/total)*100) },
+    { step: '7', title: 'Negotiation', targetCount: stepCounts['Negotiation'] || 0, displayCount: getDisplay(stepCounts['Negotiation'] || 0), percentage: `${Math.round(((stepCounts['Negotiation'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Negotiation'] || 0)/total)*100) },
+    { step: '8', title: 'Won', targetCount: stepCounts['Won'] || 0, displayCount: getDisplay(stepCounts['Won'] || 0), percentage: `${Math.round(((stepCounts['Won'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Won'] || 0)/total)*100) },
+    { step: '9', title: 'Lost', targetCount: stepCounts['Lost'] || 0, displayCount: getDisplay(stepCounts['Lost'] || 0), percentage: `${Math.round(((stepCounts['Lost'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Lost'] || 0)/total)*100) },
+    { step: '10', title: 'Disqualified', targetCount: stepCounts['Disqualified'] || 0, displayCount: getDisplay(stepCounts['Disqualified'] || 0), percentage: `${Math.round(((stepCounts['Disqualified'] || 0)/total)*100)}% of total`, progress: Math.round(((stepCounts['Disqualified'] || 0)/total)*100) }
   ]
 }
 

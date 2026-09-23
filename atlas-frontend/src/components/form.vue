@@ -9,14 +9,9 @@ import * as z from 'zod';
 const turnstileBox = ref(null);
 const turnstileToken = ref('');
 
-
-onMounted(() => {
-  const script = document.createElement('script');
-  script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-  script.async = true;
-  script.defer = true;
-  
-  script.onload = () => {
+const renderTurnstile = () => {
+  if (turnstileBox.value && window.turnstile) {
+    // Clear previous widget if any (optional but safe)
     window.turnstile.render(turnstileBox.value, {
       sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
       theme: 'light',
@@ -24,7 +19,28 @@ onMounted(() => {
         turnstileToken.value = token;
       }
     });
-  };
+  }
+};
+
+onMounted(() => {
+  if (window.turnstile) {
+    renderTurnstile();
+    return;
+  }
+
+  const existingScript = document.getElementById('turnstile-script');
+  if (existingScript) {
+    existingScript.addEventListener('load', renderTurnstile);
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.id = 'turnstile-script';
+  script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+  script.async = true;
+  script.defer = true;
+  
+  script.onload = renderTurnstile;
   
   document.head.appendChild(script);
 });
