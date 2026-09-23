@@ -14,7 +14,7 @@ import { EmailModule } from '../email/email.module';
     PassportModule,
     JwtModule.registerAsync({
       useFactory: async () => ({
-        secret: process.env.JWT_SECRET || 'ganti_dengan_rahasia_jwt_yang_sangat_panjang_dan_aman',
+        secret: process.env.JWT_SECRET,
         signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any },
       }),
     }),
