@@ -74,4 +74,8 @@ export class CreateLeadDto {
 
   @IsBoolean()
   consent_status: boolean;
+
+  @IsNotEmpty()
+  @IsString()
+  cf_turnstile_token: string;
 }

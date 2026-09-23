@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Lead {
@@ -27,6 +29,7 @@ model Lead {
   utm_medium              String?
   utm_campaign            String?
   consent_status          Boolean?
+  consent_at              DateTime?
   
   lead_score              Int?
   lead_tier               String?
@@ -74,10 +77,14 @@ model LeadActivityLog {
 }
 
 model User {
+  google_access_token String?
+  google_refresh_token String?
+  email_signature     String?
   id            String   @id @default(uuid()) @db.Uuid
   name          String?
   email         String?  @unique
   role          String?
+  job_title     String?
   password_hash String?
   created_at    DateTime @default(now())
 

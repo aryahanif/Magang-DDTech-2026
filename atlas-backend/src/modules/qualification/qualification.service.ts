@@ -40,7 +40,7 @@ export class QualificationService {
    * Calculates a rule-based score based on basic lead information.
    * Uses weighted criteria to generate a final score from 1.0 to 5.0.
    */
-  calculateRuleBasedScore(leadData: any): number {
+  async calculateRuleBasedScore(leadData: any): Promise<number> {
     // 1. Country Score (1-5)
     const country = (leadData.country || '').trim().toLowerCase();
     const countryScore = SCORING_CONFIG.COUNTRY_SCORES[country] || SCORING_CONFIG.COUNTRY_SCORES['default'];
@@ -61,11 +61,14 @@ export class QualificationService {
     const isFreeEmail = freeDomains.some(domain => email.includes(domain));
     if (email && !isFreeEmail) intentScore += 1;
 
-    // Spam / Missing Data Check
-    if (!leadData.email || !leadData.company_name) intentScore -= 2;
-    const spamWords = ['test', 'spam', 'asdf', '1234'];
-    const messageText = (leadData.message || '').toLowerCase() + ' ' + (leadData.full_name || '').toLowerCase();
-    if (spamWords.some(w => messageText.includes(w))) intentScore -= 3;
+    // Spam / Missing Data Check (toggleable via SystemSetting.is_spam_detection_enabled)
+    const settings = await this.prisma.systemSetting.findFirst();
+    if (settings?.is_spam_detection_enabled ?? true) {
+      if (!leadData.email || !leadData.company_name) intentScore -= 2;
+      const spamWords = ['test', 'spam', 'asdf', '1234'];
+      const messageText = (leadData.message || '').toLowerCase() + ' ' + (leadData.full_name || '').toLowerCase();
+      if (spamWords.some(w => messageText.includes(w))) intentScore -= 3;
+    }
 
     intentScore = Math.max(1, Math.min(5, intentScore)); // Clamp between 1 and 5
 
@@ -95,30 +98,38 @@ export class QualificationService {
         return;
       }
 
-      const prompt = `Anda adalah analis penjualan B2B profesional untuk Atlas, DDTech's AI Workforce Platform.
-Analisis data klien berikut dan berikan wawasan mendalam mengenai potensi klien.
+      const tierEnums = ["Tier A", "Tier B", "Tier C", "Disqualified"];
+      let tierDescription = "Client tier category. Use Disqualified for valid data that doesn't fit the business. Do not use Spam because spam detection is disabled.";
+      
+      if (!settings || settings.is_spam_detection_enabled) {
+        tierEnums.push("Spam");
+        tierDescription = "Client tier category. Use Spam for fake/nonsense data, and Disqualified for valid data that doesn't fit the business.";
+      }
 
-Informasi Sistem:
-- Klien ini mendapatkan Rule-Based Score: ${ruleBasedScore ?? 'N/A'} (skala 1.0 - 5.0).
-- Gunakan skor sistem tersebut sebagai salah satu acuan utama untuk menentukan lead_tier (Tier A/B/C). Skor tinggi (>4.0) mengindikasikan Tier A atau B.
+      const prompt = `You are a professional B2B sales analyst for Atlas, DDTech's AI Workforce Platform.
+Analyze the following client data and provide deep insights regarding the client's potential.
 
-Data Klien:
+System Information:
+- This client received a Rule-Based Score: ${ruleBasedScore ?? 'N/A'} (scale 1.0 - 5.0).
+- Use this system score as one of the main references to determine the lead_tier (Tier A/B/C). A high score (>4.0) indicates Tier A or B.
+
+Client Data:
 ${JSON.stringify(leadData, null, 2)}`;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-1.5-flash',
         contents: prompt,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              lead_tier: { type: Type.STRING, enum: ["Tier A", "Tier B", "Tier C", "Disqualified", "Spam"], description: "Kategori tier klien. Gunakan Spam untuk data palsu/tidak masuk akal, dan Disqualified untuk data sah yang tidak cocok dengan bisnis." },
-              fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Kecocokan klien dengan produk" },
-              qualification_summary: { type: Type.STRING, description: "Ringkasan analisis maksimal 2 kalimat" },
-              recommended_next_action: { type: Type.STRING, description: "Aksi selanjutnya yang direkomendasikan" },
-              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Tingkat urgensi" },
-              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Bendera risiko atau data mencurigakan" }
+              lead_tier: { type: Type.STRING, enum: tierEnums, description: tierDescription },
+              fit_status: { type: Type.STRING, enum: ["Good Fit", "Potential", "Unlikely"], description: "Client fit with the product" },
+              qualification_summary: { type: Type.STRING, description: "Analysis summary, max 2 sentences" },
+              recommended_next_action: { type: Type.STRING, description: "Recommended next action" },
+              urgency_level: { type: Type.STRING, enum: ["High", "Medium", "Low"], description: "Urgency level" },
+              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Risk flags or suspicious data" }
             },
             required: ["lead_tier", "fit_status", "qualification_summary", "recommended_next_action", "urgency_level", "risk_flags"]
           }
@@ -127,7 +138,7 @@ ${JSON.stringify(leadData, null, 2)}`;
 
       const text = response.text;
       if (!text) {
-        throw new Error('Tidak ada teks yang dikembalikan oleh Gemini');
+        throw new Error('No text returned by Gemini');
       }
 
       const parsed = JSON.parse(text);
@@ -143,7 +154,7 @@ ${JSON.stringify(leadData, null, 2)}`;
         },
       });
 
-      this.logger.log(`Berhasil menganalisis lead ${leadId} dengan AI.`);
+      this.logger.log(`Successfully analyzed lead ${leadId} with AI.`);
 
       if (updatedLead.lead_tier !== 'Spam') {
         // Fire-and-forget so a slow/failing Resend call never blocks qualification.
@@ -159,7 +170,7 @@ ${JSON.stringify(leadData, null, 2)}`;
           .catch((error) => this.logger.error('Failed to send auto-reply to prospect', error));
       }
     } catch (error) {
-      this.logger.error(`Error menganalisis lead ${leadId} dengan AI`, error);
+      this.logger.error(`Error analyzing lead ${leadId} with AI`, error);
     }
   }
 }
