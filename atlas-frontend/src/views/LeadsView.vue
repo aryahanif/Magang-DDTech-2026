@@ -29,6 +29,7 @@ interface Lead {
   value: string;
   updated: string;
   isValid: boolean; 
+  assigned_owner?: string; 
 }
 
 const router = useRouter();
